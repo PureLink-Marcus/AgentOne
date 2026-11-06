@@ -6,7 +6,7 @@ Ziel: Günni und Fressi / AgentOne Personal
 
 ## Ergebnis
 
-Der technische Releasekandidat ist reproduzierbar gebaut, auf beiden privaten Instanzen ausgerollt und gegen Browser, PWA, Datenbank, Connector-Download und Sicherheitsgrenzen geprüft. Der Arbeitsordner ist als lokales Git-Repository mit `agentone-main` vorbereitet; die vier vereinbarten Branches werden aus demselben geprüften Commit angelegt. Für die Veröffentlichung auf GitHub fehlt nur eine gültige Anmeldung, weil das vorhandene `gh`-Token abgelaufen ist. Externe Benutzerkonten und Hardwarefreigaben bleiben bewusst getrennte Abnahmepunkte.
+Der technische Releasekandidat ist reproduzierbar gebaut, auf beiden privaten Instanzen ausgerollt und gegen Browser, PWA, Datenbank, Connector-Download und Sicherheitsgrenzen geprüft. Der geprüfte Stand wurde auf GitHub veröffentlicht; die vier vereinbarten Branches basieren auf demselben Release-79-Commit. Externe Benutzerkonten und Hardwarefreigaben bleiben bewusst getrennte Abnahmepunkte.
 
 ## Verifizierte Anforderungen
 
@@ -33,7 +33,7 @@ Diese Punkte sind keine versteckten Softwarefehler und dürfen ohne Benutzer- od
 3. iPhone: HealthKit-/Standortdaten und native Signierung benötigen Apple-Gerät und Entwicklerzugang.
 4. Ollama: Connector v4 auf dem Pi aktualisieren, Modell installieren und in `OLLAMA_MODELS` erlauben; erst dann wird `STRICT · lokal` aktiv.
 5. Betrieb: externes Backupziel, Aufbewahrungsregeln und PostgreSQL-PITR organisatorisch festlegen.
-6. Git/Main: GitHub erneut authentifizieren und die lokal vorbereiteten Branches `agentone-main`, `agentone-dev`, `agentone-personal-main`, `agentone-personal-dev` zu `PureLink-Marcus/AgentOne` pushen.
+6. Externe Freigaben: echte Gmail-/Apple-/Home-Assistant-Konten und ein lokales Ollama-Modell können vom jeweiligen Benutzer beziehungsweise Gerät verbunden werden; hierfür werden keine Zugangsdaten im Repository gespeichert.
 
 ## Reproduzierbares Protokoll
 
@@ -58,5 +58,5 @@ Releaseartefakte:
 ## Promotionsentscheidung
 
 Technischer Kandidat: **PASS**.
-Git-Main-Promotion: **READY / lokaler Checkout vorbereitet, wartet auf GitHub-Authentifizierung**.
+Git-Main-Promotion: **PASS / alle vier Branches auf `PureLink-Marcus/AgentOne` veröffentlicht**.
 Externe Konten und Geräte: **READY / wartet auf Benutzerfreigabe**.

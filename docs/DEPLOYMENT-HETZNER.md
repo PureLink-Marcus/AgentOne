@@ -103,4 +103,4 @@ npm run deploy:remote
 npm run verify:remote
 ```
 
-Das Deployment wird aktuell aus einem lokalen, secret-freien Release-Archiv als versioniertes Image direkt auf dem Hetzner-Host gebaut. Der Arbeitsordner ist inzwischen als Git-Checkout mit `origin` auf `PureLink-Marcus/AgentOne` vorbereitet. Die Branches `agentone-main`, `agentone-dev`, `agentone-personal-main` und `agentone-personal-dev` werden aus dem geprüften Release-79-Commit erzeugt; der Remote-Push benötigt eine erneuerte GitHub-Authentifizierung.
+Das Deployment wird aktuell aus einem lokalen, secret-freien Release-Archiv als versioniertes Image direkt auf dem Hetzner-Host gebaut. Der Arbeitsordner ist als Git-Checkout mit `origin` auf `PureLink-Marcus/AgentOne` eingerichtet. Die Branches `agentone-main`, `agentone-dev`, `agentone-personal-main` und `agentone-personal-dev` wurden aus dem geprüften Release-79-Commit veröffentlicht.
