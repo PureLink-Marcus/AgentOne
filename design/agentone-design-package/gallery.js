@@ -1,0 +1,9 @@
+const state={variant:'hybrid',theme:'dark',level:'inside',world:'product'};
+const frame=document.getElementById('preview');const stage=document.getElementById('stage');const world=document.getElementById('world');const crumb=document.getElementById('crumb');const count=document.getElementById('count');
+const variants=['cosmos','pixel','hybrid'],themes=['light','dark'],levels=['outside','inside'];
+function screenUrl(){return `screen.html?variant=${state.variant}&theme=${state.theme}&level=${state.level}&world=${state.world}`;}
+function position(){return variants.indexOf(state.variant)*4+themes.indexOf(state.theme)*2+levels.indexOf(state.level)+1;}
+function scale(){const factor=Math.min(stage.clientWidth/1440,stage.clientHeight/960);frame.style.transform=`translate(-50%,-50%) scale(${factor})`;}
+function render(){document.querySelectorAll('[data-key]').forEach(button=>button.classList.toggle('active',state[button.dataset.key]===button.dataset.value));world.value=state.world;world.disabled=state.level==='outside';crumb.textContent=`${state.variant.toUpperCase()} / ${state.theme==='light'?'HELL':'DUNKEL'} / ${state.level==='outside'?'PROJEKT · AUSSEN':'WELT · INNEN'}`;count.textContent=`Ansicht ${position()} von 12`;frame.classList.remove('ready');frame.src=screenUrl();}
+document.querySelectorAll('[data-key]').forEach(button=>button.addEventListener('click',()=>{state[button.dataset.key]=button.dataset.value;render();}));
+world.addEventListener('change',()=>{state.world=world.value;render();});frame.addEventListener('load',()=>frame.classList.add('ready'));window.addEventListener('resize',scale);window.addEventListener('message',event=>{if(event.data?.type==='agentone-screen'&&event.data.action==='open-world'){state.world=event.data.world;state.level='inside';render();}});document.getElementById('open-screen').addEventListener('click',()=>window.open(screenUrl(),'_blank'));scale();render();

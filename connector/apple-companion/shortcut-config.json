@@ -1,0 +1,19 @@
+{
+  "schema": "agentone.apple-companion/v1",
+  "instance": "Günni",
+  "baseUrl": "https://guenni.mwart.solutions",
+  "pairEndpoint": "/agentone/companion/redeem",
+  "ingestEndpoint": "/agentone/companion/ingest",
+  "scopes": [
+    "health.summary",
+    "location.temporary",
+    "calendar.read",
+    "reminders.read",
+    "shortcuts.invoke"
+  ],
+  "privacy": {
+    "rawHealthStored": false,
+    "locationTtlMaxMinutes": 60,
+    "backgroundTracking": false
+  }
+}

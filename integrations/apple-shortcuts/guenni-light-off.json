@@ -1,0 +1,17 @@
+{
+  "schema": "agentone.apple-shortcut-blueprint/v1",
+  "name": "Licht aus",
+  "fallbackName": "Günni Licht aus",
+  "endpoint": "https://guenni.mwart.solutions/agentone/siri/v1/execute",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer <AGENTONE_GUENNI_SIRI_API_KEY>",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "intent": "home.lights.off",
+    "requestId": "siri-light-off"
+  },
+  "responseSpeechField": "speech",
+  "containsSecrets": false
+}

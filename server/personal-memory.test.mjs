@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { forgetMemoryEntry,initPersonalMemoryStore,listMemoryEntries,normalizeMemoryEntry,saveMemoryEntry } from './personal-memory.mjs';
+
+test('memory keeps provenance, sensitivity and expiry while isolating users',()=>{const db=new DatabaseSync(':memory:');initPersonalMemoryStore(db);const expiresAt=new Date(Date.now()+86_400_000).toISOString(),entry=saveMemoryEntry(db,{id:'m1',userId:'u1',input:{area:'interests',content:'Mag ruhige elektronische Musik',source:'user',sourceRef:'settings',sensitivity:'PRIVATE',expiresAt}});assert.equal(entry.sourceRef,'settings');assert.equal(listMemoryEntries(db,{userId:'u2'}).length,0);assert.equal(listMemoryEntries(db,{userId:'u1',query:'elektronische'}).length,1);assert.equal(listMemoryEntries(db,{userId:'u1',area:'home'}).length,0);assert.deepEqual(forgetMemoryEntry(db,{userId:'u1',id:'m1'}),{id:'m1',forgotten:true});assert.equal(listMemoryEntries(db,{userId:'u1'}).length,0);db.close();});
+test('memory rejects unsupported metadata and past expiry',()=>{assert.throws(()=>normalizeMemoryEntry({area:'secret',content:'x'}),/invalid_memory_area/);assert.throws(()=>normalizeMemoryEntry({area:'home',content:'Licht',sensitivity:'PUBLIC'}),/invalid_memory_metadata/);assert.throws(()=>normalizeMemoryEntry({area:'home',content:'Licht',expiresAt:'2020-01-01'}),/memory_expiry_must_be_future/);});

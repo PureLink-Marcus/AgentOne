@@ -1,0 +1,54 @@
+# AgentOne Personal
+
+AgentOne Personal ist das eigenständige persönliche Assistenzprojekt innerhalb der AgentOne-Struktur. Die sichtbare Produktidentität bleibt **AgentOne**; Repository und Service heißen **AgentOne-Personal**.
+
+## Verantwortungsgrenzen
+
+- AgentOne Platform verwaltet Projekte, Welten, Workflows und zentrale Richtlinien.
+- Jede Workflow-Welt besitzt genau einen `world-orchestrator` namens AgentOne.
+- AgentOne Personal ist der `personal-agent` eines Benutzers. Er sammelt berechtigte Ergebnisse aus mehreren Welten, führt persönliche Quellen und Memory und verteilt Aufgaben an die zuständigen Welt-Orchestratoren.
+- Interne PureLink-Ressourcen werden ausschließlich über den AgentOne Connector angesprochen.
+
+## Benutzer und Isolation
+
+Nach einem zulässigen Microsoft-Entra-Login wird idempotent ein eigenes Personal Gateway provisioniert. Jeder Benutzer erhält eine eigene Runtime, ein eigenes Netzwerk, ein eigenes verschlüsseltes Volume, eigene Quellen, Sessions, Secrets und Kanalverbindungen. Die stabile Entra-`oid` ist die technische Benutzerkennung; `@purelink.de` und `@purelink.com` bilden zusammen mit der Tenant-Prüfung die Zulassungsgrenze.
+
+## Kanäle
+
+V1 stellt Web, Microsoft Teams, Outlook, WhatsApp, Telegram, Slack und Discord als Adapter bereit. Nicht konfigurierte Kanäle verwenden im lokalen Demomodus schemaidentische Simulatoren.
+
+## Dienste, Connectoren und OpenClaw-Plugins
+
+Die Oberfläche trennt zwei technisch unterschiedliche Ebenen:
+
+- **Konten und Geräte** verbinden externe Benutzerquellen wie Gmail, Kalender, Home Assistant, Spotify oder iPhone-Companions. Sie besitzen je Instanz eigene Zugangsdaten, Freigaben und Zustände `LIVE`, `PREPARED`, `DEGRADED` oder `DISABLED`.
+- **OpenClaw-Plugins** stellen Werkzeuge, Provider und Kanäle innerhalb der persönlichen Agent-Runtime bereit. Der Katalog wird serverseitig aus der installierten OpenClaw-Registry bereitgestellt; Secret-Werte gelangen dabei nie in den Browser.
+
+Release `2026.11.06-79` betreibt Fressi und Günni mit getrennten Apps, Datenbanken, OpenClaw-Runtimes, Access-Proxys und Volumes. Günni besitzt Command Center, Live-Inbox, Routinen, persistentes Memory, Voice, Home-Assistant-Steuerung, Connector-Governance und einen optionalen lokalen Modellpfad über den signierten Home Connector v4. Externe Konten und Geräte benötigen trotz geladener Plugins weiterhin eigene Zugangsdaten beziehungsweise Benutzerfreigaben.
+
+Ein externer Dienst gilt erst nach erfolgreichem Healthcheck als `LIVE`. Das bloße Vorhandensein eines OpenClaw-Plugins oder einer gespeicherten Connector-Freigabe reicht dafür nicht aus.
+
+## Konto und persönlicher Chat
+
+Der öffentliche Einzelbenutzer-Testzugang verwendet ein normales AgentOne-Formular statt Browser-Basic-Auth. Zugangsdaten werden konstant verglichen, Fehlversuche begrenzt und erfolgreiche Anmeldungen als opaque, serverseitig gehashte Secure-/HttpOnly-Session gespeichert. Entra Authorization Code + PKCE bleibt für die spätere Mehrbenutzerfreigabe vorbereitet.
+
+Der persönliche Webchat verwendet serverseitig die OpenAI Responses API. `gpt-6-luna` ist der kostengünstige Standard, `gpt-6.1-sol` der automatische Fallback. Ohne konfigurierten Schlüssel bleibt derselbe Endpoint als sichtbar markierter Simulator verfügbar. Schlüssel, Prompts und Antworten werden nicht im Audit protokolliert; dort erscheinen nur Modus und Modell.
+
+## Administration
+
+Autorisierte Administratoren können Instanzen und Sessions vollständig analysieren, neu starten, sperren, neu aufbauen, in Quarantäne verschieben und wiederherstellen. Jeder Zugriff auf Sessioninhalte und jede administrative Aktion wird unveränderbar auditiert. Secret-Werte bleiben maskiert.
+
+Eine Löschung sperrt die Instanz sofort. Daten bleiben 30 Tage verschlüsselt in Quarantäne und werden anschließend endgültig entfernt.
+
+## Entwicklungs- und Hauptlinien
+
+| Projekt | Hauptlinie | Entwicklung |
+|---|---|---|
+| AgentOne Platform | `agentone-main` | `agentone-dev` |
+| AgentOne Personal | `agentone-personal-main` | `agentone-personal-dev` |
+
+Der lokale Hybrid-Demomodus arbeitet standardmäßig mit den beiden Entwicklungsumgebungen. Hauptlinien werden nur lesend visualisiert.
+
+## Open-Source-Basis
+
+Für das spätere separate Repository ist ein privater Mirror von [OpenClaw](https://github.com/openclaw/openclaw) vorgesehen. OpenJarvis bleibt Referenz für lokale Inferenz, Hardwareprofile und Evaluation. Upstream-Änderungen werden als geprüfte Update-PRs übernommen und nie automatisch in eine Hauptlinie deployt.

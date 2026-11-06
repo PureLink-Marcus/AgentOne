@@ -1,0 +1,51 @@
+# Secrets and environment configuration
+.env
+.env.*
+.env0
+*.env
+!.env.example
+
+# Consolidated master environment (local only)
+master/env/.env.master
+master/env/sources/
+!master/env/.env.example
+!master/env/README.md
+
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+!connector/raspberry/update-public.pem
+
+# Local secret/config overlays
+secrets/
+*.secret
+*.secrets
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.playwright-cli/
+tmp/
+output/demo/*.sqlite*
+output/demo/runtime/
+output/demo/mobile-access.txt
+output/demo/private-access.txt
+output/demo/siri-private-access.txt
+output/
+
+# Logs and editor/OS files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+

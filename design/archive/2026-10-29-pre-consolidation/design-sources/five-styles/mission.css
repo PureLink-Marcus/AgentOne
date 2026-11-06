@@ -1,0 +1,502 @@
+.mission {
+  --ms-ink: #121419;
+  --ms-paper: #e8e3d9;
+  --ms-paper-2: #d5cfc2;
+  --ms-night: #080a0d;
+  --ms-panel: #101319;
+  --ms-line: rgba(18, 20, 25, 0.22);
+  --ms-light-line: rgba(232, 227, 217, 0.17);
+  --ms-signal: #ff5a3d;
+  --ms-signal-dark: #bd321f;
+  --ms-amber: #f3b548;
+  --ms-cyan: #72d8d2;
+  --ms-green: #8fcf8a;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--ms-night);
+  color: var(--ms-paper);
+  font-family: "Arial Narrow", "Roboto Condensed", "Segoe UI", sans-serif;
+  letter-spacing: 0.035em;
+}
+
+.mission *,
+.mission *::before,
+.mission *::after {
+  box-sizing: border-box;
+}
+
+.mission button {
+  color: inherit;
+  font: inherit;
+}
+
+.mission > header {
+  height: 68px;
+  display: grid;
+  grid-template-columns: 48px max-content minmax(260px, 1fr) max-content;
+  align-items: center;
+  gap: 20px;
+  padding: 0 24px 0 18px;
+  border-bottom: 1px solid var(--ms-light-line);
+  background: #050609;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.mission > header .ms-brand {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  background: var(--ms-signal);
+  color: var(--ms-night);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.mission > header > b {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+
+.mission > header nav {
+  justify-self: center;
+  color: rgba(232, 227, 217, 0.64);
+  word-spacing: 1.1em;
+}
+
+.mission > header nav em {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--ms-signal);
+  color: var(--ms-night);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.mission > header > span {
+  color: var(--ms-signal);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.07em;
+}
+
+.mission > main {
+  height: calc(100vh - 68px);
+  min-height: 720px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 330px;
+  overflow: hidden;
+}
+
+.mission .ms-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 38px 24px 24px;
+  background: var(--ms-signal);
+  color: var(--ms-night);
+  text-transform: uppercase;
+}
+
+.mission .ms-side > small {
+  font: 700 10px/1 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.17em;
+}
+
+.mission .ms-side h2 {
+  margin: 12px 0 11px;
+  font-size: 31px;
+  line-height: 0.93;
+  letter-spacing: -0.035em;
+}
+
+.mission .ms-side > span {
+  font: 700 10px/1.6 "Cascadia Mono", Consolas, monospace;
+}
+
+.mission .ms-side nav {
+  display: grid;
+  gap: 1px;
+  margin: 42px -24px 0;
+  border-block: 1px solid rgba(8, 10, 13, 0.35);
+}
+
+.mission .ms-side nav button {
+  min-height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-bottom: 1px solid rgba(8, 10, 13, 0.24);
+  background: transparent;
+  text-align: left;
+  font: 800 11px/1 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.055em;
+}
+
+.mission .ms-side nav button:last-child {
+  border-bottom: 0;
+}
+
+.mission .ms-side nav button.on {
+  background: var(--ms-night);
+  color: var(--ms-paper);
+}
+
+.mission .ms-side nav button.warn {
+  color: #411108;
+}
+
+.mission .ms-side > div {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(8, 10, 13, 0.4);
+}
+
+.mission .ms-side > div b,
+.mission .ms-side > div span {
+  display: block;
+}
+
+.mission .ms-side > div b {
+  font: 900 44px/1 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: -0.09em;
+}
+
+.mission .ms-side > div span {
+  margin-top: 6px;
+  font: 800 9px/1.2 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.12em;
+}
+
+.mission .ms-sequence {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 104px 42px minmax(470px, 1fr) 58px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(18, 20, 25, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 20, 25, 0.035) 1px, transparent 1px),
+    var(--ms-paper);
+  background-size: 24px 24px;
+  color: var(--ms-ink);
+}
+
+.mission .ms-sequence > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 30px 20px;
+  border-bottom: 2px solid var(--ms-ink);
+}
+
+.mission .ms-sequence > header small,
+.mission .ms-sequence > header span {
+  font: 700 10px/1.4 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.1em;
+}
+
+.mission .ms-sequence > header h1 {
+  margin: 4px 0 0;
+  font-size: clamp(20px, 2vw, 30px);
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+.mission .ms-sequence > header > div:last-child {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.mission .ms-sequence > header > div:last-child b,
+.mission .ms-sequence > header > div:last-child span {
+  display: block;
+}
+
+.mission .ms-sequence > header > div:last-child b {
+  font: 900 24px/1 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: -0.07em;
+}
+
+.mission .ms-ruler {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-left: 96px;
+  padding: 0 23px;
+  border-bottom: 1px solid var(--ms-line);
+  font: 700 9px/1 "Cascadia Mono", Consolas, monospace;
+}
+
+.mission .ms-ruler span {
+  position: relative;
+}
+
+.mission .ms-ruler span::after {
+  content: "";
+  position: absolute;
+  top: 19px;
+  left: 50%;
+  width: 1px;
+  height: 8px;
+  background: var(--ms-ink);
+}
+
+.mission .ms-lanes {
+  position: relative;
+  min-height: 0;
+  padding-top: 7px;
+  overflow: hidden;
+}
+
+.mission .ms-lanes::before {
+  content: "";
+  position: absolute;
+  inset: 0 22px 0 96px;
+  background: repeating-linear-gradient(90deg, transparent 0, transparent calc(20% - 1px), rgba(18, 20, 25, 0.12) 20%);
+  pointer-events: none;
+}
+
+.mission .ms-lanes .lane {
+  position: relative;
+  height: 25%;
+  min-height: 100px;
+  border-bottom: 1px solid var(--ms-line);
+}
+
+.mission .ms-lanes .lane label {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 96px;
+  display: flex;
+  align-items: center;
+  padding-left: 17px;
+  border-right: 1px solid var(--ms-line);
+  background: rgba(232, 227, 217, 0.76);
+  font: 900 9px/1 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.12em;
+}
+
+.mission .ms-lanes .lane i {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: calc(96px + 2%);
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  translate: 0 -50%;
+  border: 2px solid var(--ms-ink);
+  border-radius: 50%;
+  background: var(--ms-paper);
+  font: 900 14px/1 "Cascadia Mono", Consolas, monospace;
+  font-style: normal;
+}
+
+.mission .ms-lanes .lane i small {
+  font-size: 6px;
+}
+
+.mission .ms-lanes .lane i.director {
+  background: var(--ms-ink);
+  color: var(--ms-paper);
+}
+
+.mission .ms-lanes .lane i.content {
+  left: 46%;
+  background: var(--ms-amber);
+}
+
+.mission .ms-lanes .lane i.audit {
+  left: 68%;
+  background: var(--ms-cyan);
+}
+
+.mission .ms-lanes .lane i.shop {
+  left: 71%;
+}
+
+.mission .ms-lanes .lane i.human {
+  left: 57%;
+  border-radius: 4px;
+  background: var(--ms-signal);
+}
+
+.mission .ms-lanes .bar {
+  position: absolute;
+  top: 50%;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  translate: 0 -50%;
+  border: 1px solid var(--ms-ink);
+  background: var(--ms-paper-2);
+  font: 800 8px/1 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.mission .ms-lanes .planning { left: 18%; width: 16%; background: var(--ms-ink); color: var(--ms-paper); }
+.mission .ms-lanes .merge { left: 50%; width: 13%; background: var(--ms-ink); color: var(--ms-paper); }
+.mission .ms-lanes .gate { left: 65%; width: 16%; background: var(--ms-signal); }
+.mission .ms-lanes .report { left: 83%; width: 13%; }
+.mission .ms-lanes .research { left: 17%; width: 27%; background: var(--ms-green); }
+.mission .ms-lanes .write { left: 51%; width: 16%; background: var(--ms-amber); }
+.mission .ms-lanes .review { left: 73%; width: 17%; background: var(--ms-cyan); }
+.mission .ms-lanes .read { left: 17%; width: 37%; }
+.mission .ms-lanes .push { left: 77%; width: 18%; }
+.mission .ms-lanes .approval { left: 63%; width: 26%; background: var(--ms-signal); }
+
+.mission .ms-lanes .now {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  left: 61%;
+  width: 2px;
+  background: var(--ms-signal-dark);
+  box-shadow: 0 0 0 1px rgba(255, 90, 61, 0.12);
+}
+
+.mission .ms-lanes .now::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  translate: -50% 0;
+  rotate: 45deg;
+  background: var(--ms-signal-dark);
+}
+
+.mission .ms-sequence > footer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 24px;
+  border-top: 2px solid var(--ms-ink);
+  background: var(--ms-ink);
+  color: var(--ms-paper);
+}
+
+.mission .ms-sequence > footer span {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  background: var(--ms-signal);
+  color: var(--ms-night);
+  font: 900 9px/1 "Cascadia Mono", Consolas, monospace;
+}
+
+.mission .ms-sequence > footer p {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.mission .ms-chat {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 72px repeat(4, auto) 1fr 64px;
+  align-content: start;
+  overflow: hidden;
+  border-left: 1px solid var(--ms-light-line);
+  background:
+    linear-gradient(135deg, rgba(255, 90, 61, 0.04), transparent 38%),
+    var(--ms-panel);
+  color: var(--ms-paper);
+}
+
+.mission .ms-chat > header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--ms-light-line);
+}
+
+.mission .ms-chat > header span,
+.mission .ms-chat article small {
+  color: rgba(232, 227, 217, 0.53);
+  font: 700 9px/1.4 "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.1em;
+}
+
+.mission .ms-chat > header b {
+  margin-top: 5px;
+  font: 900 13px/1 "Cascadia Mono", Consolas, monospace;
+}
+
+.mission .ms-chat article {
+  margin: 0;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--ms-light-line);
+}
+
+.mission .ms-chat article.you {
+  background: rgba(232, 227, 217, 0.045);
+}
+
+.mission .ms-chat article p {
+  margin: 8px 0 0;
+  color: rgba(232, 227, 217, 0.86);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.mission .ms-chat article p b {
+  color: var(--ms-cyan);
+}
+
+.mission .ms-chat article button {
+  margin-top: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--ms-light-line);
+  background: transparent;
+  color: var(--ms-amber);
+  font: 800 9px/1 "Cascadia Mono", Consolas, monospace;
+}
+
+.mission .ms-chat > footer {
+  grid-row: 7;
+  align-self: end;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 64px;
+  padding: 0 14px 0 20px;
+  border-top: 1px solid var(--ms-light-line);
+  color: rgba(232, 227, 217, 0.45);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.mission .ms-chat > footer button {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 0;
+  background: var(--ms-signal);
+  color: var(--ms-night);
+  font-weight: 900;
+}
+
+@media (max-width: 1120px) {
+  .mission > main { grid-template-columns: 190px minmax(0, 1fr) 280px; }
+  .mission .ms-side { padding-inline: 18px; }
+  .mission .ms-side nav { margin-inline: -18px; }
+  .mission .ms-side nav button { padding-inline: 18px; }
+  .mission .ms-chat article { padding-inline: 16px; }
+  .mission .ms-lanes .bar { overflow: hidden; text-overflow: ellipsis; }
+}
+

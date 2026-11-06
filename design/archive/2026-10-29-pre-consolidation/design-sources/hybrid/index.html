@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgentOne · PureLink Orbit Grid</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">A1</span><b>AgentOne</b><small>by PureLink</small></div>
+      <nav><button class="active">Welten</button><button>Runs</button><button>Entscheidungen <em>3</em></button><button>Connectoren</button></nav>
+      <div class="system"><span class="online">● System online</span><span>10:34</span><span class="avatar">MW</span></div>
+    </header>
+
+    <aside class="rail">
+      <section class="project">
+        <small>PROJEKT</small><h1>Shop Content</h1><p>4 Welten · 12 aktive Runs</p>
+      </section>
+      <section class="world-list">
+        <div class="section-label"><span>WELTEN</span><b>04</b></div>
+        <button class="selected"><i>A1</i><span><b>Produkttexte</b><small>4 Agenten · Run A-1842</small></span><strong>40%</strong></button>
+        <button><i>A1</i><span><b>Bild-Audit</b><small>2 Agenten · 76 erledigt</small></span><strong>76%</strong></button>
+        <button class="warning"><i>A1</i><span><b>Publish</b><small>Freigabe erforderlich</small></span><strong>!</strong></button>
+        <button><i>A1</i><span><b>Kategorie-Sync</b><small>Heute · 14:00</small></span><strong>—</strong></button>
+      </section>
+      <section class="rail-metrics">
+        <div><span>RUNS</span><b>12</b></div><div><span>AGENTEN</span><b>18</b></div><div><span>GATES</span><b>3</b></div>
+      </section>
+    </aside>
+
+    <main>
+      <header class="world-head">
+        <div><small>SHOP CONTENT / PRODUKTTEXTE / RUN A-1842</small><h2>Eine Welt. Ein AgentOne. Ein Team.</h2></div>
+        <div class="run-stats"><span><small>FORTSCHRITT</small><b>48 / 120</b></span><span><small>KOSTEN</small><b>€ 8,42</b></span><span><small>FEHLER</small><b class="ok">0</b></span></div>
+      </header>
+
+      <section class="workspace">
+        <div class="map-title"><span>WELT W-01</span><small>LIVE-ORCHESTRIERUNG</small></div>
+        <svg class="orbit-map" viewBox="0 0 830 590" role="img" aria-label="AgentOne orchestriert Agenten und Connectoren in der Welt Produkttexte">
+          <defs>
+            <radialGradient id="coreGlow"><stop stop-color="#005ae5" stop-opacity=".46"/><stop offset=".42" stop-color="#005ae5" stop-opacity=".14"/><stop offset="1" stop-color="#005ae5" stop-opacity="0"/></radialGradient>
+            <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="10" flood-color="#000" flood-opacity=".3"/></filter>
+          </defs>
+          <g class="rings"><circle cx="414" cy="292" r="118"/><circle cx="414" cy="292" r="220"/><circle cx="414" cy="292" r="278"/></g>
+          <g class="links">
+            <path d="M112 165C226 169 282 211 363 270"/><path d="M112 421C228 418 295 366 365 320"/>
+            <path d="M465 267C551 204 624 181 731 186"/><path d="M464 320C553 370 620 400 731 413"/>
+            <path class="handoff" d="M284 274C318 257 342 252 371 267"/><path class="review" d="M547 237C602 276 602 337 545 374"/>
+          </g>
+          <g class="connector" transform="translate(107 165)"><rect x="-66" y="-33" width="132" height="66" rx="8"/><text y="-5">ERP GraphQL</text><text class="meta" y="16">CONNECTOR · READ</text><circle cx="66" cy="0" r="4"/></g>
+          <g class="connector" transform="translate(107 421)"><rect x="-58" y="-33" width="116" height="66" rx="8"/><text y="-5">PIM</text><text class="meta" y="16">CONNECTOR · READ</text><circle cx="58" cy="0" r="4"/></g>
+          <g class="connector target" transform="translate(733 186)"><rect x="-64" y="-33" width="128" height="66" rx="8"/><text y="-5">Shopware</text><text class="meta" y="16">STAGING · GATE</text><circle cx="-64" cy="0" r="4"/></g>
+          <g class="connector" transform="translate(733 413)"><rect x="-64" y="-33" width="128" height="66" rx="8"/><text y="-5">Artefakte</text><text class="meta" y="16">MERGE · REPORT</text><circle cx="-64" cy="0" r="4"/></g>
+          <g class="agent" transform="translate(278 275)"><circle r="42"/><text y="-3">R</text><text class="meta" y="18">RESEARCH</text></g>
+          <g class="agent" transform="translate(551 232)"><circle r="44"/><text y="-3">C</text><text class="meta" y="18">CONTENT</text></g>
+          <g class="agent audit" transform="translate(548 377)"><circle r="42"/><text y="-3">A</text><text class="meta" y="18">AUDIT</text></g>
+          <g class="core" transform="translate(414 292)"><circle class="glow" r="124" fill="url(#coreGlow)"/><circle class="core-ring" r="67"/><circle class="core-body" r="55" filter="url(#shadow)"/><text y="-7">A1</text><text class="meta" y="18">DIESE WELT</text></g>
+          <g class="event" transform="translate(414 471)"><rect x="-105" y="-23" width="210" height="46" rx="23"/><circle cx="-80" r="5"/><text x="-65" y="-3">4 BATCHES GEMERGED</text><text class="meta" x="-65" y="13">0 Konflikte · Audit aktiv</text></g>
+        </svg>
+        <div class="flow-key"><span><i class="solid"></i>Datenfluss</span><span><i class="dash"></i>Übergabe</span><span><i class="gate"></i>Human Gate</span></div>
+      </section>
+
+      <section class="batch-strip">
+        <div><small>OUTPUT-MATRIX</small><b>48 fertig · 6 aktiv · 66 geplant</b></div>
+        <div id="matrix" aria-label="120 Textaufgaben, davon 48 fertig und 6 aktiv"></div>
+      </section>
+    </main>
+
+    <aside class="chat">
+      <header><span class="chat-mark">A1</span><div><small>AGENTONE DIESER WELT</small><b>Produkttexte</b></div><i>LIVE</i></header>
+      <div class="scope">SHOP CONTENT / W-01 / A-1842</div>
+      <article class="message user"><small>DU · 10:31</small><p>Was machen die Agenten gerade?</p></article>
+      <article class="message agentone"><small>AGENTONE · 10:31</small><p>Research hat vier Quellenpakete an Content übergeben. Audit prüft Batch 3 parallel.</p><div class="handoffs"><span>R</span><b>48 →</b><span>C</span><b>1 Review →</b><span>A</span></div><strong>Keine offenen Konflikte</strong></article>
+      <article class="message user"><small>DU · 10:32</small><p>Danach Staging vorbereiten.</p></article>
+      <article class="message agentone compact"><small>AGENTONE · 10:32</small><p>Geplant. Vor dem Push stoppt Gate #084 zur Freigabe.</p></article>
+      <div class="next-step"><small>NÄCHSTER SCHRITT</small><b>MERGE → SNAPSHOT → GATE #084 → PUSH</b></div>
+      <footer><span>AgentOne dieser Welt fragen …</span><button aria-label="Nachricht senden">↑</button></footer>
+    </aside>
+  </div>
+  <script>
+    const matrix = document.getElementById('matrix');
+    for (let i = 0; i < 120; i += 1) {
+      const cell = document.createElement('i');
+      cell.className = i < 48 ? 'done' : i < 54 ? 'active' : '';
+      matrix.appendChild(cell);
+    }
+  </script>
+</body>
+</html>

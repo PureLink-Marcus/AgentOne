@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgentOne · Designpaket</title>
+  <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+  <div class="gallery">
+    <header><div class="brand"><span>A1</span><div><b>AgentOne Designpaket</b><small>3 Varianten · 2 Themes · 2 Ebenen</small></div></div><nav><a href="PROJECT-DESCRIPTION.md">Projektbeschreibung</a><a href="screenshots/">Screenshots</a></nav></header>
+    <section class="controls">
+      <fieldset><legend>VARIANTE</legend><button data-key="variant" data-value="cosmos">Cosmos</button><button data-key="variant" data-value="pixel">Pixel Hive</button><button data-key="variant" data-value="hybrid" class="active">Hybrid</button></fieldset>
+      <fieldset><legend>THEME</legend><button data-key="theme" data-value="light">Hell</button><button data-key="theme" data-value="dark" class="active">Dunkel</button></fieldset>
+      <fieldset><legend>EBENE</legend><button data-key="level" data-value="outside">Projekt · außen</button><button data-key="level" data-value="inside" class="active">Welt · innen</button></fieldset>
+      <label><span>WELT</span><select id="world"><option value="product">Produkttexte</option><option value="images">Bild-Audit</option><option value="publish">Publish</option><option value="sync">Kategorie-Sync</option></select></label>
+      <button id="open-screen" class="open">Ansicht separat öffnen ↗</button>
+    </section>
+    <section class="context"><span id="crumb">HYBRID / DUNKEL / WELT · INNEN</span><p>Außen: Projekt und mehrere Welten. Innen: ein AgentOne mit Team und Connectoren.</p><i>● INTERAKTIV</i></section>
+    <main id="stage"><div class="loading">Ansicht wird geladen …</div><iframe id="preview" title="AgentOne Designvorschau"></iframe></main>
+    <footer><span>Welten sind unabhängig: jede Welt besitzt ihren eigenen AgentOne.</span><b id="count">Ansicht 12 von 12</b></footer>
+  </div>
+  <script src="gallery.js"></script>
+</body>
+</html>

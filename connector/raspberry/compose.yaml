@@ -1,0 +1,59 @@
+services:
+  tailscale:
+    image: tailscale/tailscale:v1.94.1
+    hostname: agentone-home-connector
+    environment:
+      TS_AUTHKEY: ${TAILSCALE_AUTH_KEY}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_ACCEPT_DNS: "true"
+      TS_AUTH_ONCE: "true"
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+
+  connector:
+    build: .
+    network_mode: service:tailscale
+    environment:
+      PORT: "8787"
+      CONNECTOR_TOKEN: ${CONNECTOR_TOKEN}
+      HOME_ASSISTANT_URL: ${HOME_ASSISTANT_URL}
+      HOME_ASSISTANT_TOKEN: ${HOME_ASSISTANT_TOKEN}
+      HOME_ASSISTANT_DOMAINS: ${HOME_ASSISTANT_DOMAINS:-sensor,binary_sensor,weather,calendar,todo,media_player,light,climate,camera,automation,scene,script,switch,fan,cover,vacuum,humidifier,water_heater,input_boolean,input_number,input_select,number,select,button,device_tracker,person,sun}
+      HOME_ASSISTANT_ENTITIES: ${HOME_ASSISTANT_ENTITIES:-}
+      HOME_ASSISTANT_CONTROL_ENABLED: ${HOME_ASSISTANT_CONTROL_ENABLED:-false}
+      CONNECTOR_INSTANCE_NAME: ${CONNECTOR_INSTANCE_NAME:-Günni}
+      TAILSCALE_HOSTNAME: ${TAILSCALE_HOSTNAME:-agentone-home-connector}
+      TAILSCALE_DNS_NAME: ${TAILSCALE_DNS_NAME:-}
+      TAILSCALE_KEY_EXPIRY: ${TAILSCALE_KEY_EXPIRY:-}
+      FOLDER_ROOT: /shares
+      FOLDER_GRANTS_JSON: '${FOLDER_GRANTS_JSON:-[]}'
+      FOLDER_ALLOWED_EXTENSIONS: ${FOLDER_ALLOWED_EXTENSIONS:-.txt,.md,.json,.csv,.pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx}
+      FOLDER_MAX_BYTES: ${FOLDER_MAX_BYTES:-8388608}
+      NETWORK_TARGETS_JSON: '${NETWORK_TARGETS_JSON:-[]}'
+      NETWORK_TARGET_AUTH_JSON: '${NETWORK_TARGET_AUTH_JSON:-}'
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_MODELS: ${OLLAMA_MODELS:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${HOST_SHARED_ROOT:-./shared}:/shares:ro
+    depends_on:
+      - tailscale
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  tailscale-state:

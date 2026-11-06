@@ -1,0 +1,11 @@
+import path from 'node:path';
+import nodemailer from 'nodemailer';
+import { loadEnv } from '../server/state.mjs';
+
+const root=path.resolve('.'),env=loadEnv(root),to=String(env.AGENTONE_INSTRUCTION_RECIPIENT||'mw@ric2k.de');
+const port=Number(env.TECHHUB_SMTP_PORT||587),siriKey=String(env.AGENTONE_GUENNI_SIRI_API_KEY||'');
+if(to.toLowerCase()!=='mw@ric2k.de'||siriKey.length<32)throw new Error('Empfänger oder Siri-Key fehlt');
+const transport=nodemailer.createTransport({host:env.TECHHUB_SMTP_HOST,port,secure:port===465,requireTLS:port!==465,auth:{user:env.MAIL_SMTP_USER||env.MAIL_ABSENDER,pass:env.MAIL_SMTP_PASSWORD},tls:{minVersion:'TLSv1.2',rejectUnauthorized:true},connectionTimeout:20_000,socketTimeout:30_000});
+const text=`AgentOne Personal · Release 57\n\nNeu: frei einstellbare Farben sowie ein Home-Assistant-Medienzentrum für Spotify, Sonos und andere media_player.\n\nRaspberry: Im Connector-Ordner ./update.sh ausführen. HOME_ASSISTANT_CONTROL_ENABLED=true setzen und media_player sowie die gewünschten Bereiche in HOME_ASSISTANT_DOMAINS/HOME_ASSISTANT_ENTITIES freigeben.\n\nGünni: Einstellungen → Farben und Atmosphäre. Zuhause → Musik, Spotify und Sonos.\n\nDer bestehende Siri-Testzugang lautet weiterhin:\nAuthorization: Bearer ${siriKey}\nEndpoint: https://guenni.mwart.solutions/agentone/siri/v1/execute\n\nEs werden keine Datenbank-, Coolify-, OpenAI- oder Benutzerpasswörter verschickt.`;
+const result=await transport.sendMail({from:env.TECHHUB_MAIL_FROM||env.MAIL_ABSENDER,to,subject:'AgentOne Günni Release 57: Farben, Spotify, Sonos und Home Assistant',text,attachments:[{filename:'HOME-ASSISTANT-MEDIA-AND-THEMES.md',path:path.join(root,'docs','HOME-ASSISTANT-MEDIA-AND-THEMES.md')},{filename:'guenni-color-settings.png',path:path.join(root,'output','demo','guenni-color-settings-release-57.png')},{filename:'guenni-home-media.png',path:path.join(root,'output','demo','guenni-home-media-release-57.png')},{filename:'agentone-home-connector-raspberry.zip',path:path.join(root,'output','connector','agentone-home-connector-raspberry.zip')}],headers:{'X-AgentOne-Delivery':'release-57-task-specific'}});
+console.log(JSON.stringify({sent:true,to,accepted:result.accepted?.includes(to)||false,messageId:result.messageId,attachments:4,taskSpecificKeyIncluded:true,masterSecretsIncluded:false},null,2));

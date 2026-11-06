@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgentOne Interactive Screen Lab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="lab">
+    <header class="lab-header">
+      <div class="brand"><span>A1</span><div><b>AgentOne Screen Lab</b><small>PureLink Designsystem</small></div></div>
+      <div class="controls">
+        <div class="control-group" aria-label="Stil auswählen"><small>STIL</small><button data-style="cosmos" class="active">Cosmos</button><button data-style="pixel">Pixel Hive</button></div>
+        <div class="control-group" aria-label="Ebene auswählen"><small>EBENE</small><button data-level="outside" class="active">Projekt · außen</button><button data-level="inside">Welt · innen</button></div>
+        <label><small>WELT</small><select id="world"><option value="product">Produkttexte</option><option value="images">Bild-Audit</option><option value="publish">Publish</option><option value="sync">Kategorie-Sync</option></select></label>
+      </div>
+      <a href="../hybrid/index.html" class="hybrid">Hybrid öffnen ↗</a>
+    </header>
+    <div class="context"><span id="breadcrumb">SHOP CONTENT / PROJEKTÜBERSICHT</span><p id="description">Vier Welten, jede mit einem eigenen AgentOne. Eine Welt anklicken, um hineinzuwechseln.</p><span class="status">● INTERAKTIV</span></div>
+    <main id="stage"><div class="loader">Ansicht wird geladen …</div><iframe id="screen" title="Interaktive AgentOne-Designansicht"></iframe></main>
+    <footer><span><kbd>1</kbd> Cosmos　<kbd>2</kbd> Pixel Hive　<kbd>O</kbd> außen　<kbd>I</kbd> innen</span><b>Die Projektansicht besitzt keinen globalen AgentOne.</b></footer>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

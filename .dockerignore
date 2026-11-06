@@ -1,0 +1,15 @@
+node_modules
+dist
+output
+master
+design
+docs
+scripts
+.env*
+*.key
+*.pem
+*.p12
+*.pfx
+*.sqlite*
+*.log
+.git

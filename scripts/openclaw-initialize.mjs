@@ -1,0 +1,24 @@
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { loadEnv } from '../server/state.mjs';
+import { redact } from '../server/secrets.mjs';
+
+const env=loadEnv(path.resolve('.'));
+const noRestart=process.argv.includes('--no-restart');
+const host=env.COOLIFY_HETZNER_SERVER_IP||env.COOLIFY_SERVER_IP;
+const user=env.COOLIFY_HETZNER_SSH_USER||env.COOLIFY_SSH_USER;
+const key=env.COOLIFY_HETZNER_SSH_KEY_PATH||env.COOLIFY_SSH_KEY_PATH;
+const knownHosts=path.resolve('output/demo/known_hosts');
+const ip=env.COOLIFY_HETZNER_SERVER_IP||env.COOLIFY_SERVER_IP;
+const assistantOrigin=String(env.AGENTONE_ASSISTANT_ORIGIN||`https://jarvis.${ip}.sslip.io`).replace(/\/$/,'');
+if(!assistantOrigin.startsWith('https://'))throw new Error('AGENTONE_ASSISTANT_ORIGIN muss HTTPS verwenden');
+const identity=`${env.AGENTONE_MOBILE_USER||'marcus'}@purelink.de`;
+const operatorScopes=['operator.read','operator.write','operator.approvals','operator.questions'];
+const settings=JSON.stringify([{path:'gateway.mode',value:'local'},{path:'gateway.bind',value:'lan'},{path:'gateway.trustedProxies',value:['__TRUSTED_PROXY_IP__']},{path:'gateway.auth.mode',value:'trusted-proxy'},{path:'gateway.auth.identityScopes',value:{[identity]:operatorScopes}},{path:'gateway.auth.trustedProxy',value:{userHeader:'x-forwarded-user',requiredHeaders:['x-forwarded-proto','x-forwarded-host'],allowUsers:[identity],allowLoopback:false,deviceAutoApprove:{enabled:true,scopes:operatorScopes}}},{path:'gateway.controlUi.allowedOrigins',value:['http://127.0.0.1:18789',assistantOrigin]},{path:'agents.defaults.models',value:{'openai/gpt-6-luna':{alias:'Luna · Alltag'},'openai/gpt-6.1-sol':{alias:'Sol · Stark'},'openai/gpt-6-astra':{alias:'Astra · Premium'}}},{path:'agents.defaults.model',value:{primary:'openai/gpt-6-luna',fallbacks:['openai/gpt-6.1-sol']}},{path:'agents.defaults.utilityModel',value:'openai/gpt-6-luna'},{path:'agents.defaults.thinkingDefault',value:'low'},{path:'agents.entries.main.identity',value:{name:'AgentOne',theme:'PureLink personal AI assistant',emoji:'✦'}},{path:'memory.search.provider',value:'none'}]);
+const settingsBase64=Buffer.from(settings).toString('base64');
+const finish=noRestart?'echo OPENCLAW_PRECONFIGURED':`docker start "$c" >/dev/null; echo OPENCLAW_INITIALIZED`;
+const command=`set -eu; c=$(docker ps -a --format '{{.Names}}' | grep '^agentone-personal-gateway-' | head -1); proxy=$(docker ps --format '{{.Names}}' | grep '^jarvis-access-' | head -1); test -n "$c"; test -n "$proxy"; service_network=$(docker inspect -f '{{range $name,$net := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$c" | grep -v '^coolify$' | head -1); test -n "$service_network"; proxy_ip=$(docker inspect -f '{{range $name,$net := .NetworkSettings.Networks}}{{println $name $net.IPAddress}}{{end}}' "$proxy" | awk -v n="$service_network" '$1==n {print $2; exit}'); echo "$proxy_ip" | grep -Eq '^[0-9]+(\.[0-9]+){3}$'; echo TRUSTED_PROXY_DISCOVERED; batch=$(printf '%s' '${settingsBase64}' | base64 -d | sed "s/__TRUSTED_PROXY_IP__/$proxy_ip/g"); config_volume=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/home/node/.openclaw"}}{{.Name}}{{end}}{{end}}' "$c"); workspace_volume=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/home/node/.openclaw/workspace"}}{{.Name}}{{end}}{{end}}' "$c"); test -n "$config_volume"; test -n "$workspace_volume"; echo VOLUMES_DISCOVERED; docker stop "$c" >/dev/null; docker run --rm -e HOME=/home/node -e OPENCLAW_STATE_DIR=/home/node/.openclaw -e OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json -v "$config_volume":/home/node/.openclaw -v "$workspace_volume":/home/node/.openclaw/workspace --entrypoint node ghcr.io/openclaw/openclaw:2026.10.8 dist/index.js config set --batch-json "$batch"; ${finish}`;
+const result=spawnSync('ssh',['-i',key,'-o','BatchMode=yes','-o','ConnectTimeout=15','-o','StrictHostKeyChecking=accept-new','-o',`UserKnownHostsFile=${knownHosts}`,`${user}@${host}`,command],{encoding:'utf8',timeout:120_000});
+const secrets=Object.entries(env).filter(([name,value])=>/(SECRET|TOKEN|PASSWORD|API_KEY|PRIVATE_KEY)/i.test(name)&&String(value).length>=8).map(([,value])=>String(value));
+console.log(redact(`${result.stdout||''}\n${result.stderr||''}`.trim(),secrets));
+if(result.status!==0)throw new Error(`OpenClaw-Initialisierung fehlgeschlagen (${result.status})`);

@@ -1,0 +1,15 @@
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { loadEnv } from '../server/state.mjs';
+
+const env=loadEnv(path.resolve('.'));
+const host=env.COOLIFY_HETZNER_SERVER_IP||env.COOLIFY_SERVER_IP;
+const user=env.COOLIFY_HETZNER_SSH_USER||env.COOLIFY_SSH_USER;
+const key=env.COOLIFY_HETZNER_SSH_KEY_PATH||env.COOLIFY_SSH_KEY_PATH;
+const origin=String(env.AGENTONE_ASSISTANT_ORIGIN||'').replace(/\/$/,'');
+const domain=new URL(origin).hostname;
+const knownHosts=path.resolve('output/demo/known_hosts');
+const command=`set -u; c=$(docker ps --format '{{.Names}}' | grep '^jarvis-access-' | head -1); test -n "$c" || exit 2; user=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$c" | sed -n 's/^BASIC_AUTH_USER=//p'); pass=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$c" | sed -n 's/^BASIC_AUTH_PASSWORD=//p'); test -n "$user" || exit 3; test -n "$pass" || exit 4; body=$(mktemp); login=$(mktemp); headers=$(mktemp); cookies=$(mktemp); trap 'rm -f "$body" "$login" "$headers" "$cookies"' EXIT; anonymous=$(curl --silent --show-error --header 'Accept: text/html' --dump-header "$headers" --output /dev/null --write-out '%{http_code}|%{ssl_verify_result}' --resolve '${domain}:443:${host}' --max-time 20 'https://${domain}/'); loginPage=$(curl --silent --show-error --output "$login" --write-out '%{http_code}' --resolve '${domain}:443:${host}' --max-time 20 'https://${domain}/login'); loginStatus=$(curl --silent --show-error --cookie-jar "$cookies" --output /dev/null --write-out '%{http_code}' --request POST --header 'Origin: ${origin}' --data-urlencode "username=$user" --data-urlencode "password=$pass" --resolve '${domain}:443:${host}' --max-time 20 'https://${domain}/login'); authenticated=$(curl --silent --show-error --cookie "$cookies" --output "$body" --write-out '%{http_code}' --resolve '${domain}:443:${host}' --max-time 20 'https://${domain}/'); redirect=no; branding=no; ui=no; grep -Eiq '^location: /login' "$headers" && redirect=yes; grep -Eiq 'AgentOne.+Anmeldung|<h1>AgentOne</h1>' "$login" && branding=yes; grep -Eiq 'OpenClaw|Gateway|Control|Chat' "$body" && ui=yes; echo "$anonymous|$loginPage|$loginStatus|$authenticated|$redirect|$branding|$ui"; test "$anonymous" = '303|0' && test "$loginPage" = '200' && test "$loginStatus" = '303' && test "$authenticated" = '200' && test "$redirect" = 'yes' && test "$branding" = 'yes' && test "$ui" = 'yes'`;
+const result=spawnSync('ssh',['-i',key,'-o','BatchMode=yes','-o','ConnectTimeout=15','-o','StrictHostKeyChecking=accept-new','-o',`UserKnownHostsFile=${knownHosts}`,`${user}@${host}`,command],{encoding:'utf8',timeout:90_000});
+if(result.status!==0)throw new Error(`Domain-Smoke fehlgeschlagen: ${(result.stdout||result.stderr||'').trim().slice(-300)}`);
+console.log(JSON.stringify({origin,status:{anonymousRedirect:303,loginPage:200,login:303,authenticated:200},tlsVerified:true,loginForm:'AgentOne',sessionCookie:true,agentOneUi:true,secretsExposed:false},null,2));
