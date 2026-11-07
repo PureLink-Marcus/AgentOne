@@ -1,8 +1,8 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-89`
-Deployment: Release 89 ergänzt eine sichtbare, ehrliche WHOOP-Einrichtungskarte mit Read-only-Scopes, Redirect- und NOT_CONFIGURED/READY/LIVE-Status; OAuth bleibt bis zum persistenten Single-Use-State-Store bewusst gesperrt.
+Release: `2026.11.07-90`
+Deployment: Release 90 ergänzt eine sichtbare, mobile Event-Ledger-Zeitachse mit Quellenfilter, minimierten Ereignissen sowie explizit geschütztem Klartext-Export und Löschung.
 
 ## Abgenommen
 
