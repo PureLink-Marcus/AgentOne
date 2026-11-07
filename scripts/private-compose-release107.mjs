@@ -71,10 +71,10 @@ awk -v pub="$AGENTONE_VAPID_PUBLIC_KEY" -v priv="$AGENTONE_VAPID_PRIVATE_KEY" -v
   {print}
   /^[[:space:]]*AGENTONE_RELEASE:/ {
     match($0,/^[[:space:]]*/); indent=substr($0,1,RLENGTH)
-    print indent "AGENTONE_VAPID_PUBLIC_KEY: \"" pub "\""
-    print indent "AGENTONE_VAPID_PRIVATE_KEY: \"" priv "\""
-    print indent "AGENTONE_VAPID_SUBJECT: \"" subject "\""
-    print indent "AGENTONE_PUSH_MASTER_KEY: \"" master "\""
+    print indent "AGENTONE_VAPID_PUBLIC_KEY: " pub
+    print indent "AGENTONE_VAPID_PRIVATE_KEY: " priv
+    print indent "AGENTONE_VAPID_SUBJECT: " subject
+    print indent "AGENTONE_PUSH_MASTER_KEY: " master
   }
 ' "$file" > "$tmp"
 mv "$tmp" "$file"
@@ -97,6 +97,7 @@ wait_pair() {
   cid=$(docker ps --format '{{.ID}}|{{.Names}}' | awk -F'|' -v prefix="$prefix-app" '$2 ~ ("^" prefix "-") {print $1; exit}')
   test -n "$cid"
   docker exec "$cid" node -e "fetch('http://127.0.0.1:4173/api/health').then(async response=>{const payload=await response.json();process.exit(response.ok&&payload.status==='ok'?0:1)}).catch(()=>process.exit(1))"
+  docker exec "$cid" node -e "const e=process.env;process.exit(String(e.AGENTONE_VAPID_PUBLIC_KEY||'').length>=80&&String(e.AGENTONE_VAPID_PRIVATE_KEY||'').length>=40&&/^mailto:|^https:/.test(String(e.AGENTONE_VAPID_SUBJECT||''))&&String(e.AGENTONE_PUSH_MASTER_KEY||'').length>=32?0:1)"
 }
 docker compose up -d --no-deps --force-recreate guenni-app guenni-access
 wait_pair guenni

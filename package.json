@@ -49,6 +49,7 @@
     "verify:guenni-release106": "node scripts/guenni-release106-live-smoke.mjs",
     "verify:release107-ui": "node scripts/release107-pwa-push-browser-smoke.mjs",
     "verify:guenni-release107": "node scripts/guenni-release107-live-smoke.mjs",
+    "verify:release107-audit": "node scripts/release107-live-audit.mjs",
     "verify:ics-subscription": "node scripts/release-96-ics-subscription-browser-smoke.mjs",
     "release:archive": "node scripts/build-release-archive.mjs",
     "diagnose:guenni-chat": "node scripts/guenni-chat-runtime-diagnose.mjs",
