@@ -130,7 +130,7 @@ function buildMailSignals(events, now) {
     return event.kind === 'mail.message' && occurredAt >= since && occurredAt <= now.getTime();
   });
   const fromPeople = mail.filter((event) => event.tags.includes('person'));
-  const needsReply = fromPeople.filter((event) => event.tags.includes('needs-reply'));
+  const needsReview = fromPeople.filter((event) => event.tags.some((tag) => ['needs-review', 'unread', 'needs-reply'].includes(tag)));
   const urgent = mail.filter((event) => event.tags.includes('urgent'));
   if (!mail.length) return [];
 
@@ -139,8 +139,8 @@ function buildMailSignals(events, now) {
     domain: 'mail',
     severity: urgent.length ? 'attention' : 'info',
     title: urgent.length ? `${urgent.length} dringende Nachricht${urgent.length === 1 ? '' : 'en'}` : 'Posteingang ausgewertet',
-    summary: `${mail.length} neue Nachrichten; ${fromPeople.length} von Personen; ${needsReply.length} benötigen wahrscheinlich eine Antwort.`,
-    actions: needsReply.length ? [{ type: 'open-filter', target: 'mail:needs-reply', label: 'Antworten vorbereiten' }] : [],
+    summary: `${mail.length} neue Nachrichten; ${fromPeople.length} von Personen; ${needsReview.length} sollten geprüft werden.`,
+    actions: needsReview.length ? [{ type: 'open-filter', target: 'mail:person-review', label: 'Personennachrichten prüfen' }] : [],
     evidence: mail.slice(0, 20).map(sourceRef),
     confidence: 0.82,
   }];
@@ -192,7 +192,9 @@ function metricSeries(events, metricNames, source, now, convert = (value) => val
 function buildHealthSignals(events, now) {
   const definitions = [
     { names: ['sleep_duration_hours', 'sleep_minutes'], label: 'Schlafdauer', lowerAttention: -12, convert: (value, name) => name === 'sleep_minutes' ? value / 60 : value },
-    { names: ['hrv_ms', 'hrv_sdnn_ms', 'hrv_rmssd_ms'], label: 'HRV', lowerAttention: -15 },
+    { names: ['hrv_ms'], label: 'HRV · Methode unbekannt', lowerAttention: -15, method: 'unspecified' },
+    { names: ['hrv_sdnn_ms'], label: 'HRV · SDNN', lowerAttention: -15, method: 'SDNN' },
+    { names: ['hrv_rmssd_ms'], label: 'HRV · RMSSD', lowerAttention: -15, method: 'RMSSD' },
     { names: ['resting_heart_rate_bpm'], label: 'Ruhepuls', upperAttention: 10 },
     { names: ['recovery_score', 'recovery_score_percent'], label: 'Erholung', lowerAttention: -15 },
   ];

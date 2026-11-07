@@ -50,7 +50,9 @@ test('consent and metric payloads are encrypted and strictly user-bound', () => 
   assert.throws(() => getHealthConsent(db, { userId: 'fressi', consentId: 'consent-guenni', decrypt }), /nicht gefunden/i);
   storeHealthImport(db, { userId: 'guenni', importId: 'import-1', provider: 'apple_health', consentId: 'consent-guenni', sourceHash: 'b'.repeat(64), metrics: [metric()], metadata: { fileName: 'export.zip' }, encrypt });
   const raw = db.prepare('SELECT payload_encrypted AS payload FROM personal_health_metrics').get().payload;
-  assert.doesNotMatch(raw, /420|sleep_minutes|record-1/);
+  // Ciphertext is random and may legitimately contain a short numeric sequence such as
+  // "420". Assert on structured plaintext markers that cannot occur in base64 instead.
+  assert.doesNotMatch(raw, /sleep_minutes|record-1/);
   assert.equal(queryHealthMetrics(db, { userId: 'fressi', decrypt }).length, 0);
   assert.equal(queryHealthMetrics(db, { userId: 'guenni', metricNames: ['sleep_minutes'], decrypt })[0].value, 420);
 });

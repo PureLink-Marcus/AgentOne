@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildPersonalCalendarPlan,calendarPlanWindow } from './personal-calendar-plan.mjs';
 
-function event({id,start,end,title='Termin',source='calendar.ics',allDay=false,status='confirmed',payload={},provenance={}}){return {eventId:id,type:'calendar.event',source,sourceAccount:source==='calendar.google'?'google':'ics-upload',occurredAt:start,ingestedAt:'2026-11-07T12:00:00.000Z',summary:title,structuredPayload:{endAt:end,allDay,status,timeZone:'Europe/Berlin',...payload},provenance:{connectorId:source==='calendar.google'?'google':'ics-upload',revisionKey:`revision-${id}`,...provenance}};}
+function event({id,start,end,title='Termin',source='calendar.ics',allDay=false,status='confirmed',payload={},provenance={}}){const sourceAccount={'calendar.google':'google','calendar.apple':'iphone-companion','calendar.companion':'companion'}[source]||'ics-upload';return {eventId:id,type:'calendar.event',source,sourceAccount,occurredAt:start,ingestedAt:'2026-11-07T12:00:00.000Z',summary:title,structuredPayload:{endAt:end,allDay,status,timeZone:'Europe/Berlin',...payload},provenance:{connectorId:sourceAccount,revisionKey:`revision-${id}`,...provenance}};}
 
 test('daily calendar plan normalizes events, conflicts and free work windows',()=>{
   const plan=buildPersonalCalendarPlan({date:'2026-11-08',timeZone:'Europe/Berlin',workdayStart:'08:00',workdayEnd:'18:00',minFreeMinutes:30,now:'2026-11-08T08:00:00.000Z',events:[
@@ -27,6 +27,17 @@ test('daily plan uses DST-aware IANA day boundaries',()=>{
   assert.equal(spring.startAt,'2026-03-28T23:00:00.000Z');
   assert.equal(spring.endAt,'2026-03-29T22:00:00.000Z');
   assert.equal((new Date(spring.endAt)-new Date(spring.startAt))/3_600_000,23);
+});
+
+test('daily plan includes minimized Apple and companion calendar events',()=>{
+  const plan=buildPersonalCalendarPlan({date:'2026-11-08',timeZone:'Europe/Berlin',now:'2026-11-08T07:00:00Z',events:[
+    event({id:'apple',source:'calendar.apple',start:'2026-11-08T08:00:00Z',end:'2026-11-08T08:30:00Z',title:'Vom iPhone'}),
+    event({id:'companion',source:'calendar.companion',start:'2026-11-08T09:00:00Z',end:'2026-11-08T09:45:00Z',title:'Companion-Termin'}),
+    event({id:'untrusted',source:'calendar.untrusted',start:'2026-11-08T10:00:00Z',end:'2026-11-08T11:00:00Z'}),
+  ]});
+  assert.deepEqual(plan.events.map(item=>item.source),['calendar.apple','calendar.companion']);
+  assert.deepEqual(plan.events.map(item=>item.provenance.sourceAccount),['iphone-companion','companion']);
+  assert.equal(plan.summary.events,2);
 });
 
 test('public plan projection excludes raw details, PII fields and secrets',()=>{

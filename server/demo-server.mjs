@@ -25,7 +25,8 @@ import { connectorAction, governanceSnapshot, initGovernanceStore, recordAudit }
 import { applyNudgeFeedback, buildPersonalNudges, filterPersonalNudges, initNudgeStore, loadNudgeFeedbackProfile, loadNudgeSettings, quietNow, recordNudgeFeedback, resetNudgeFeedback, saveNudgeSettings } from './personal-nudges.mjs';
 import { forgetMemoryEntry, initPersonalMemoryStore, listMemoryEntries } from './personal-memory.mjs';
 import { approveMemoryCandidate, initPersonalMemoryReviewStore, listMemoryAreaPolicies, listMemoryCandidates, rejectMemoryCandidate, setMemoryAreaPolicy, stageMemoryCandidate } from './personal-memory-review.mjs';
-import { createRoutine, deleteRoutine, dueRoutines, initRoutineStore, listRoutines, recordRoutineRun, setRoutineState, simulateStoredRoutine } from './personal-routines.mjs';
+import { claimDueRoutineRun, claimManualRoutineRun, completeRoutineRun, createRoutine, deleteRoutine, dueRoutines, failRoutineRun, initRoutineStore, listRoutineInbox, listRoutines, setRoutineRunInboxState, setRoutineState, simulateStoredRoutine } from './personal-routines.mjs';
+import { buildRoutineBriefingResult } from './personal-routine-briefing.mjs';
 import { buildPersonalBrief } from './personal-intelligence.mjs';
 import { buildHealthDigest, createHealthConsent, healthConnectorCapabilities, importAppleHealth } from './personal-health.mjs';
 import { buildPersonalHealthComparison } from './personal-health-comparison.mjs';
@@ -127,7 +128,29 @@ const icsDerivedKey=icsCryptoReady?crypto.createHmac('sha256',Buffer.from(icsMas
 function icsFeedAad(userId){return Buffer.from('agentone:ics-feed:v1:'+String(userId),'utf8');}
 function encryptIcsFeed(userId,value){if(!icsCryptoReady)throw Object.assign(new Error('Kalender-Verschlüsselung ist nicht konfiguriert'),{code:'ICS_ENCRYPTION_NOT_CONFIGURED',status:503});const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',icsDerivedKey,iv);cipher.setAAD(icsFeedAad(userId));const ciphertext=Buffer.concat([cipher.update(String(value),'utf8'),cipher.final()]);return {ciphertext:ciphertext.toString('base64'),iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),algorithm:'AES-256-GCM'};}
 function decryptIcsFeed(userId,envelope){if(!icsCryptoReady)throw Object.assign(new Error('Kalender-Verschlüsselung ist nicht konfiguriert'),{code:'ICS_ENCRYPTION_NOT_CONFIGURED',status:503});if(String(envelope?.algorithm||'').toUpperCase()!=='AES-256-GCM')throw Object.assign(new Error('Kalender-Credential ist beschädigt'),{code:'ICS_CREDENTIAL_CORRUPT',status:500});const decipher=crypto.createDecipheriv('aes-256-gcm',icsDerivedKey,Buffer.from(envelope.iv,'base64'));decipher.setAAD(icsFeedAad(userId));decipher.setAuthTag(Buffer.from(envelope.tag,'base64'));return Buffer.concat([decipher.update(Buffer.from(envelope.ciphertext,'base64')),decipher.final()]).toString('utf8');}
-let routineRunnerBusy=false;async function runPersonalRoutines(){if(routineRunnerBusy)return;routineRunnerBusy=true;try{for(const routine of dueRoutines(state.db)){const startedAt=new Date().toISOString(),result={schema:'agentone.personal-routine-result/v1',action:routine.action,mode:'READ_ONLY',generatedAt:new Date().toISOString(),mutations:[]};recordRoutineRun(state.db,{id:crypto.randomUUID(),routine,result,startedAt});recordAudit(state.db,{userId:routine.userId,connectorId:'routines',action:'routine.'+routine.action,outcome:'OK',detail:JSON.stringify({routineId:routine.id,mode:'READ_ONLY'})});}}finally{routineRunnerBusy=false;}}setInterval(()=>void runPersonalRoutines(),30_000).unref();
+function safeRoutineFailureCode(error){const code=String(error?.code||'ROUTINE_EXECUTION_FAILED').toUpperCase();return /^[A-Z][A-Z0-9_]{2,63}$/.test(code)?code:'ROUTINE_EXECUTION_FAILED';}
+async function executePersonalRoutine({routine,claim,source='schedule'}){
+  const userId=routine.userId;let commandRun=null,tool=null;
+  try{
+    commandRun=createCommandRun(state.db,{userId,label:`Routine · ${routine.title||routine.action}`,mode:'controlled',source});
+    appendCommandStep(state.db,{userId,runId:commandRun.id,type:'OBSERVE',summary:'Freigegebene persönliche Quellen read-only prüfen'});
+    tool=appendCommandStep(state.db,{userId,runId:commandRun.id,type:'TOOL',summary:'Minimiertes persönliches Briefing erzeugen',toolId:'personal.routines',operation:'briefing.build',access:'read',scopes:['personal.read','routine.read'],idempotent:true,input:{routineId:routine.id,action:routine.action,readOnly:true}});
+    const intelligence=await personalIntelligenceSnapshot(userId),result=buildRoutineBriefingResult({routine,intelligence,commandRunId:commandRun.id});
+    recordCommandResult(state.db,{userId,runId:commandRun.id,toolStepId:tool.id,summary:'Read-only Routine-Ergebnis sicher erstellt',output:{routineId:routine.id,action:routine.action,events:result.summary.events,signals:result.summary.signals,attention:result.summary.attention,sources:result.sources.map(item=>({id:item.id,status:item.status})),readOnly:true,secretsExposed:false}});
+    completeCommandRun(state.db,{userId,runId:commandRun.id});
+    const completed=completeRoutineRun(state.db,{userId,runId:claim.run.id,result});
+    recordAudit(state.db,{userId,connectorId:'routines',action:'routine.'+routine.action,outcome:'OK',detail:JSON.stringify({routineId:routine.id,routineRunId:claim.run.id,commandRunId:commandRun.id,source,mode:'READ_ONLY',events:result.summary.events,signals:result.summary.signals,secretsExposed:false})});
+    return {run:completed,commandStream:publicCommandTimeline(state.db,{userId,runId:commandRun.id})};
+  }catch(error){
+    const code=safeRoutineFailureCode(error);
+    if(commandRun&&tool)try{recordCommandError(state.db,{userId,runId:commandRun.id,toolStepId:tool.id,code,message:'Persönliches Routine-Briefing konnte nicht erstellt werden',retryable:true});}catch{}
+    let failed=null;try{failed=failRoutineRun(state.db,{userId,runId:claim.run.id,errorCode:code});}catch{}
+    try{recordAudit(state.db,{userId,connectorId:'routines',action:'routine.'+routine.action,outcome:'ERROR',detail:JSON.stringify({routineId:routine.id,routineRunId:claim.run.id,commandRunId:commandRun?.id||null,source,code,secretsExposed:false})});}catch{}
+    error.routineRun=failed;throw error;
+  }
+}
+let routineRunnerBusy=false;async function runPersonalRoutines(){if(routineRunnerBusy)return;routineRunnerBusy=true;try{for(const routine of dueRoutines(state.db)){try{const claim=claimDueRoutineRun(state.db,{id:crypto.randomUUID(),routine});if(claim.claimed)await executePersonalRoutine({routine,claim,source:'schedule'});}catch{}}}finally{routineRunnerBusy=false;}}
+setInterval(()=>void runPersonalRoutines(),30_000).unref();setTimeout(()=>void runPersonalRoutines(),500).unref();
 
 function seedPlatform(){
   const templates=[
@@ -367,21 +390,21 @@ async function syncStoredGoogleAccount({userId,refreshToken=null,scope='',select
 function personalSourceEvents({userId,mailAccounts=[],mailMessages=[],companion={},google=null}){
   const events=[];
   const accountsById=new Map(mailAccounts.map(account=>[account.id,account]));
-  if(mailMessages.length)for(const item of mailMessages){const account=accountsById.get(item.accountId)||{},category=String(item.category||'people'),occurredAt=item.receivedAt;if(!occurredAt)continue;const labels=Array.isArray(item.labels)?item.labels.map(value=>String(value).toLowerCase()):[],tags=[category,category==='people'?'person':null,category==='people'&&(item.unread||!labels.some(value=>value.includes('seen')))?'needs-reply':null,/\b(?:dringend|urgent|asap|sofort)\b/i.test(String(item.subject||''))?'urgent':null].filter(Boolean);events.push({userId,source:`mail.${account.provider||'imap'}`,kind:'mail.message',externalId:item.idempotencyKey||item.id,occurredAt,title:item.subject||'',tags,provenance:{connectorId:item.accountId,importedAt:occurredAt,rawRecordHash:item.idempotencyKey||item.id||null}});}
+  if(mailMessages.length)for(const item of mailMessages){const account=accountsById.get(item.accountId)||{},category=String(item.category||'people'),occurredAt=item.receivedAt;if(!occurredAt)continue;const labels=Array.isArray(item.labels)?item.labels.map(value=>String(value).toLowerCase()):[],tags=[category,category==='people'?'person':null,category==='people'&&(item.unread||!labels.some(value=>value.includes('seen')))?'needs-review':null,/\b(?:dringend|urgent|asap|sofort)\b/i.test(String(item.subject||''))?'urgent':null].filter(Boolean);events.push({userId,source:`mail.${account.provider||'imap'}`,kind:'mail.message',externalId:item.idempotencyKey||item.id,occurredAt,title:item.subject||'',tags,provenance:{connectorId:item.accountId,importedAt:occurredAt,rawRecordHash:item.idempotencyKey||item.id||null}});}
   else for(const account of mailAccounts){
     const groups=account.lastTest?.scan?.groups||{};
     for(const [category,items] of Object.entries(groups))for(const item of Array.isArray(items)?items:[]){
       const occurredAt=item.receivedAt||item.date;
       if(!occurredAt)continue;
       const labels=Array.isArray(item.labels)?item.labels.map(value=>String(value).toLowerCase()):[];
-      const tags=[category,category==='people'?'person':null,category==='people'&&!labels.some(value=>value.includes('seen'))?'needs-reply':null,/\b(?:dringend|urgent|asap|sofort)\b/i.test(String(item.subject||''))?'urgent':null].filter(Boolean);
+      const tags=[category,category==='people'?'person':null,category==='people'&&!labels.some(value=>value.includes('seen'))?'needs-review':null,/\b(?:dringend|urgent|asap|sofort)\b/i.test(String(item.subject||''))?'urgent':null].filter(Boolean);
       events.push({userId,source:`mail.${account.provider||'imap'}`,kind:'mail.message',externalId:item.idempotencyKey||String(item.uid||item.providerId||''),occurredAt,title:item.subject||'',tags,provenance:{connectorId:account.id,importedAt:account.lastTest?.testedAt||occurredAt,rawRecordHash:item.idempotencyKey||null}});
     }
   }
   for(const item of google?.lastTest?.sync?.mail?.messages||[]){
     if(!item.receivedAt)continue;
     const labels=Array.isArray(item.labels)?item.labels.map(value=>String(value).toLowerCase()):[],category=String(item.category||'people');
-    const tags=[category,category==='people'?'person':null,category==='people'&&labels.includes('unread')?'needs-reply':null,/\b(?:dringend|urgent|asap|sofort)\b/i.test(String(item.subject||''))?'urgent':null].filter(Boolean);
+    const tags=[category,category==='people'?'person':null,category==='people'&&labels.includes('unread')?'needs-review':null,/\b(?:dringend|urgent|asap|sofort)\b/i.test(String(item.subject||''))?'urgent':null].filter(Boolean);
     events.push({userId,source:'mail.gmail',kind:'mail.message',externalId:item.idempotencyKey,occurredAt:item.receivedAt,title:item.subject||'',tags,provenance:{connectorId:'google',importedAt:google.lastTest?.sync?.syncedAt||item.receivedAt,rawRecordHash:item.idempotencyKey||null}});
   }
   for(const item of google?.lastTest?.sync?.calendar?.events||[]){
@@ -575,7 +598,11 @@ async function api(req,res,url){
     try{
       const settings=loadNudgeSettings(state.db,userId),externalOptIn=settings.channels.filter(channel=>channel!=='in-app');
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/pulse'){const intelligence=await personalIntelligenceSnapshot(userId),plan=planPersonalPulse(state.db,{userId,signals:intelligence.signals,channels:settings.channels,externalOptIn,quietHours:settings.quietHours,timeZone:'Europe/Berlin',dailyLimit:3});return json(res,200,{...plan,history:listPersonalPulseDeliveries(state.db,userId,{limit:20}),policy:{automatic:true,deduplicated:true,externalOptInRequired:true,secretsExposed:false}});}
-      if(req.method==='POST'&&url.pathname==='/api/internal/personal/pulse/delivery'){const input=await body(req),delivery=recordPersonalPulseDelivery(state.db,{userId,signalId:input.signalId,notificationKey:input.notificationKey,channel:input.channel||'in-app',externalOptIn,timeZone:'Europe/Berlin'});return json(res,delivery.delivered?201:200,{delivery});}
+      if(req.method==='POST'&&url.pathname==='/api/internal/personal/pulse/delivery'){
+        const input=await body(req),channel=String(input.channel||'in-app'),intelligence=await personalIntelligenceSnapshot(userId),plan=planPersonalPulse(state.db,{userId,signals:intelligence.signals,channels:settings.channels,externalOptIn,quietHours:settings.quietHours,timeZone:'Europe/Berlin',dailyLimit:3}),planned=plan.items.find(item=>item.id===String(input.signalId||'')&&item.notificationKey===String(input.notificationKey||'')&&item.channels.includes(channel));
+        if(!planned)return json(res,409,{error:'PERSONAL_PULSE_DELIVERY_NOT_PLANNED',message:'Dieser Hinweis ist nicht mehr zur Zustellung freigegeben.',secretsExposed:false});
+        const delivery=recordPersonalPulseDelivery(state.db,{userId,signalId:planned.id,notificationKey:planned.notificationKey,channel,externalOptIn,timeZone:'Europe/Berlin'});return json(res,delivery.delivered?201:200,{delivery});
+      }
       if(req.method==='DELETE'&&url.pathname==='/api/internal/personal/pulse'){const input=await body(req);return json(res,200,{reset:resetPersonalPulseDeliveries(state.db,{userId,confirmation:input.confirmation})});}
       return json(res,405,{error:'method_not_allowed'});
     }catch(error){return json(res,error.status||400,{error:error.code||'PERSONAL_PULSE_FAILED',message:String(error.message||error).slice(0,160),secretsExposed:false});}
@@ -678,6 +705,9 @@ async function api(req,res,url){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
     if(req.method==='GET'&&url.pathname==='/api/internal/personal/routines')return json(res,200,{routines:listRoutines(state.db,userId),policy:{simulationRequired:true,readOnlyActions:true,timezone:'Europe/Berlin'}});
     if(req.method==='POST'&&url.pathname==='/api/internal/personal/routines')try{return json(res,201,{routine:createRoutine(state.db,{id:crypto.randomUUID(),userId,input:await body(req)})});}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}
+    if(req.method==='GET'&&url.pathname==='/api/internal/personal/routines/runs')try{const raw=url.searchParams.get('limit'),limit=raw===null?20:Number(raw);return json(res,200,{runs:listRoutineInbox(state.db,{userId,limit}),policy:{readOnly:true,retentionDays:30,userBound:true,secretsExposed:false},secretsExposed:false});}catch(error){return json(res,error.status||400,{error:error.code||'ROUTINE_RUN_LIST_FAILED',message:'Routine-Verlauf konnte nicht geladen werden.',secretsExposed:false});}
+    const runState=url.pathname.match(/^\/api\/internal\/personal\/routines\/runs\/([^/]+)\/state$/);if(req.method==='PUT'&&runState)try{const input=await body(req),run=setRoutineRunInboxState(state.db,{userId,runId:decodeURIComponent(runState[1]),state:String(input.state||''),snoozedUntil:input.snoozedUntil});recordAudit(state.db,{userId,connectorId:'routines',action:'routine.inbox.'+run.inboxState.toLowerCase(),outcome:'OK',detail:JSON.stringify({routineRunId:run.id,inboxState:run.inboxState,secretsExposed:false})});return json(res,200,{run,secretsExposed:false});}catch(error){return json(res,error.status||400,{error:error.code||'ROUTINE_INBOX_STATE_FAILED',message:'Inbox-Status konnte nicht gespeichert werden.',secretsExposed:false});}
+    const manualRun=url.pathname.match(/^\/api\/internal\/personal\/routines\/([^/]+)\/run$/);if(req.method==='POST'&&manualRun){const routineId=decodeURIComponent(manualRun[1]),routine=listRoutines(state.db,userId).find(item=>item.id===routineId);if(!routine)return json(res,404,{error:'ROUTINE_NOT_FOUND',message:'Routine wurde nicht gefunden.',secretsExposed:false});try{const claim=claimManualRoutineRun(state.db,{id:crypto.randomUUID(),userId,routineId}),result=await executePersonalRoutine({routine:{...routine,userId},claim,source:'api'});return json(res,200,{...result,secretsExposed:false});}catch(error){return json(res,error.status||500,{error:safeRoutineFailureCode(error),message:'Routine konnte nicht abgeschlossen werden.',run:error.routineRun||null,secretsExposed:false});}}
     const simulation=url.pathname.match(/^\/api\/internal\/personal\/routines\/([^/]+)\/simulate$/);if(req.method==='POST'&&simulation)try{return json(res,200,{simulation:simulateStoredRoutine(state.db,{userId,id:decodeURIComponent(simulation[1])})});}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}
     const stateMatch=url.pathname.match(/^\/api\/internal\/personal\/routines\/([^/]+)\/state$/);if(req.method==='PUT'&&stateMatch)try{const input=await body(req);return json(res,200,{routine:setRoutineState(state.db,{userId,id:decodeURIComponent(stateMatch[1]),state:String(input.state||''),simulationHash:String(input.simulationHash||'')})});}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}
     const routineMatch=url.pathname.match(/^\/api\/internal\/personal\/routines\/([^/]+)$/);if(req.method==='DELETE'&&routineMatch)try{return json(res,200,deleteRoutine(state.db,{userId,id:decodeURIComponent(routineMatch[1])}));}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}

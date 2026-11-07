@@ -1,6 +1,6 @@
 const DATE_PATTERN=/^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
-const CALENDAR_SOURCES=new Set(['calendar.ics','calendar.google']);
+const CALENDAR_SOURCES=new Set(['calendar.ics','calendar.google','calendar.apple','calendar.companion']);
 
 function calendarPlanError(message,code='CALENDAR_PLAN_INVALID',status=400){return Object.assign(new Error(message),{code,status});}
 function iso(value){const date=value instanceof Date?value:new Date(value);return Number.isFinite(date.getTime())?date.toISOString():null;}
