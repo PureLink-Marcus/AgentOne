@@ -253,3 +253,13 @@ Jeder neue Release muss mindestens ein sichtbar neues oder wesentlich
 verbessertes Frontend-Element enthalten. Das Element muss echte Zustände und
 Ergebnisse anzeigen, mobil bedienbar sein und im Chrome-Smoke angeklickt werden.
 Reine Backend-, Versions- oder Dokumentations-Releases sind ausgeschlossen.
+
+## Release 106 · Quellen-Datenstand
+
+Vor Routine-Briefings werden verbundene IMAP-, Google- und ICS-Quellen
+kontrolliert aktualisiert. Eine einzelne Störung degradiert nur die betroffene
+Quelle und erhält den letzten gültigen Datenstand. Command Stream und
+persistierte Inbox zeigen getrennte Refresh-/Build-Schritte; die mobile
+Oberfläche besitzt klickbare Datenstand-Karten. 352/352 Tests, Build,
+Chrome-Smoke und der schreibfreie Vier-Container-Rollout-Preflight sind grün.
+Produktiver Rollout und Live-Smoke bleiben bis zum Image-Build offen.

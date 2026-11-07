@@ -697,3 +697,20 @@ entfernt. 338/338 Tests und alle vier privaten Release-105-Container sind grün.
 - [Leon](https://github.com/leon-ai/leon) — MIT; Referenz für Voice,
   geschichtetes Memory, kontrollierte Aktionen und begrenzte Proaktivität.
 
+### Release 2026.11.07-106 · belastbarer Quellen-Datenstand (**PASS LOCAL**)
+
+Jarvis-artige Proaktivität braucht nicht nur einen Scheduler, sondern einen
+nachvollziehbaren Datenstand. Deshalb prüft AgentOne Personal vor jedem
+Routine-Briefing IMAP, Google und ICS und aktualisiert nur verbundene,
+fällige oder veraltete Quellen. Timeout, paralleler Lauf, User-Isolation und
+Teilversagen sind begrenzt; ein Fehler bewahrt den letzten gültigen Snapshot,
+statt das gesamte Briefing leer erscheinen zu lassen.
+
+Die Inbox macht den Unterschied sichtbar: `AKTUELL`, `LETZTER STAND`, `NICHT
+VERBUNDEN` und `EINGESCHRÄNKT` erscheinen mit letzter erfolgreicher
+Synchronisierung und direkter Navigation. Der Command Stream trennt
+`source.refresh` von `briefing.build`. Damit wird aus einer bloßen
+Ergebnis-Kachel ein erklärbarer Assistentenlauf. 352/352 Tests, Build, mobiler
+Chrome-Smoke und Rollout-Preflight sind lokal bestanden; Live-Nachweise werden
+nach dem Image-Rollout ergänzt.
+

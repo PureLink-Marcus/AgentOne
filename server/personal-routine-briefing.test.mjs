@@ -21,22 +21,30 @@ const intelligence={
 };
 
 test('scheduled briefing projection is useful, bounded and contains no source payloads',()=>{
-  const result=buildRoutineBriefingResult({routine,intelligence,commandRunId:'command-1'});
+  const result=buildRoutineBriefingResult({routine,intelligence,commandRunId:'command-1',sourceFreshness:[
+    {source:'mail',status:'LIVE',freshness:'FRESH',lastSuccessAt:'2026-11-08T07:29:00.000Z',attemptedAt:'2026-11-08T07:29:00.000Z',outcome:'SYNCED',accounts:1,password:'never'},
+    {source:'google',status:'DEGRADED',freshness:'STALE_FALLBACK',lastSuccessAt:'2026-11-08T06:00:00.000Z',attemptedAt:'2026-11-08T07:29:30.000Z',outcome:'FAILED',errorCode:'GOOGLE_TIMEOUT',refreshToken:'secret'},
+    {source:'ics',status:'DEGRADED',freshness:'DEGRADED',outcome:'FAILED',errorCode:'ACCESS_TOKEN_SUPERSECRET'},
+  ]});
   assert.equal(result.schema,'agentone.personal-routine-result/v2');
   assert.equal(result.summary.events,503);
   assert.equal(result.insights.length,2);
   assert.equal(result.sources[0].records,500);
+  assert.equal(result.sourceFreshness[0].freshness,'FRESH');
+  assert.equal(result.sourceFreshness[1].errorCode,'GOOGLE_TIMEOUT');
+  assert.equal(result.sourceFreshness[2].errorCode,null);
   assert.match(result.contentHash,/^[a-f0-9]{64}$/);
   const serialized=JSON.stringify(result);
-  for(const forbidden of ['Private Mail Subject','secret@example.test','sk-not-a-real-key','private-id','health-private','raw health 12','9876','should-never-serialize'])assert.equal(serialized.includes(forbidden),false,forbidden);
+  for(const forbidden of ['Private Mail Subject','secret@example.test','sk-not-a-real-key','private-id','health-private','raw health 12','9876','should-never-serialize','password','refreshToken'])assert.equal(serialized.includes(forbidden),false,forbidden);
   assert.equal(result.policy.bodyStored,false);
   assert.equal(result.policy.rawHealthValuesStored,false);
   assert.equal(result.policy.secretsExposed,false);
 });
 
 test('mail summary retains only mail source and mail insight',()=>{
-  const result=buildRoutineBriefingResult({routine:{id:'mail-routine',action:'mail-summary'},intelligence});
+  const result=buildRoutineBriefingResult({routine:{id:'mail-routine',action:'mail-summary'},intelligence,sourceFreshness:[{source:'mail',status:'LIVE',freshness:'FRESH'},{source:'google',status:'LIVE',freshness:'FRESH'},{source:'ics',status:'LIVE',freshness:'FRESH'}]});
   assert.deepEqual(result.sources.map(item=>item.id),['mail']);
+  assert.deepEqual(result.sourceFreshness.map(item=>item.source),['mail','google']);
   assert.deepEqual(result.insights.map(item=>item.id),['mail.daily-triage']);
 });
 

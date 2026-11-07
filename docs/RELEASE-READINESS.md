@@ -1,14 +1,14 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-105` (**PASS LIVE**)
-Deployment: Release 105 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Der gestufte Rollout Günni → Fressi besitzt einen automatischen Rollback auf Release 104. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Release: `2026.11.07-106` (**PASS LOCAL · LIVE-ROLLOUT VORBEREITET**)
+Deployment: Release 105 ist auf Fressi und Günni live; Release 106 besitzt einen bestandenen Vier-Container-Preflight und einen gestuften Rollout Günni → Fressi mit automatischem Rollback auf Release 105. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL + LIVE | Release 105: 338/338 Node-Tests, Produktions-Build, mobiler Briefing-Inbox-Smoke sowie PWA-, Mail-, Chrome- und WebKit-Abnahme grün; echter Günni-Routine-Lauf samt Command Stream, Inbox und Cleanup live verifiziert. |
+| Lokale Anwendung | PASS LOCAL / RELEASE 105 LIVE | Release 106: 352/352 Node-Tests, Produktions-Build und mobiler Datenstand-Smoke grün. Release 105 bleibt bis zum gestuften Rollout samt Günni-Command-Stream, Inbox und Cleanup live verifiziert. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. HTTPS, WebKit, Vault-Preflight, 54-px-Touchziele und 0 Konsolenfehler sind live geprüft; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
@@ -231,6 +231,15 @@ Deployment: Release 105 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Ergebnis- und Datenqualität | PASS | Keine Mailtexte, Roh-Health-Werte, PII oder Secrets in Run, API, Audit oder DOM. Ungelesene Personenpost bedeutet Review statt Antwortpflicht; HRV SDNN/RMSSD bleiben getrennt; Apple-/Companion-Termine fließen in den Tagesplan. |
 | Mobile Oberfläche | PASS LIVE | 390×844, kein horizontaler Overflow, mindestens 44-px-Touchziele, Reload-Persistenz und sichere `textContent`-Darstellung. Screenshots: `output/playwright/release105-briefing-inbox-mobile.png` und `output/playwright/guenni-release105-briefing-inbox-live-mobile.png`. |
 | Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `4703575`; secret-freies Archiv SHA-256 `e2201d9133324f4643ca010cdb55e67ab112bfb9e6e62b7aba46ce6ede3d3769`; Image `purelink/agentone:2026.11.07-105`, ID `sha256:ce582ce92c254bb3ed290d442ff127a6b23df5136ddfe0a3787e32f3f0d9e087`; vier Container healthy. PWA auf PureLink/Fressi/Günni, Mail-Mobilansicht, Release-105-Chrome und WebKit/iPhone mit 0 Konsolenfehlern sind live grün. |
+
+### Release 106 · Freshness-aware Briefing Sync (**PASS LOCAL**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Quellen-Orchestrierung | PASS | IMAP, Google und ICS werden usergebunden, parallelitätsbegrenzt und nur bei Fälligkeit/Alter aktualisiert; Timeout, Busy, Teilfehler und letzter gültiger Snapshot sind getestet. |
+| Command Stream und Persistenz | PASS | Jeder Lauf weist `OBSERVE → source.refresh → RESULT → briefing.build → RESULT` nach. Die sichere Projektion persistiert ausschließlich Quelle, Zustand, Zeitpunkte, Ergebniscode und Kontenzahl. |
+| Sichtbares Frontend | PASS LOCAL | Drei klickbare Datenstand-Karten mit Alter, Fallback und Zielnavigation; 390×844, kein horizontaler Overflow, mindestens 44-px-Touchziele, Reload-Persistenz, 0 Konsolenfehler. Screenshot: `output/playwright/release106-source-freshness-mobile.png`. |
+| Regression | PASS | 352/352 Node-Tests und Produktions-Build sind grün. Release-106-Preflight bestätigt vier einheitliche Release-105-Ausgangscontainer; Live-Rollout und Günni-Live-Smoke folgen nach Image-Build. |
 
 ```powershell
 npm run verify:local

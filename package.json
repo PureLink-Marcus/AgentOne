@@ -45,6 +45,8 @@
     "verify:guenni-release104": "node scripts/guenni-release104-live-smoke.mjs",
     "verify:release105-ui": "node scripts/release105-briefing-inbox-browser-smoke.mjs",
     "verify:guenni-release105": "node scripts/guenni-release105-live-smoke.mjs",
+    "verify:release106-ui": "node scripts/release106-source-freshness-browser-smoke.mjs",
+    "verify:guenni-release106": "node scripts/guenni-release106-live-smoke.mjs",
     "verify:ics-subscription": "node scripts/release-96-ics-subscription-browser-smoke.mjs",
     "release:archive": "node scripts/build-release-archive.mjs",
     "diagnose:guenni-chat": "node scripts/guenni-chat-runtime-diagnose.mjs",

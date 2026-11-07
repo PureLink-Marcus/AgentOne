@@ -171,3 +171,13 @@ Der lokale Hybrid-Demomodus arbeitet standardmäßig mit den beiden Entwicklungs
 ## Open-Source-Basis
 
 Für das spätere separate Repository ist ein privater Mirror von [OpenClaw](https://github.com/openclaw/openclaw) vorgesehen. OpenJarvis bleibt Referenz für lokale Inferenz, Hardwareprofile und Evaluation. Upstream-Änderungen werden als geprüfte Update-PRs übernommen und nie automatisch in eine Hauptlinie deployt.
+
+## Release 106 · Freshness-aware Briefings
+
+Geplante und manuelle Briefings sind an einen sicheren Quellen-Datenstand
+gekoppelt. IMAP, Google und verschlüsselte ICS-Feeds werden nur bei Bedarf
+read-only aktualisiert. Teilfehler stoppen das Briefing nicht, sondern werden
+als `STALE_FALLBACK` oder `DEGRADED` mit letztem Erfolgszeitpunkt persistiert.
+Die Inbox zeigt diese Zustände als eigene klickbare Karten und führt direkt zu
+Postfach oder Tagesplanung. Rohinhalte, Zugangsdaten und Providerantworten sind
+weder Teil der Run-Persistenz noch des DOM.

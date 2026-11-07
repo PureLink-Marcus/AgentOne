@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 
 const EXECUTABLE_ACTIONS=new Set(['morning-briefing','mail-summary','nudge-review']);
 const SOURCE_IDS=new Set(['mail','calendar','health']);
+const REFRESH_SOURCE_IDS=new Set(['mail','google','ics']);
+const FRESHNESS_STATES=new Set(['FRESH','STALE_FALLBACK','NOT_CONNECTED','DEGRADED']);
 const SIGNAL_COPY=Object.freeze({
   'mail.daily-triage':Object.freeze({domain:'mail',title:'Posteingang ausgewertet',summary:'Neue Nachrichten wurden nach Handlungsbedarf und Herkunft gebündelt.',target:'tools:mail'}),
   'calendar.next-24h':Object.freeze({domain:'calendar',title:'Die nächsten 24 Stunden',summary:'Termine, Belegung und mögliche Überschneidungen wurden read-only geprüft.',target:'tasks:planning'}),
@@ -15,10 +17,12 @@ function safeInteger(value,max=1_000_000){const number=Number(value);return Numb
 function safeConfidence(value){const number=Number(value);return Number.isFinite(number)?Math.max(0,Math.min(1,Math.round(number*1000)/1000)):0;}
 function safeStatus(value){const status=String(value||'UNKNOWN').toUpperCase();return /^[A-Z][A-Z0-9_]{1,39}$/.test(status)?status:'UNKNOWN';}
 function safeId(value,max=191){const id=String(value||'').trim();return /^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(id)&&id.length<=max?id:null;}
+function safeOptionalTimestamp(value){if(value==null||value==='')return null;try{return safeTimestamp(value);}catch{return null;}}
+function safeFreshness(item){if(!item||typeof item!=='object')return null;const source=String(item.source||'').toLowerCase();if(!REFRESH_SOURCE_IDS.has(source))return null;const freshness=FRESHNESS_STATES.has(String(item.freshness||'').toUpperCase())?String(item.freshness).toUpperCase():'DEGRADED',status=safeStatus(item.status),outcome=safeStatus(item.outcome),candidate=String(item.errorCode||''),errorCode=/^[A-Z][A-Z0-9_]{2,63}$/.test(candidate)&&!/(?:PASSWORD|PASSWORT|SECRET|ACCESS_?TOKEN|REFRESH_?TOKEN|API_?KEY|CLIENT_?SECRET|AUTHORIZATION|BEARER|CREDENTIAL)/.test(candidate)?candidate:null;return Object.freeze({source,status,freshness,lastSuccessAt:safeOptionalTimestamp(item.lastSuccessAt),attemptedAt:safeOptionalTimestamp(item.attemptedAt),outcome,errorCode,accounts:safeInteger(item.accounts,100)});}
 function canonical(value){if(value===null||typeof value!=='object')return JSON.stringify(value);if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}';}
 function digest(value){return createHash('sha256').update(canonical(value)).digest('hex');}
 
-export function buildRoutineBriefingResult({routine,intelligence,commandRunId=null,now=new Date()}={}){
+export function buildRoutineBriefingResult({routine,intelligence,sourceFreshness=[],commandRunId=null,now=new Date()}={}){
   if(!routine||typeof routine!=='object')throw routineBriefingError('Routine fehlt');
   const action=String(routine.action||'');
   if(!EXECUTABLE_ACTIONS.has(action))throw routineBriefingError('Diese Routine besitzt noch keinen echten read-only Ausführungspfad','ROUTINE_ACTION_NOT_EXECUTABLE',409);
@@ -39,6 +43,7 @@ export function buildRoutineBriefingResult({routine,intelligence,commandRunId=nu
     insights.push(Object.freeze({id:String(signal.id),domain:copy.domain,severity:signal.severity==='attention'?'attention':'info',title:copy.title,summary:copy.summary,confidence:safeConfidence(signal.confidence),evidenceCount:Math.min(1000,evidence.length),sources:evidenceSources,target:copy.target}));
   }
   const filteredSources=action==='mail-summary'?sources.filter(source=>source.id==='mail'):sources;
+  const freshness=(Array.isArray(sourceFreshness)?sourceFreshness:[]).map(safeFreshness).filter(Boolean).filter(item=>action!=='mail-summary'||['mail','google'].includes(item.source));
   const projection={
     schema:'agentone.personal-routine-result/v2',
     routineId:safeId(routine.id)||'routine',
@@ -55,6 +60,7 @@ export function buildRoutineBriefingResult({routine,intelligence,commandRunId=nu
       ledgerEvents:safeInteger(intelligence.ledger?.total,100_000),
     }),
     sources:Object.freeze(filteredSources),
+    sourceFreshness:Object.freeze(freshness),
     insights:Object.freeze(insights.slice(0,12)),
     mutations:Object.freeze([]),
     policy:Object.freeze({readOnly:true,bodyStored:false,rawHealthValuesStored:false,piiStored:false,medicalDiagnosis:false,secretsExposed:false}),
