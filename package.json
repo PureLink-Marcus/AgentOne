@@ -26,6 +26,7 @@
     "verify:guenni-jarvis85": "node scripts/guenni-jarvis-release85-browser-smoke.mjs",
     "verify:command-stream": "node scripts/command-stream-browser-smoke.mjs",
     "verify:guenni-command-stream": "node scripts/guenni-command-stream-live-smoke.mjs",
+    "verify:planning": "node scripts/release-94-planning-browser-smoke.mjs",
     "release:archive": "node scripts/build-release-archive.mjs",
     "diagnose:guenni-chat": "node scripts/guenni-chat-runtime-diagnose.mjs",
     "verify:mail-reader": "node scripts/openclaw-mail-reader-smoke.mjs",

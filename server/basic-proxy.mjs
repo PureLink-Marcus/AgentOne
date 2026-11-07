@@ -28,7 +28,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-93');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-94');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -286,18 +286,24 @@ async function personalCommandsRead(req,res){
 }
 async function personalIcsCalendar(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'ics_calendar_unavailable'});
-  const requestUrl=new URL(String(req.url||'/agentone/calendar/ics'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/calendar/ics'.length),method=String(req.method||'GET'),upload=method==='POST'&&suffix==='/import',allowed=(method==='GET'&&(suffix===''||suffix==='/'))||upload||(method==='DELETE'&&(suffix===''||suffix==='/'));
+  const requestUrl=new URL(String(req.url||'/agentone/calendar/ics'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/calendar/ics'.length),method=String(req.method||'GET'),upload=method==='POST'&&suffix==='/import',feed=method==='POST'&&suffix==='/feed',allowed=(method==='GET'&&(suffix===''||suffix==='/'))||upload||feed||(method==='DELETE'&&(suffix===''||suffix==='/'));
   if(!allowed)return jsonResponse(res,404,{error:'not_found'});if(method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
-  const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},options={method,headers,signal:AbortSignal.timeout(upload?45_000:20_000)};
+  const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},options={method,headers,signal:AbortSignal.timeout(upload||feed?45_000:20_000)};
   try{
     if(upload){
       const max=4*1024*1024,declared=req.headers['content-length'];if(declared!=null&&(!/^\d+$/.test(String(declared))||Number(declared)<=0))return jsonResponse(res,400,{error:'ICS_UPLOAD_SIZE_INVALID'});if(declared!=null&&Number(declared)>max)return jsonResponse(res,413,{error:'ICS_TOO_LARGE'});
       const contentType=String(req.headers['content-type']||'application/octet-stream').split(';')[0].trim().toLowerCase();if(!['text/calendar','text/plain','application/octet-stream'].includes(contentType))return jsonResponse(res,415,{error:'ICS_UPLOAD_TYPE_UNSUPPORTED'});headers['content-type']=contentType;let transferred=0,limitFailure=null;options.duplex='half';options.body=(async function*(){for await(const chunk of req){transferred+=chunk.length;if(transferred>max){limitFailure=Object.assign(new Error('Upload too large'),{status:413});throw limitFailure;}yield chunk;}if(!transferred){limitFailure=Object.assign(new Error('Upload empty'),{status:400});throw limitFailure;}})();
       try{const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics/import`,options);return await streamHealthResponse(response,res);}catch(error){if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'ICS_TOO_LARGE':'ICS_EMPTY'});throw error;}
     }
+    if(feed){headers['content-type']='application/json';options.body=(await readBody(req,4096)).toString('utf8')||'{}';const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics/feed`,options);return await streamHealthResponse(response,res);}
     if(method==='DELETE'){headers['content-type']='application/json';options.body=(await readBody(req,4096)).toString('utf8')||'{}';}
     const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics${requestUrl.search}`,options);return await streamHealthResponse(response,res);
-  }catch(error){return jsonResponse(res,error.status||502,{error:'ics_calendar_failed',detail:String(error.message||error).slice(0,100)});}
+  }catch(error){return jsonResponse(res,error.status||502,{error:'ics_calendar_failed',secretsExposed:false});}
+}
+async function personalCalendarPlan(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'calendar_plan_unavailable',secretsExposed:false});
+  const requestUrl=new URL(String(req.url||'/agentone/calendar/plan'),publicOrigin||'http://127.0.0.1'),allowed=new Set(['date','timeZone','workdayStart','workdayEnd','minFreeMinutes']);if([...requestUrl.searchParams.keys()].some(key=>!allowed.has(key)||requestUrl.searchParams.getAll(key).length!==1))return jsonResponse(res,400,{error:'invalid_calendar_plan_query',secretsExposed:false});
+  try{const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/plan${requestUrl.search}`,{method:'GET',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(20_000)});return await streamHealthResponse(response,res);}catch{return jsonResponse(res,502,{error:'calendar_plan_unavailable',secretsExposed:false});}
 }
 async function personalWhoopStatus(res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'whoop_status_unavailable'});
@@ -424,6 +430,7 @@ const server=http.createServer((req,res)=>{
     if(req.method==='GET')return personalCommandsRead(req,res);
     return jsonResponse(res,405,{error:'method_not_allowed',secretsExposed:false});
   }
+  if(req.method==='GET'&&/^\/agentone\/calendar\/plan(?:\?|$)/.test(req.url||''))return personalCalendarPlan(req,res);
   if(/^\/agentone\/calendar\/ics(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalIcsCalendar(req,res);
   if(req.method==='GET'&&/^\/agentone\/whoop\/status(?:\?|$)/.test(req.url||''))return personalWhoopStatus(res);
   if(/^\/agentone\/health(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalHealth(req,res);

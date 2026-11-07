@@ -63,12 +63,13 @@ test('personal health API persists user-isolated scoped imports and requires con
     const bobConsents = await fetch(`${origin}/api/internal/personal/health/consents`, { headers: internalHeaders(token, 'bob') }).then((response) => response.json());
     assert.deepEqual(bobConsents.consents, []);
 
+    const metricDay=new Date(Date.now()-2*86_400_000).toISOString().slice(0,10),previousDay=new Date(Date.now()-3*86_400_000).toISOString().slice(0,10);
     const xml = `<?xml version="1.0"?><HealthData>
-      <Record type="HKQuantityTypeIdentifierStepCount" unit="count" startDate="2026-11-06 07:00:00 +0100" endDate="2026-11-06 08:00:00 +0100" value="4200"/>
-      <Record type="HKCategoryTypeIdentifierSleepAnalysis" value="HKCategoryValueSleepAnalysisAsleepDeep" startDate="2026-11-05 23:00:00 +0100" endDate="2026-11-06 00:30:00 +0100"/>
-      <Record type="HKQuantityTypeIdentifierHeartRate" unit="count/min" startDate="2026-11-06 08:00:00 +0100" endDate="2026-11-06 08:01:00 +0100" value="70"/>
-      <Record type="HKQuantityTypeIdentifierBodyMass" unit="kg" startDate="2026-11-06 08:00:00 +0100" endDate="2026-11-06 08:00:00 +0100" value="80"/>
-      <Workout workoutActivityType="HKWorkoutActivityTypeWalking" duration="45" startDate="2026-11-06 18:00:00 +0100" endDate="2026-11-06 18:45:00 +0100"/>
+      <Record type="HKQuantityTypeIdentifierStepCount" unit="count" startDate="${metricDay} 07:00:00 +0100" endDate="${metricDay} 08:00:00 +0100" value="4200"/>
+      <Record type="HKCategoryTypeIdentifierSleepAnalysis" value="HKCategoryValueSleepAnalysisAsleepDeep" startDate="${previousDay} 23:00:00 +0100" endDate="${metricDay} 00:30:00 +0100"/>
+      <Record type="HKQuantityTypeIdentifierHeartRate" unit="count/min" startDate="${metricDay} 08:00:00 +0100" endDate="${metricDay} 08:01:00 +0100" value="70"/>
+      <Record type="HKQuantityTypeIdentifierBodyMass" unit="kg" startDate="${metricDay} 08:00:00 +0100" endDate="${metricDay} 08:00:00 +0100" value="80"/>
+      <Workout workoutActivityType="HKWorkoutActivityTypeWalking" duration="45" startDate="${metricDay} 18:00:00 +0100" endDate="${metricDay} 18:45:00 +0100"/>
     </HealthData>`;
     const uploadHeaders = internalHeaders(token, 'alice', { 'content-type': 'application/xml', 'x-agentone-health-consent-id': consentId, 'x-agentone-human-actor': 'alice', 'x-agentone-human-action': 'health-import-confirmed' });
     const deniedImport = await fetch(`${origin}/api/internal/personal/health/apple-import`, { method: 'POST', headers: internalHeaders(token, 'alice', { 'content-type': 'application/xml', 'x-agentone-health-consent-id': consentId }), body: xml });
@@ -90,6 +91,15 @@ test('personal health API persists user-isolated scoped imports and requires con
     const aliceDigest = await fetch(`${origin}/api/internal/personal/health/digest`, { headers: internalHeaders(token, 'alice') }).then((response) => response.json());
     const bobDigest = await fetch(`${origin}/api/internal/personal/health/digest`, { headers: internalHeaders(token, 'bob') }).then((response) => response.json());
     assert.equal(aliceDigest.metricCount, 1); assert.equal(bobDigest.metricCount, 0); assert.match(aliceDigest.digest.disclaimer, /Keine Diagnose/);
+
+    const comparisonResponse=await fetch(`${origin}/api/internal/personal/health/comparison?periodDays=7&minimumCoverageDays=1&timeZone=Europe%2FBerlin`,{headers:internalHeaders(token,'alice')});
+    assert.equal(comparisonResponse.status,200);const comparison=await comparisonResponse.json();
+    assert.equal(comparison.schema,'agentone.personal-health-comparison/v1');assert.equal(comparison.sources.apple_health.coverageDays,1);assert.equal(comparison.sources.whoop.status,'missing');assert.deepEqual(comparison.comparisons,[]);assert.equal(comparison.policy.medicalDiagnosis,false);assert.equal(comparison.policy.secretsExposed,false);
+    const serializedComparison=JSON.stringify(comparison);assert.equal(serializedComparison.includes(consentId),false);assert.equal(serializedComparison.includes('sourceRecordId'),false);assert.equal(serializedComparison.includes('<HealthData>'),false);assert.equal(serializedComparison.includes('4200'),false);
+    const bobComparison=await fetch(`${origin}/api/internal/personal/health/comparison?periodDays=7&minimumCoverageDays=1&timeZone=UTC`,{headers:internalHeaders(token,'bob')}).then(response=>response.json());assert.equal(bobComparison.sources.apple_health.coverageDays,0);
+    for(const query of ['extra=1','periodDays=7&periodDays=8','periodDays=0','periodDays=91','periodDays=seven','periodDays=2&minimumCoverageDays=3','timeZone=America%2FNew_York']){
+      const invalid=await fetch(`${origin}/api/internal/personal/health/comparison?${query}`,{headers:internalHeaders(token,'alice')});assert.equal(invalid.status,400,query);const payload=await invalid.json();assert.equal(payload.error,'HEALTH_COMPARISON_QUERY_INVALID');assert.equal(payload.secretsExposed,false);
+    }
 
     const unconfirmedExport = await fetch(`${origin}/api/internal/personal/health/export`, { method: 'POST', headers: internalHeaders(token, 'alice', { 'content-type': 'application/json' }), body: '{}' });
     assert.equal(unconfirmedExport.status, 409);
@@ -125,6 +135,8 @@ test('Graph client secret never enables health encryption', async () => {
     await waitFor(`${origin}/api/health`);
     const status = await fetch(`${origin}/api/internal/personal/health`, { headers: internalHeaders(token, 'alice') }).then((response) => response.json());
     assert.equal(status.encryptionReady, false); assert.deepEqual(status.consents, []);
+    const comparison = await fetch(`${origin}/api/internal/personal/health/comparison`, { headers: internalHeaders(token, 'alice') });
+    assert.equal(comparison.status, 503); assert.equal((await comparison.json()).error, 'HEALTH_ENCRYPTION_NOT_CONFIGURED');
     const create = await fetch(`${origin}/api/internal/personal/health/consents`, { method: 'POST', headers: internalHeaders(token, 'alice', { 'content-type': 'application/json' }), body: JSON.stringify({ scopes: ['activity'] }) });
     assert.equal(create.status, 503); assert.equal((await create.json()).error, 'HEALTH_ENCRYPTION_NOT_CONFIGURED');
   } finally {
