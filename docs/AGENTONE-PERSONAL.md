@@ -38,6 +38,26 @@ Jarvis Core ist die schnelle Kommunikationsoberfläche von Günni, nicht eine dr
 
 Release 99 macht die persönliche Mailquelle zu einem dauerhaften Assistenten-Signal statt zu einer Demo-Kachel. IMAP läuft ausschließlich read-only und speichert pro Benutzer und Konto nur UID, UIDVALIDITY, Thread, Absender, Betreff, Empfangszeit, Flags und erklärbare Klassifikation. Bodies, Snippets, Anhänge und Roh-Header bleiben außerhalb von Fetch, Datenbank, API und Audit. Günni zeigt diesen Bestand im Mail Review Center mit Filtern, Suche, Thread-Detail und Antwortentwurf; der Entwurf bleibt bis zu einer gesonderten Freigabe ungesendet. Der 15-Minuten-Hintergrundlauf nutzt begrenzten Backoff und bewahrt bei Fehlern den letzten gültigen Bestand. Live bestätigt sind 500 reale Metadatensätze, ein unmittelbar leerer Folgelauf, unveränderte Deduplizierung und vollständige Wiederherstellung nach Containerrotation.
 
+Release 100 bereitet das **Learning Lab** als kontrollierte Jarvis-Skill-Schicht
+vor. Der erste und bislang einzige ausführbare Built-in-Skill ist
+`personal-briefing.v1`; seine feste Read-only-Allowlist umfasst
+`mail.read`, `calendar.read` und `health.summary`. Draft, deterministische
+serverseitige Evaluation, Exact-Hash-Freigabe, Aktivierung, Ausführung und
+Rollback werden benutzerisoliert persistiert. Approve, Activate und Rollback
+verlangen jeweils die authentifizierte Benutzer-Session als Human Gate; kein
+Agent darf diese Rolle übernehmen. Die aktive Revision verarbeitet echte,
+berechtigte persönliche Signale ohne Quellmutation und erscheint als
+nachvollziehbarer Command-Stream-Lauf.
+
+Browser und Audit erhalten ausschließlich sichere Governance-Metadaten sowie
+die redigierte, für den angemeldeten Benutzer bestimmte Briefing-Antwort.
+Verfahren, Prompts, Payloads, Evidence, Mail-/Health-Rohdaten und Secrets werden
+nicht öffentlich projiziert oder als Ausführungsnachweis gespeichert.
+Lifecycle- und Testattestierung werden auch nach einem Neustart erneut geprüft;
+direkt manipulierte Datenbankzustände führen zu einem fail-closed Fehler. Der
+Stand ist lokal verifiziert und für Release 100 vorbereitet, aber noch nicht
+als Live-Rollout auf Fressi oder Günni dokumentiert.
+
 ## Administration
 
 Autorisierte Administratoren können Instanzen und Sessions vollständig analysieren, neu starten, sperren, neu aufbauen, in Quarantäne verschieben und wiederherstellen. Jeder Zugriff auf Sessioninhalte und jede administrative Aktion wird unveränderbar auditiert. Secret-Werte bleiben maskiert.

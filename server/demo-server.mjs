@@ -37,6 +37,7 @@ import { getPersonalIcsFeedCredential, getPersonalIcsStatus, initPersonalIcsStor
 import { buildPersonalCalendarPlan, calendarPlanWindow } from './personal-calendar-plan.mjs';
 import { googleSnapshotLedgerEvents, icsSnapshotLedgerEvents } from './personal-calendar-sources.mjs';
 import { whoopOnboardingViewModel } from './whoop-onboarding.mjs';
+import { activatePersonalBriefingSkill, approvePersonalBriefingDraft, createPersonalBriefingDraft, evaluatePersonalBriefingDraft, executePersonalBriefingSkill, initPersonalLearningLabStore, listPersonalBriefingExecutions, listPersonalBriefingSkills, rollbackPersonalBriefingSkill } from './personal-learning-lab-store.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const env=loadEnv(root);
@@ -61,6 +62,7 @@ initPersonalPulseStore(state.db);
 initPersonalEventLedger(state.db);
 initPersonalCommandStream(state.db);
 initPersonalIcsStore(state.db);
+initPersonalLearningLabStore(state.db);
 const companionPepper=String(env.AGENTONE_COMPANION_PEPPER||env.AGENTONE_SECRET_KEY||'');
 const companionPepperReady=Buffer.byteLength(companionPepper,'utf8')>=32;
 const healthMasterKey=env.AGENTONE_HEALTH_MASTER_KEY||env.AGENTONE_DEMO_MASTER_KEY||'';
@@ -370,6 +372,21 @@ function healthComparisonOptions(searchParams){
 }
 function healthFailure(res,error){return json(res,error.status||400,{error:error.code||'HEALTH_REQUEST_FAILED',message:String(error.message||'Gesundheitsanfrage fehlgeschlagen').slice(0,180),...(error.commandStream?{commandStream:error.commandStream}:{}),secretsExposed:false,medicalDiagnosis:false});}
 
+function learningError(message,code='LEARNING_REQUEST_INVALID',status=400){return Object.assign(new Error(message),{code,status});}
+function learningBody(input,allowed){if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!allowed.has(key)))throw learningError('Ungültige Learning-Lab-Anfrage');return input;}
+function learningHumanPrincipal(req,userId,action){const actor=String(req.headers['x-agentone-human-actor']||''),humanAction=String(req.headers['x-agentone-human-action']||'');if(actor!==userId||humanAction!==`skill-${action}`)throw learningError('Menschliche Bestätigung erforderlich','LEARNING_HUMAN_GATE_REQUIRED',403);return {kind:'human',authenticated:true,userId};}
+function learningBriefingEvents(intelligence){
+  const generatedAt=String(intelligence?.generatedAt||new Date().toISOString()),signals=Array.isArray(intelligence?.signals)?intelligence.signals:[],sourceName=domain=>domain==='mail'?'mail':domain==='health'?'health':'calendar';
+  const events=signals.slice(0,100).map((signal,index)=>({id:`signal-${index}-${String(signal.notificationKey||signal.id||index).replace(/[^a-zA-Z0-9._:-]/g,'-').slice(0,80)}`,source:sourceName(String(signal.domain||'')),kind:/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(String(signal.id||''))?String(signal.id):'personal-signal',occurredAt:generatedAt,title:String(signal.title||'Persönlicher Hinweis'),urgency:signal.severity==='attention'?'high':'normal',actionRequired:signal.severity==='attention',unread:signal.domain==='mail'&&signal.severity==='attention',confidence:Number.isFinite(Number(signal.confidence))?Number(signal.confidence):1}));
+  if(events.length)return events;
+  return (Array.isArray(intelligence?.sources)?intelligence.sources:[]).slice(0,3).map((source,index)=>({id:`source-${index}-${String(source.id||'unknown').replace(/[^a-zA-Z0-9._:-]/g,'-')}`,source:sourceName(String(source.id||'')),kind:'source-status',occurredAt:generatedAt,title:`${String(source.id||'Quelle')}: ${String(source.status||'UNKNOWN')} · ${Number(source.records||0)} Datensätze`,urgency:['DEGRADED','ERROR'].includes(String(source.status||''))?'high':'normal',actionRequired:['DEGRADED','ERROR'].includes(String(source.status||'')),unread:false,confidence:1}));
+}
+function learningLabView(userId){
+  const skills=listPersonalBriefingSkills(state.db,{userId}),executions=listPersonalBriefingExecutions(state.db,{userId,limit:100});
+  return {schema:'agentone.personal-learning-lab/v1',skills:skills.map(skill=>{const last=executions.find(item=>item.candidateId===skill.id),rollbackTarget=skill.active?skills.filter(item=>item.status==='ACTIVE'&&item.version<skill.version).sort((a,b)=>b.version-a.version)[0]:null;return {...skill,name:'Persönliches Briefing',evaluation:{...(skill.evaluation||{}),status:skill.test?.passed?'PASS':'NOT_RUN',attestationId:skill.evaluation?.outputHash||'',testedAt:skill.test?.testedAt||null},provenance:{source:'AGENTONE_BUILTIN',publisher:'learning-release-worker'},lastExecution:last?{status:'COMPLETED',executedAt:last.createdAt,runId:last.executionId}:null,rollbackAvailable:Boolean(rollbackTarget),rollbackTargetVersion:rollbackTarget?.version||null,actions:{rollback:{available:Boolean(rollbackTarget),targetVersion:rollbackTarget?.version||null}}};}),executions,policy:{serverDefinedSkillsOnly:true,deterministicEvaluation:true,humanExactHashApproval:true,readOnlyExecution:true,userIsolated:true,secretsExposed:false}};
+}
+function learningFailure(res,error){return json(res,error.status||400,{error:error.code||'LEARNING_REQUEST_FAILED',message:'Learning-Lab-Aktion konnte nicht abgeschlossen werden.',secretsExposed:false});}
+
 async function api(req,res,url){
   const internalPersonal=req.headers['x-agentone-internal-token']&&req.headers['x-agentone-internal-token']===env.AGENTONE_INTERNAL_API_TOKEN;
   if(url.pathname==='/api/internal/personal/connectors'){
@@ -523,6 +540,33 @@ async function api(req,res,url){
       if(req.method==='DELETE'&&url.pathname==='/api/internal/personal/events'){const input=await body(req);if(input.confirm!=='DELETE_MY_PERSONAL_EVENTS')return json(res,409,{error:'EVENT_LEDGER_DELETE_CONFIRMATION_REQUIRED'});return json(res,200,{deleted:deletePersonalEvents(state.db,{userId,source:input.source||undefined,confirmAll:!input.source}),irreversible:true});}
       return json(res,405,{error:'method_not_allowed'});
     }catch(error){return json(res,error.status||400,{error:error.code||'EVENT_LEDGER_FAILED',message:String(error.message||error).slice(0,160),secretsExposed:false});}
+  }
+  if(url.pathname==='/api/internal/personal/skills'||url.pathname.startsWith('/api/internal/personal/skills/')){
+    if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
+    try{
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/skills'){if([...url.searchParams.keys()].length)throw learningError('Query-Parameter sind nicht erlaubt');return json(res,200,learningLabView(userId));}
+      if(req.method==='POST'&&url.pathname==='/api/internal/personal/skills'){
+        learningBody(await body(req),new Set());if(listPersonalBriefingSkills(state.db,{userId}).length)throw learningError('Der integrierte Briefing-Skill ist bereits vorhanden','LEARNING_DRAFT_EXISTS',409);
+        const skill=createPersonalBriefingDraft(state.db,{userId,sourceRunId:`learning-${crypto.randomUUID()}`});recordAudit(state.db,{userId,connectorId:'learning-lab',action:'skill.draft.created',outcome:'OK',detail:JSON.stringify({candidateId:skill.id,skillId:skill.skillId,version:skill.version,contentHash:skill.contentHash,secretsExposed:false})});return json(res,201,{skill,...learningLabView(userId)});
+      }
+      const actionMatch=url.pathname.match(/^\/api\/internal\/personal\/skills\/([^/]+)\/(evaluate|approve|activate|execute|rollback)$/);if(req.method!=='POST'||!actionMatch)return json(res,405,{error:'method_not_allowed'});
+      const candidateId=decodeURIComponent(actionMatch[1]),action=actionMatch[2],current=listPersonalBriefingSkills(state.db,{userId}).find(item=>item.id===candidateId);if(!current)throw learningError('Skill wurde nicht gefunden','LEARNING_CANDIDATE_NOT_FOUND',404);
+      if(action==='evaluate'){
+        learningBody(await body(req),new Set());const skill=evaluatePersonalBriefingDraft(state.db,{userId,candidateId});recordAudit(state.db,{userId,connectorId:'learning-lab',action:'skill.evaluated',outcome:'OK',detail:JSON.stringify({candidateId,version:skill.version,contentHash:skill.contentHash,passed:skill.test?.passed===true,secretsExposed:false})});return json(res,200,{skill});
+      }
+      if(action==='approve'){
+        const input=learningBody(await body(req),new Set(['contentHash'])),principal=learningHumanPrincipal(req,userId,'approve'),skill=approvePersonalBriefingDraft(state.db,{userId,candidateId,contentHash:String(input.contentHash||''),principal});recordAudit(state.db,{userId,connectorId:'learning-lab',action:'skill.approved',outcome:'OK',detail:JSON.stringify({candidateId,version:skill.version,contentHash:skill.contentHash,actor:userId,secretsExposed:false})});return json(res,200,{skill});
+      }
+      if(action==='activate'){
+        learningBody(await body(req),new Set());const principal=learningHumanPrincipal(req,userId,'activate'),skill=activatePersonalBriefingSkill(state.db,{userId,candidateId,principal});recordAudit(state.db,{userId,connectorId:'learning-lab',action:'skill.activated',outcome:'OK',detail:JSON.stringify({candidateId,version:skill.version,contentHash:skill.contentHash,actor:userId,worker:'learning-release-worker',secretsExposed:false})});return json(res,200,{skill});
+      }
+      if(action==='execute'){
+        learningBody(await body(req),new Set());if(!current.active||current.status!=='ACTIVE')throw learningError('Nur der aktive Skill kann ausgeführt werden','LEARNING_TRANSITION_DENIED',409);
+        const run=createCommandRun(state.db,{userId,label:'Learning Lab · Persönliches Briefing',mode:'controlled',source:'chat'});appendCommandStep(state.db,{userId,runId:run.id,type:'OBSERVE',summary:'Minimierte Mail-, Kalender- und Health-Signale laden'});const tool=appendCommandStep(state.db,{userId,runId:run.id,type:'TOOL',summary:'Freigegebenen Briefing-Skill deterministisch und read-only ausführen',toolId:'personal.learning-lab',operation:'personal-briefing.v1',access:'read',scopes:['mail.read','calendar.read','health.summary'],idempotent:true,input:{candidateId,contentHash:current.contentHash}});
+        try{const intelligence=await personalIntelligenceSnapshot(userId),events=learningBriefingEvents(intelligence),execution=executePersonalBriefingSkill(state.db,{userId,executionId:run.id,input:{events}});recordCommandResult(state.db,{userId,runId:run.id,toolStepId:tool.id,summary:'Briefing-Skill ohne Mutation ausgeführt',output:{skillId:execution.skill.id,version:execution.skill.version,events:execution.overview.total,actionRequired:execution.overview.actionRequired,sourceCount:Object.values(execution.overview.bySource).filter(Boolean).length,inputHash:execution.inputHash,outputHash:execution.outputHash,readOnly:true}});completeCommandRun(state.db,{userId,runId:run.id});recordAudit(state.db,{userId,connectorId:'learning-lab',action:'skill.executed',outcome:'OK',detail:JSON.stringify({candidateId,version:execution.skill.version,executionId:execution.executionId,eventCount:execution.overview.total,inputHash:execution.inputHash,outputHash:execution.outputHash,readOnly:true,secretsExposed:false})});return json(res,200,{schema:'agentone.personal-learning-execution/v1',execution,commandStream:publicCommandTimeline(state.db,{userId,runId:run.id}),secretsExposed:false});}catch(error){try{recordCommandError(state.db,{userId,runId:run.id,toolStepId:tool.id,code:error.code||'LEARNING_EXECUTION_FAILED',message:'Learning-Lab-Briefing konnte nicht ausgeführt werden',retryable:false});}catch{}throw error;}
+      }
+      const input=learningBody(await body(req),new Set(['contentHash','targetVersion','reason'])),principal=learningHumanPrincipal(req,userId,'rollback');if(String(input.contentHash||'')!==current.contentHash)throw learningError('Rollback bezieht sich nicht auf den aktiven Content Hash','LEARNING_APPROVAL_HASH_MISMATCH',409);const result=rollbackPersonalBriefingSkill(state.db,{userId,candidateId,targetVersion:Number(input.targetVersion),reason:String(input.reason||'Manueller Rollback im Learning Lab'),principal});recordAudit(state.db,{userId,connectorId:'learning-lab',action:'skill.rolled_back',outcome:'OK',detail:JSON.stringify({candidateId,fromVersion:current.version,targetVersion:result.active.version,contentHash:current.contentHash,actor:userId,secretsExposed:false})});return json(res,200,result);
+    }catch(error){return learningFailure(res,error);}
   }
   if(url.pathname==='/api/internal/personal/commands'&&req.method==='GET'){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});return json(res,200,{schema:'agentone.command-run-list/v1',runs:listCommandRuns(state.db,{userId,limit:url.searchParams.get('limit')||20}),secretsExposed:false});

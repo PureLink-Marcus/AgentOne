@@ -510,6 +510,37 @@ Source-Commit `c955ae0`, secret-freies Archiv mit SHA-256
 Image-Digest `sha256:5966bd5e7158961f994d8c2e377ee7e8f8fdd9480348bf902ba6f623cc594d15`
 sind dokumentiert.
 
+### Release 2026.11.07-100 · Learning Lab und kontrollierte Jarvis-Skills (**LOKAL VERIFIZIERT**)
+
+Das Learning Lab macht aus der Hermes-inspirierten Lernschleife erstmals einen
+bedienbaren, aber eng begrenzten Skill-Lebenszyklus. Als einziger ausführbarer
+Skill ist `personal-briefing.v1` zugelassen. Mail, Kalender und Health werden
+ausschließlich über `mail.read`, `calendar.read` und `health.summary` gelesen;
+der Client kann weder zusätzliche Tools noch Verfahren oder Testresultate
+einschleusen.
+
+Der Ablauf ist persistent und benutzerisoliert: serverkontrollierter Draft,
+deterministische interne Evaluation, Human-Approval des exakten Content-Hash,
+separates Human-Gate zur Aktivierung durch den Release Worker, read-only
+Ausführung sowie Human-Rollback auf eine nachweislich vorhandene ältere aktive
+Version. Die Ausführung wird im Command Stream sichtbar und kann echte,
+berechtigte Mail-, Kalender- und Health-Signale kombinieren. Sie verändert
+keine Quelle.
+
+Die neue Oberfläche zeigt Lifecycle, Content-Hash, Testattestierung,
+Provenienz, letzte Ausführung und ein redigiertes Briefing-Ergebnis. Version 1
+weist ehrlich darauf hin, dass noch keine Rollback-Vorversion existiert.
+Public API und Audit enthalten keine Procedures, Prompts, Payloads, Evidence,
+Rohdaten oder Secrets. Persistierte Guard-, Test-, Approval- und Aktivzustände
+werden bei jedem Laden und Ausführen gegeneinander geprüft; manipulierte
+Lifecycle- oder Evaluationsdaten werden abgewiesen. Restart-Persistenz,
+Benutzertrennung und der vollständige HTTP-Lebenszyklus sind lokal verifiziert.
+
+**Noch offen:** Produktiv-Deployment, Live-Chrome-Abnahme und die breite
+Fressi-/Günni-Regression. Frei programmierbare Skills bleiben außerhalb dieses
+Releases und benötigen später eine echte Prozess-/Container-Sandbox sowie
+serverseitig signierte Attestierungen.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —

@@ -23,8 +23,50 @@ Alternativ endet ein Kandidat als `REJECTED`. Eine aktive Version kann durch
 eine menschliche Entscheidung auf eine ältere Version zurückgerollt werden und
 erhält dann den Status `ROLLED_BACK`.
 
-Implementierung: `server/personal-learning-lab.mjs`  
-Tests: `server/personal-learning-lab.test.mjs`
+Kern: `server/personal-learning-lab.mjs`
+
+Persistenz und ausführbarer Built-in-Skill:
+`server/personal-learning-lab-store.mjs`
+
+Tests: `server/personal-learning-lab.test.mjs`,
+`server/personal-learning-lab-store.test.mjs` und
+`server/personal-learning-lab-security.test.mjs`
+
+## Release 100 · kontrollierter Jarvis-Skill
+
+Release 100 bindet als ersten produktnahen Skill ausschließlich
+`personal-briefing.v1` an. Der Skill ist serverseitig definiert und besitzt die
+unveränderliche Read-only-Allowlist `mail.read`, `calendar.read` und
+`health.summary`. Ein Browser oder Agent kann weder Verfahren noch Toolumfang,
+Testbericht oder Freigabe-Actor vorgeben.
+
+Der benutzerisolierte Store persistiert Draft, Testattestierung, menschliche
+Exact-Hash-Freigabe, Aktivierung, Ausführungsnachweise und Rollback-Zustand. Die
+Evaluation läuft deterministisch mit einer internen Fixture und wird
+serverseitig an Kandidat, Skill-ID und Content-Hash gebunden. Freigabe,
+Aktivierung und Rollback sind getrennte Human Gates; die technische
+Statusänderung zur aktiven Revision schreibt ausschließlich der
+`learning-release-worker`.
+
+Eine aktive Revision liest echte, bereits berechtigte Mail-, Kalender- und
+Health-Signale, erzeugt daraus ein deterministisches persönliches Briefing und
+schreibt keine Daten zu den Quellsystemen zurück. Der Command Stream zeigt den
+kontrollierten Ablauf. In der Ausführungsablage bleiben nur Hashes, Zähler,
+Version und Zeitstempel; die benutzerseitige Antwort darf die für diesen
+Benutzer bestimmten redigierten Briefing-Hinweise enthalten.
+
+Die öffentliche Learning-Lab-Projektion zeigt Lifecycle, gekürzte
+Attestierungsdaten, Provenienz und Ausführungsstatus. Verfahren, Prompts,
+Payloads, Evidence, Rohdaten und Secrets werden weder dort noch im Audit
+ausgegeben. Beim Laden und vor jeder Ausführung werden Lifecycle,
+`is_active`, Guard, Testattestierung und menschliche Freigabe erneut geprüft.
+Manipulierte Status- oder Evaluationszeilen werden daher fail-closed
+abgewiesen. Skill und sichere Ausführungsnachweise überleben einen
+Serverneustart.
+
+**Status:** lokal verifiziert und für Release 100 vorbereitet. Ein
+Produktiv-Rollout und eine Live-Abnahme auf Fressi und Günni sind an dieser
+Stelle noch nicht behauptet.
 
 ## Durchgesetzte Grenzen
 
@@ -44,6 +86,8 @@ Tests: `server/personal-learning-lab.test.mjs`
 - Die Auditansicht enthält keine Verfahrensschritte, Belege oder beschreibenden
   Inhalte und eignet sich damit für redigierte Betriebsprotokolle.
 
-Das Modul führt keinen vorgeschlagenen Code aus. Spätere Replay-Ausführung
-gehört in eine getrennte Sandbox mit fester Tool-Allowlist, Test-Fixtures,
-Zeit-, Kosten- und Netzwerkgrenzen.
+Der neue Built-in-Skill führt weiterhin keinen vorgeschlagenen Fremdcode aus.
+Er verarbeitet nur das fest implementierte, deterministische Briefing mit
+fester Tool-Allowlist. Frei programmierbare Skills benötigen später zusätzlich
+eine getrennte Prozess- oder Container-Sandbox mit Zeit-, Kosten- und
+Netzwerkgrenzen sowie serverseitig signierten Attestierungen.

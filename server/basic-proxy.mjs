@@ -29,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-99');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-100');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -286,6 +286,10 @@ async function personalRoutines(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'routine_store_unavailable'});if(req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
   try{const suffix=String(req.url||'').slice('/agentone/routines'.length),headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},options={method:req.method,headers,signal:AbortSignal.timeout(12_000)};if(req.method!=='GET')options.body=(await readBody(req,16_384)).toString('utf8');const response=await fetch(`${personalApiUrl}/api/internal/personal/routines${suffix}`,options),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'routine_service_failed',detail:String(error.message||error).slice(0,100)});}
 }
+async function personalSkills(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'skill_store_unavailable'});if(req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
+  try{const suffix=String(req.url||'').slice('/agentone/skills'.length),action=suffix.match(/\/(approve|activate|rollback)(?:\?|$)/)?.[1]||'',headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},options={method:req.method,headers,signal:AbortSignal.timeout(30_000)};if(action){headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']=`skill-${action}`;}if(req.method!=='GET')options.body=(await readBody(req,32_768)).toString('utf8');const response=await fetch(`${personalApiUrl}/api/internal/personal/skills${suffix}`,options),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch{return jsonResponse(res,502,{error:'skill_service_failed',secretsExposed:false});}
+}
 async function dashboardSnapshot(res){
   if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'dashboard_unavailable'});
   try{const response=await fetch(`${personalApiUrl}/api/internal/personal/dashboard`,{headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(15_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'dashboard_failed',detail:String(error.message||error).slice(0,100)});}
@@ -478,6 +482,7 @@ const server=http.createServer((req,res)=>{
   if(req.url?.startsWith('/agentone/nudges')&&['GET','PUT','POST','DELETE'].includes(req.method||''))return personalNudges(req,res);
   if(req.url?.startsWith('/agentone/memory')&&['GET','POST','DELETE'].includes(req.method||''))return personalMemory(req,res);
   if(req.url?.startsWith('/agentone/routines')&&['GET','POST','PUT','DELETE'].includes(req.method||''))return personalRoutines(req,res);
+  if(req.url?.startsWith('/agentone/skills')&&['GET','POST'].includes(req.method||''))return personalSkills(req,res);
   if(req.method==='GET'&&req.url==='/agentone/dashboard')return dashboardSnapshot(res);
   if(req.method==='GET'&&req.url==='/agentone/intelligence')return personalIntelligence(res);
   if(req.url?.startsWith('/agentone/pulse')&&['GET','POST','DELETE'].includes(req.method||''))return personalPulse(req,res);

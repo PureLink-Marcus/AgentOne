@@ -10,6 +10,14 @@ Freigabe und nachvollziehbarer Ausführung.
 
 Release `2026.11.07-99` ist auf Fressi und Günni live. 229/229 Tests, Production-Build, API-Smoke, zwei echte Günni-Syncs, vollständige Containerrotation und mobile Chrome-Abnahme sind grün. Der Release ersetzt den flüchtigen IMAP-Snapshot durch einen persistenten, read-only UID-/UIDVALIDITY-Sync mit Deduplizierung, Retention, Scheduler und Backoff. Das neue Mail Review Center zeigt 500 reale Datensätze mit Filter, Suche, Threads, Prüfgründen und Cursorstatus. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Auf Günni sind aktuell:
 
+Release `2026.11.07-100` ist zusätzlich lokal vorbereitet und verifiziert, aber
+noch nicht als live ausgerollt dokumentiert. Das neue Learning Lab führt den
+serverdefinierten Skill `personal-briefing.v1` durch Draft, deterministischen
+Test, Exact-Hash-Human-Approval, Human-Aktivierung, read-only Ausführung und
+kontrollierten Rollback. Die feste Allowlist umfasst nur Mail-, Kalender- und
+Health-Lesezugriffe. Persistenz, Benutzertrennung, Neustart, Command Stream und
+DB-Tamper-Abwehr sind abgedeckt; eine Live-Abnahme folgt separat.
+
 - 500 reale Gmail-Metadaten per IMAP read-only, persistent und dedupliziert synchronisiert und gruppiert;
 - acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
@@ -100,6 +108,17 @@ angezeigt.
     vollständiger Containerrotation waren alle 500 Datensätze sofort wieder
     verfügbar. Mobile Chrome-Abnahme, redigierter Log-/DB-Audit und breite
     Regression sind grün.
+13. **Release 100 lokal verifiziert, Live-Rollout ausstehend:** Das Learning
+    Lab stellt ausschließlich `personal-briefing.v1` bereit. Evaluation und
+    Attestierung entstehen serverseitig; Approve, Activate und Rollback sind
+    Session-gebundene Human Gates und Freigaben gelten nur für den exakten
+    Content-Hash. Die aktive Revision liest echte minimierte Mail-, Kalender-
+    und Health-Signale, erzeugt ein deterministisches Briefing und erscheint im
+    Command Stream, ohne eine Quelle zu verändern. Public API und Audit führen
+    keine Procedures, Prompts, Payloads, Evidence, Rohdaten oder Secrets. Der
+    Store ist restartfest und prüft Lifecycle, Testattestierung, Approval und
+    Aktivstatus fail-closed gegen direkte Manipulation. Rollback ist erst bei
+    einer persistierten älteren aktiven Revision verfügbar.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 
