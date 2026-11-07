@@ -9,6 +9,13 @@ Nudge-/Pattern-Ledger gespeichert und danach aus dem Serverzustand neu
 gerendert. Provider-IDs, Rohbelege, Inhalte und Secrets bleiben außerhalb der
 Browserprojektion. Der Stand ist auf Fressi und Günni live.
 
+Release `2026.11.07-111` ergänzt den Fokus-Kompass und eine neue
+Planungsregel. Mehrere kurze Terminwechsel werden als Fragmentierung erkannt,
+ohne Betreff, Ort oder Teilnehmer zu projizieren. Der Kompass priorisiert
+aktive Attention-Muster vor Information, zeigt unterdrückte Muster transparent
+und führt in den echten Tagesplan. Es bleibt ein Vorschlag: keine automatische
+Kalender- oder Mailmutation.
+
 ## Verantwortungsgrenzen
 
 - AgentOne Platform verwaltet Projekte, Welten, Workflows und zentrale Richtlinien.
@@ -250,3 +257,8 @@ Die erste neue Quellenkombination erkennt, wenn wichtige Personenpost auf
 mindestens drei geplante Stunden der nächsten 24 Stunden trifft. Sie öffnet
 nur die betroffenen read-only Ansichten. Termine, E-Mails oder Health-Daten
 werden dadurch niemals automatisch verändert.
+
+Release 111 erweitert diese Regel um Kalenderfragmentierung: Schon drei
+Termine mit mindestens zwei Wechseln unter 30 Minuten können in Verbindung mit
+dringender Personenpost einen Planungsbedarf auslösen. Eine Gegenprüfung weist
+sichtbar darauf hin, wenn die reine Terminzeit unter drei Stunden liegt.

@@ -24,6 +24,12 @@ Muster bleiben getrennt sichtbar und ihre Quelle lässt sich direkt öffnen.
 Damit ist der Pattern Feed kein Bericht mehr, sondern eine kontrollierte,
 persistente Lernoberfläche ohne autonome Selbstfreigabe.
 
+Release `2026.11.07-111` setzt den nächsten Jarvis-Schritt um: Der
+Fokus-Kompass verdichtet aktive Muster zu einer nächsten begründeten Priorität.
+Eine deterministische Regel erkennt kurze Terminwechsel als Fragmentierung und
+verknüpft sie bei Bedarf mit dringender Personenpost. Der Assistent erklärt die
+Belege und Gegenargumente, verändert aber weder Kalender noch Postfach.
+
 ## Warum es so viele Jarvis-Projekte gibt
 
 `Jarvis` ist ein popkultureller Gattungsname und kein technischer Standard.
@@ -782,4 +788,17 @@ Mail-Mobile, WebKit/iPhone, Container- und Secret-Grenzaudit sind grün. Der
 produktive Feed zeigt auf Günni ein echtes Muster aus den vorhandenen
 Gmail-Metadaten. Nächste Ausbaustufe sind belastbare Health-Muster aus echten
 Apple-Health-/WHOOP-Daten, sobald die externen Quellen freigegeben sind.
+
+### Release 2026.11.07-111 · Fokus statt nur Feed (**MASTER · PASS LIVE**)
+
+Der Fokus-Kompass zeigt die nächste aktive Priorität, Attention-/Aktiv-/
+Ausgeblendet-Zähler und öffnet den passenden echten Bereich. Die neue
+Kalenderregel erkennt mindestens drei Termine mit zwei Wechseln unter 30
+Minuten und kann diese Belastung mit dringender Personenpost kombinieren.
+Private Titel, Orte, Teilnehmer und Rohdaten bleiben außerhalb der Projektion;
+alle Aktionen bleiben read-only.
+
+380/380 Tests, Build, npm-Audit, lokaler und produktiver Chrome-Smoke, PWA,
+Mail-Mobile, WebKit/iPhone sowie Container- und Secret-Grenzaudit sind grün.
+Vier private Container laufen healthy auf Release 111.
 
