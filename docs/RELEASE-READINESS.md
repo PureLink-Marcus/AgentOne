@@ -1,14 +1,27 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-109` (**MASTER · PASS LIVE**)
-Deployment: Release 109 ist gestuft Günni → Fressi ausgerollt; alle vier App-/Access-Container sind healthy. Der Rollout besitzt einen automatischen Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Release: `2026.11.07-110` (**MASTER · PASS LIVE**)
+Deployment: Release 110 ist gestuft Günni → Fressi ausgerollt; alle vier App-/Access-Container sind healthy. Der Rollout besitzt einen automatischen Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+
+Release 110 macht den persistenten Pattern Feed vollständig bedienbar. Drei
+Filter trennen alle, aktive und ausgeblendete Muster. Jede Karte öffnet ihre
+Quelle explizit und bietet fünf serverpersistente Feedbackwerte. 377/377
+Node-Tests, Produktionsbuild, npm-Audit mit 0 Schwachstellen, lokaler
+Chrome-Smoke und read-only Günni-Live-Smoke sind grün. Das produktive Mobilbild
+zeigt ein reales Gmail-Muster, 48-Pixel-Touchziele, 0 Konsolenfehler und keine
+Secrets. PWA-, Mail- und iPhone/WebKit-Regressionen sind ebenfalls bestanden.
+Feature-Commit: `55f25b2`. Image:
+`purelink/agentone:2026.11.07-110` (`sha256:04c4097cbafdcec40f50e92dd55a561fc856966a10821718923a31c84e5b7f9c`,
+494.505.129 Bytes). Secret-freies Archiv:
+`output/demo/agentone-release-2026.11.07-110.tgz` (9.357.417 Bytes,
+SHA-256 `62b98164c71f4301fd53c30f6427e0425a35bba579762b0999a9f4eb5e9295a4`).
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL + LIVE | Release 109: 375/375 Node-Tests, Produktions-Build, npm-Audit, lokaler Pattern-Feed-Chrome-Smoke und read-only Günni-Live-Smoke grün; Effect Ledger und PWA-Push bleiben als Regression erhalten. |
+| Lokale Anwendung | PASS LOCAL + LIVE | Release 110: 377/377 Node-Tests, Produktions-Build, npm-Audit, lokaler Pattern-Feedback-Chrome-Smoke und read-only Günni-Live-Smoke grün; Effect Ledger und PWA-Push bleiben als Regression erhalten. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. HTTPS, WebKit, Vault-Preflight, 54-px-Touchziele und 0 Konsolenfehler sind live geprüft; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |

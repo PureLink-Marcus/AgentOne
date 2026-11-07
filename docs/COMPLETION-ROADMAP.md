@@ -6,6 +6,14 @@ Ziel ist kein Portal mit vorbereiteten Kacheln, sondern ein Assistent mit einem
 geschlossenen Kreislauf aus echten Quellen, erklärbaren Mustern, Rückmeldung,
 Freigabe und nachvollziehbarer Ausführung.
 
+Release `2026.11.07-110` ist der aktuelle Masterstand. Der Pattern Feed besitzt
+jetzt echte Filter, Quellnavigation und eine persistente Feedback-Schleife mit
+fünf differenzierten Antworten. Er ist auf Günni und Fressi ausgerollt und mit
+377/377 Tests, Build, Audit sowie Chrome-/WebKit-Live-Smokes abgenommen. Extern
+offen bleiben ausschließlich Nachweise, die echte Benutzerhardware oder noch
+nicht bereitgestellte Provider-Credentials erfordern: WHOOP und ein realer
+iPhone-Safari-/PWA-Gerätetest.
+
 ## Ehrlicher Ausgangspunkt
 
 Release `2026.11.07-103` ist auf Fressi und Günni live: vier private Container

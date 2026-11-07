@@ -1,13 +1,21 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-109` (**MASTER · LIVE auf Fressi und Günni**) mit persistentem, erklärbarem Pattern Feed für Mail, Kalender und Health
+Status: Release `2026.11.07-110` (**MASTER · LIVE auf Fressi und Günni**) mit bedienbarem, erklärbarem Pattern Feed und dauerhafter Feedback-Schleife
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
-AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 109 läuft dort auf vier gesunden Containern; der gestufte Rollout Günni → Fressi besitzt einen automatischen Rückfall auf das exakte Preflight-Image. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 110 läuft dort auf vier gesunden Containern; der gestufte Rollout Günni → Fressi besitzt einen automatischen Rückfall auf das exakte Preflight-Image. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+
+Release 110 schließt die Rückkopplung des persönlichen Assistenten im Frontend:
+erkannte Muster lassen sich nach aktiv oder ausgeblendet filtern, ihre Quelle
+gezielt öffnen und mit `hilfreich`, `weniger`, `falsch`, `später` oder `nie`
+bewerten. Feedback wird benutzerisoliert serverseitig gespeichert; die UI lädt
+anschließend den autoritativen Zustand neu. Der produktive Günni-Smoke zeigte
+ein echtes Gmail-Muster bei 390 × 844 Pixeln, 48-Pixel-Touchzielen, ohne
+horizontales Überlaufen, Konsolenfehler oder Secret-Leak.
 
 Release 103 härtet den iPhone-Pfad dort, wo ein sichtbarer Browsercheck allein
 nicht ausreicht: Vor dem serverseitigen Confirm führt die gewählte Safari-

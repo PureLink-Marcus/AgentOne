@@ -17,6 +17,13 @@ Plane. OpenClaw bleibt die persönliche Runtime für Kanäle, Sitzungen, Tools u
 Plugins. Hermes- und OpenJarvis-Ideen werden nur dort übernommen, wo sie eine
 nachweisbare Lücke schließen.
 
+Release `2026.11.07-110` setzt den Rückkanal dieses Kreislaufs produktiv um:
+Der Benutzer kann ein erklärtes Muster als hilfreich, weniger hilfreich,
+falsch, später oder dauerhaft unerwünscht markieren. Aktive und unterdrückte
+Muster bleiben getrennt sichtbar und ihre Quelle lässt sich direkt öffnen.
+Damit ist der Pattern Feed kein Bericht mehr, sondern eine kontrollierte,
+persistente Lernoberfläche ohne autonome Selbstfreigabe.
+
 ## Warum es so viele Jarvis-Projekte gibt
 
 `Jarvis` ist ein popkultureller Gattungsname und kein technischer Standard.

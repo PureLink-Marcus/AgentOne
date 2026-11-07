@@ -2,6 +2,13 @@
 
 AgentOne Personal ist das eigenständige persönliche Assistenzprojekt innerhalb der AgentOne-Struktur. Die sichtbare Produktidentität bleibt **AgentOne**; Repository und Service heißen **AgentOne-Personal**.
 
+Release `2026.11.07-110` schließt die sichtbare Lernschleife des Assistenten:
+quellenübergreifende Muster sind filterbar, öffnen den passenden Arbeitsbereich
+und nehmen differenziertes Feedback an. Die Antwort wird usergebunden im
+Nudge-/Pattern-Ledger gespeichert und danach aus dem Serverzustand neu
+gerendert. Provider-IDs, Rohbelege, Inhalte und Secrets bleiben außerhalb der
+Browserprojektion. Der Stand ist auf Fressi und Günni live.
+
 ## Verantwortungsgrenzen
 
 - AgentOne Platform verwaltet Projekte, Welten, Workflows und zentrale Richtlinien.
