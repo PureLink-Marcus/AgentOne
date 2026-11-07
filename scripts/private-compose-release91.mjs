@@ -6,9 +6,13 @@ const command=`set -eu
 dir=/data/coolify/services/gohudyegrv06p4jikisfk2x1
 file="$dir/docker-compose.yml"
 test -f "$file"
-test "$(grep -c "purelink/agentone:2026.11.07-90" "$file")" -eq 4
-test "$(grep -c "AGENTONE_RELEASE" "$file")" -eq 2
-cp "$file" "$dir/docker-compose.release90.backup.yml"
+image90=$(grep -c "purelink/agentone:2026.11.07-90" "$file" || true)
+image91=$(grep -c "purelink/agentone:2026.11.07-91" "$file" || true)
+releaseLines=$(grep -c "AGENTONE_RELEASE" "$file" || true)
+echo "preflight image90=$image90 image91=$image91 releaseLines=$releaseLines"
+test "$((image90 + image91))" -eq 4
+test "$releaseLines" -eq 2
+if [ ! -f "$dir/docker-compose.release90.backup.yml" ]; then cp "$file" "$dir/docker-compose.release90.backup.yml"; fi
 sed -i "s/purelink\\/agentone:2026.11.07-90/purelink\\/agentone:2026.11.07-91/g" "$file"
 sed -i -E "s/(AGENTONE_RELEASE:[[:space:]]*).*/\\12026.11.07-91/g" "$file"
 test "$(grep -c "purelink/agentone:2026.11.07-91" "$file")" -eq 4
