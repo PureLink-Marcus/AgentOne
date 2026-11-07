@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-96`
-Deployment: Release 96 ist auf Fressi und Günni live. Alle vier App-/Access-Container sind healthy; PureLink, Fressi und Günni liefern den versionsgebundenen PWA-Stand 96. Der Release ergänzt einen dauerhaft gespeicherten, verschlüsselten privaten ICS-Kalenderlink mit manueller und automatischer Synchronisation.
+Release-Kandidat: `2026.11.07-97`
+Deployment: Release 96 ist weiterhin auf Fressi und Günni live. Release 97 ist lokal mit 210/210 Tests, Production-Build und vollständigem Chrome-Pairing-Flow abgenommen, aber noch nicht ausgerollt. Der Kandidat schließt den Self-Revoke-Lebenszyklus fail-safe und ergänzt einen secret-freien QR-Einstieg für die iPhone-Basis-Seite.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS | Release 96: 207/207 Node-Tests, Vite-Production-Build sowie dedizierter mobiler Chrome-Smoke für Kalenderlink, Sync, Status und Provider-Hilfen bestanden. |
+| Lokale Anwendung | PASS | Release 97: 210/210 Node-Tests, Vite-Production-Build sowie vollständiger lokaler Chrome-Pairing-Flow bei 390 px bestanden. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS LIVE für Web-Companion | Release 95: Der komplette HTTPS-Flow `INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → REVOKE → RECOVER → VAULT-ROLLBACK` ist auf Günni live bestanden; AES-GCM-IndexedDB, sicherer Kontext, Cleanup und 0 Konsolenfehler sind bestätigt. Offene Codes bleiben auch bei bereits verbundenen Geräten als `PAIRING` sichtbar. Die Abnahme lief in echtem Chrome mit iPhone-UA und simuliertem Standalone, nicht auf Safari/WebKit. Native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
+| Apple-Schnellstart | PASS LIVE für Release 96 / Release 97 lokal | Der komplette Webflow `INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → REVOKE → RECOVER → VAULT-ROLLBACK` ist live bestanden. Release 97 widerruft bei „Auf diesem iPhone trennen“ zuerst serverseitig und löscht erst danach den lokalen Tresor; Netz-/503-Fehler behalten den verschlüsselten Token für einen sicheren Retry. Die Abnahme läuft in echtem Chrome mit iPhone-UA und simuliertem Standalone, nicht auf Safari/WebKit. |
 | Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -132,6 +132,18 @@ Deployment: Release 96 ist auf Fressi und Günni live. Alle vier App-/Access-Con
 | Gesamtabnahme | PASS LIVE | 207/207 Tests und Production-Build grün. Source-Commit `a45b299`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-96.tgz`, SHA-256 `4ad57121ad71c3f567ff0ca92fb2ec2c80cefcbec1285bfdce57ae4ad3499dfd`; Image `purelink/agentone:2026.11.07-96`, Digest `sha256:4373daf420933e06715a602d0059ac7d297adf1b5ff57b1a05ca6b614ccd0463`; vier private Container healthy. |
 | Apple-Nativgrenze | OFFEN | Die Kalenderfunktion ist ein read-only ICS-Abo. Sie behauptet weder EventKit-/HealthKit-Zugriff noch eine Safari-/WebKit-Geräteabnahme; dafür bleiben signierte native App, Apple-Entitlements und echter iPhone-Test erforderlich. |
 | Live-Regression | PASS LIVE | PWA auf PureLink/Fressi/Günni; kompletter iPhone-Webflow `INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → REVOKE → RECOVER → VAULT-ROLLBACK`; ICS-Oberfläche bei 390 × 844 px mit mindestens 44 px Touchhöhe, ohne Überbreite oder Konsolenfehler; Connectoren HTTP 200, OpenClaw-Plugins 68/68, Home 345 Entitäten/15 Domains/275 Controls, Mail mobil, Command Stream, Kommunikation, Planung mit zwei temporären Terminen/einem Konflikt samt Cleanup und Jarvis bestanden. Keine echten Benutzer-ICS-Daten verbunden. |
+
+### Release 97 · fail-safe iPhone trennen und Scan-Einstieg
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Self-Revoke-Reihenfolge | PASS LOKAL | „Auf diesem iPhone trennen“ ruft zuerst den authentifizierten serverseitigen Self-Revoke auf. Erst nach bestätigtem Erfolg werden Geräteschlüssel und lokaler Tresor gelöscht; Gerätefreigabe und zugehörige Ereignisse sind anschließend entfernt. |
+| Fehler-Recovery | PASS LOKAL | Bei Netzfehler oder HTTP 503 bleibt der AES-GCM-geschützte Gerätetoken lokal erhalten und die Oberfläche bietet einen sicheren Retry statt eine nur lokal getrennte Scheinbereinigung. Ein bereits serverseitig widerrufener Schlüssel darf lokal bereinigt werden. |
+| Secret-freier QR | PASS LOKAL | Der authentifizierte, `no-store` ausgelieferte SVG-QR kodiert ausschließlich den normalisierten `PUBLIC_ORIGIN` plus `/iphone`; Query, Fragment, Pairing-Code und Token sind technisch ausgeschlossen. CSP und Cross-Origin-Resource-Policy begrenzen die Antwort. |
+| iOS-Anleitung | PASS LOKAL | Oberfläche, README und Download-ZIP nennen die zwingende Reihenfolge: Basis-Seite in Safari öffnen → Teilen → „Zum Home-Bildschirm“ → installierte App öffnen → sechsstelligen Code manuell eingeben. |
+| Browserabnahme | PASS LOKAL | 210/210 Tests, Production-Build und vollständiger Chrome-Flow grün; 390-px-Ansicht mit mindestens 54 px Touchhöhe, 0 relevante Konsolenfehler und kein Code-/Token-Leak in URL, QR, DOM, Storage, Screenshot oder Logs. |
+| Deployment | AUSSTEHEND | Archiv, Image, Vier-Container-Rollout und Günni-Live-Smoke folgen. Release 96 bleibt bis dahin produktiv. |
+| Apple-Nativgrenze | OFFEN | Die lokale Abnahme simuliert den Standalone-Modus in Chrome. Reales Safari/WebKit sowie direkter EventKit-/HealthKit-Zugriff benötigen weiterhin echten iPhone-Test, signierte native App und Apple-Entitlements. |
 
 ```powershell
 npm run verify:local

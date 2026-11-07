@@ -30,7 +30,7 @@ test('mobile companion script uses fragment handoff and encrypted IndexedDB stor
   assert.match(companionPairJs,/vaultPreflight/);
   assert.match(companionPairJs,/window\.isSecureContext/);
   assert.match(companionPairJs,/Home-Bildschirm-App/);
-  assert.match(companionPairJs,/LOKAL GETRENNT/);
+  assert.match(companionPairJs,/SICHER GETRENNT/);
   assert.match(companionPairJs,/showPairForm\(false\)/);
   assert.match(companionPairJs,/response\.status===401/);
   assert.match(companionPairJs,/showPairForm\(true,\{focus:!quiet\}\)/);
@@ -50,4 +50,16 @@ test('mobile companion script uses fragment handoff and encrypted IndexedDB stor
   assert.match(companionPairJs,/agentone\/companion\/self/);
   assert.match(companionPairJs,/Serverfreigabe wurde zurückgenommen/);
   assert.doesNotMatch(companionPairJs,/console\.(?:log|debug|info)/);
+});
+
+test('mobile disconnect revokes the server grant before removing the local token',()=>{
+  const start=companionPairJs.indexOf("disconnect.addEventListener('click'");
+  const end=companionPairJs.indexOf("if('serviceWorker' in navigator)",start);
+  assert.ok(start>=0&&end>start);
+  const flow=companionPairJs.slice(start,end);
+  assert.match(flow,/fetch\('\/agentone\/companion\/self',\{method:'DELETE'/);
+  assert.match(flow,/response\.status===401&&data\?\.error==='DEVICE_NOT_AUTHORIZED'/);
+  assert.match(flow,/TRENNEN FEHLGESCHLAGEN/);
+  assert.match(flow,/lokale Schlüssel bleibt/);
+  assert.ok(flow.indexOf('fetch(')<flow.indexOf('await vaultDelete(TOKEN)'),'Serverwiderruf muss vor lokaler Löschung erfolgen');
 });

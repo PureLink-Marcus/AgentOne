@@ -236,6 +236,29 @@ Containern live; PWA und Kalenderoberfläche sind auf den öffentlichen Domains
 geprüft. Dieser Webpfad behauptet weder native
 EventKit-/HealthKit-Funktionen noch eine Safari-/WebKit-Geräteabnahme.
 
+#### Release 2026.11.07-97 · sicherer iPhone-Widerruf
+
+Der mobile Companion schließt den Pairing-Lebenszyklus fail-safe. „Auf diesem
+iPhone trennen“ widerruft zuerst die serverseitige Gerätefreigabe und ihre
+Ereignisse. Nur nach bestätigtem Erfolg wird der lokale AES-GCM-Tresor
+gelöscht. Bei Netz- oder 503-Fehler bleibt der verschlüsselte Token für einen
+sicheren Retry erhalten; ein bereits serverseitig widerrufener Token kann
+lokal bereinigt werden.
+
+Für den Wechsel vom Desktop zum iPhone liefert die authentifizierte Instanz
+einen `no-store` SVG-QR mit CSP/CORP. Er kodiert ausschließlich den
+normalisierten `PUBLIC_ORIGIN` plus `/iphone`; Query, Fragment, Pairing-Code
+und Gerätetoken sind ausgeschlossen. Die Einrichtung ist in Oberfläche,
+README und Download-ZIP einheitlich: Safari öffnen, teilen, zum Home-Bildschirm
+hinzufügen, die installierte App starten und den sechsstelligen Code manuell
+eingeben.
+
+**Abnahmestand vor Deployment:** 210/210 Tests, Production-Build und der
+vollständige lokale Chrome-Pairing-Flow sind grün. Bei 390 px beträgt die
+kleinste Touchhöhe 54 px; es gibt keine relevanten Konsolenfehler und keinen
+Secret-Leak. Dies ist keine reale Safari-/WebKit- oder native
+EventKit-/HealthKit-Abnahme.
+
 ## Priorisierte vertikale Lieferpakete
 
 Die Reihenfolge maximiert echten Nutzen und hält externe Freigaben aus dem
@@ -403,6 +426,23 @@ Connectoren, Home, Mail, Command Stream, Kommunikation, Planung und Jarvis
 sind live geprüft. Bis zur Eingabe eines persönlichen Links bleibt Günni
 ehrlich `NOT_CONNECTED`. EventKit, HealthKit und native Safari-/WebKit-Abnahme
 bleiben separate Apple-Arbeitspakete.
+
+### Release 2026.11.07-97 · Self-Revoke und iPhone-Scan
+
+Der Web-Companion kann eine Geräteverbindung nun ohne verwaiste
+Serverfreigabe trennen: Server-Widerruf und Ereignislöschung kommen vor dem
+lokalen Vault-Cleanup, während temporäre Provider-/Netzfehler den Token für
+einen Retry erhalten. Der Instanz-QR enthält ausschließlich die secret-freie
+Basis-Seite `/iphone`; CSP, CORP, Authentifizierung und `no-store` schützen den
+SVG-Pfad. Die iOS-Anleitung beschreibt die zwingende Home-Screen-Installation
+vor der manuellen Codeeingabe.
+
+Der Release-Kandidat ist lokal mit 210/210 Tests, Production-Build und echtem
+Chrome bei 390 px abgenommen: vollständiger Pair-/Ingest-/Reload-/
+Self-Revoke-Retry-/Recovery-/Vault-Rollback-Flow, mindestens 54 px Touchhöhe,
+0 relevante Konsolenfehler und keine Secrets in QR, URL, DOM, Storage,
+Screenshot oder Logs. Archiv, Image, Container-Rollout und Günni-Live-Smoke
+stehen noch aus. Reales Safari/WebKit sowie EventKit/HealthKit bleiben offen.
 
 ## Primärquellen und Lizenzgrenzen
 

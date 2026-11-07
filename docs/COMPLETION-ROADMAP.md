@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-96` ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy und der versionsgebundene PWA-Stand 96 ist auf PureLink, Fressi und Günni bestätigt. 207/207 Tests, Production-Build und mobiler Chrome-Smoke sind grün. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Release 96 ergänzt einen dauerhaft gespeicherten, AES-256-GCM-verschlüsselten privaten Kalenderlink mit manuellem und 15-minütigem Sync, Backoff und Last-good-Snapshot. Auf Günni sind aktuell:
+Release `2026.11.07-96` ist auf Fressi und Günni live; Release-Kandidat `2026.11.07-97` ist lokal mit 210/210 Tests, Production-Build und vollständigem Chrome-Pairing-Flow abgenommen, aber noch nicht ausgerollt. Release 97 schließt den Self-Revoke-Lebenszyklus fail-safe und ergänzt einen secret-freien QR zur iPhone-Basis-Seite. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
@@ -62,6 +62,15 @@ angezeigt.
    sind live geprüft. Ein echter Benutzerfeed bleibt bis zur Linkeingabe
    `NOT_CONNECTED`; EventKit, HealthKit und echte Safari/WebKit-Abnahme sind
    nicht Bestandteil dieses Releases.
+10. **Release 97 lokal bestanden, Deployment ausstehend:** Das Trennen auf dem
+    iPhone widerruft zuerst die Serverfreigabe und löscht danach Ereignisse und
+    lokalen Tresor. Bei Netz-/503-Fehler bleibt der verschlüsselte Token für
+    einen sicheren Retry erhalten. Der QR enthält ausschließlich die
+    normalisierte Instanz-Basis-URL plus `/iphone`, niemals Code oder Token.
+    Safari→Teilen→Zum Home-Bildschirm→App öffnen→Code manuell ist in UI,
+    Anleitung und ZIP konsistent. 390-px-Chrome-Abnahme: mindestens 54 px
+    Touchhöhe, keine Konsolenfehler und kein Secret-Leak. Reale Safari-/WebKit-
+    und native EventKit-/HealthKit-Abnahme bleiben separat.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

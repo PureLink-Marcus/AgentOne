@@ -8,13 +8,25 @@ Dieses Paket beschreibt Günnis sofort nutzbaren **Web-Companion** für Geräte-
 
 1. In Günni **Private Access → Apple Schnellstart** die gewünschten Rechte auswählen.
 2. **Pairing-Code erzeugen** wählen.
-3. Den angebotenen Link am iPhone öffnen oder in Safari aufrufen:
+3. Die Basis-Seite am iPhone ausdrücklich in **Safari** öffnen:
 
    `https://guenni.mwart.solutions/iphone`
 
-4. Den sechsstelligen Code innerhalb von zehn Minuten eingeben und das Gerät benennen.
-5. Der Web-Companion speichert den Geräteschlüssel AES-GCM-verschlüsselt in IndexedDB auf diesem iPhone und prüft sofort den Status.
-6. Für einen eigenen Apple Kurzbefehl kann der Schlüssel auf der verbundenen iPhone-Seite einmal in die Zwischenablage kopiert werden.
+4. In Safari **Teilen → Zum Home-Bildschirm** wählen. Die neu installierte
+   Companion-App danach vom Home-Bildschirm öffnen. Die normale Safari-Seite
+   löst aus Sicherheitsgründen kein Pairing aus.
+5. Den sechsstelligen Code innerhalb von zehn Minuten **manuell in der
+   Home-Bildschirm-App** eingeben und das Gerät benennen.
+6. Der Web-Companion speichert den Geräteschlüssel AES-GCM-verschlüsselt in
+   IndexedDB auf diesem iPhone und prüft sofort den Status.
+7. Für einen eigenen Apple Kurzbefehl kann der Schlüssel auf der verbundenen
+   iPhone-Seite einmal in die Zwischenablage kopiert werden.
+
+Die Aktion **Auf diesem iPhone trennen** widerruft zuerst die Serverfreigabe
+und löscht die zugehörigen Companion-Ereignisse. Erst nach erfolgreicher
+Serverantwort wird der lokale Geräteschlüssel entfernt. Bei einem Netz- oder
+Serverfehler bleibt er ausschließlich für einen sicheren erneuten Versuch im
+verschlüsselten lokalen Tresor erhalten.
 
 ## Direkte Shortcut-API
 

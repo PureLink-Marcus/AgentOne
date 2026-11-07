@@ -8,6 +8,7 @@ import { commandCenterCss, commandCenterHtml as commandCenterHtmlBase, commandCe
 import { openClawPluginCatalog,openClawPluginCatalogByInstance } from './openclaw-plugin-catalog.generated.mjs';
 import { VOICE_AUDIO_MAX_BYTES,VOICE_SUPPORTED_MIME_TYPES,VOICE_TRANSCRIPTION_MODEL,createVoiceTranscriptionForm,createVoiceUpstreamError,publicVoiceTranscriptionError,validateVoiceAudio,voiceAudioFormat,voiceTranscriptionStatus } from './voice-transcription.mjs';
 import { companionPairHtml,companionPairJs,companionPairManifest } from './companion-pair-page.mjs';
+import { companionQrSvg } from './companion-qr.mjs';
 
 const host=process.env.HOST||'0.0.0.0';
 const port=Number(process.env.PORT||8080);
@@ -28,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-96');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-97');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -123,6 +124,15 @@ const pwaIcon=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><re
 const serviceWorker=`const CACHE='agentone-shell-${release}';const STATIC=['/agentone/app.css?v=${encodeURIComponent(release)}','/agentone/app.js?v=${encodeURIComponent(release)}','/agentone/companion-app.js?v=${encodeURIComponent(release)}','/agentone/icon.svg','/agentone/fonts/barlow-400.ttf','/agentone/fonts/barlow-600.ttf','/agentone/fonts/barlow-700.ttf','/agentone/fonts/ibm-plex-mono-400.ttf'];const PATHS=STATIC.map(value=>new URL(value,location.origin).pathname);self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>Promise.all(STATIC.map(async value=>{try{const response=await fetch(value,{cache:'no-store'});if(response.ok)await cache.put(value,response);}catch{}}))).then(()=>self.skipWaiting())));self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==location.origin||!PATHS.includes(url.pathname))return;event.respondWith(caches.match(event.request).then(hit=>hit||fetch(event.request).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(event.request,response.clone()));return response;})));});`;
 function showCommandCenter(res){const body=commandCenterHtml();res.writeHead(200,{'content-type':'text/html; charset=utf-8','content-length':Buffer.byteLength(body),'cache-control':'no-store','content-security-policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; connect-src 'self' wss:; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'x-content-type-options':'nosniff','x-frame-options':'DENY','referrer-policy':'no-referrer'});res.end(body);}
 function showCompanionPairing(res){const body=companionPairHtml({displayName,brandPrimary,brandAccent,release});res.writeHead(200,{'content-type':'text/html; charset=utf-8','content-length':Buffer.byteLength(body),'cache-control':'no-store','content-security-policy':"default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; img-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'strict-transport-security':'max-age=31536000','x-content-type-options':'nosniff','x-frame-options':'DENY','referrer-policy':'no-referrer'});res.end(body);}
+async function showCompanionQr(res){
+  try{
+    const {svg}=await companionQrSvg(publicOrigin);
+    res.writeHead(200,securityHeaders({'content-type':'image/svg+xml; charset=utf-8','content-length':Buffer.byteLength(svg),'content-disposition':'inline; filename="agentone-iphone-base-url.svg"','content-security-policy':"default-src 'none'; sandbox",'cross-origin-resource-policy':'same-origin'}));
+    res.end(svg);
+  }catch(error){
+    jsonResponse(res,Number(error?.status)||503,{error:String(error?.code||'COMPANION_QR_UNAVAILABLE'),secretsExposed:false});
+  }
+}
 function originAllowed(req){
   if(!publicOrigin)return false;const expected=new URL(publicOrigin);
   if(String(req.headers.origin||'')===publicOrigin)return true;
@@ -421,6 +431,7 @@ const server=http.createServer((req,res)=>{
   if(!user){if(req.method==='GET'&&String(req.headers.accept||'').includes('text/html'))return redirect(res,'/login');res.writeHead(401,securityHeaders({'content-type':'application/json'}));return res.end('{"error":"authentication_required"}');}
   if(req.url?.startsWith('/agentone/private-access/keys'))return privateAccessKeys(req,res);
   if(req.method==='GET'&&req.url==='/agentone/siri/status')return siriStatus(res);
+  if(req.method==='GET'&&req.url==='/agentone/companion/base-qr.svg')return showCompanionQr(res);
   if(req.method==='GET'&&/^\/agentone\/release\.json(?:\?|$)/.test(req.url||''))return jsonResponse(res,200,{release,instance:expectedUser,updatePolicy:'focus+60s+pull-to-refresh'});
   if(req.method==='GET'&&req.url==='/agentone/instruction-delivery/status')return instructionDeliveryStatus(res);
   if(req.url==='/agentone/personal/connectors'&&(req.method==='GET'||req.method==='PUT'))return personalConnectors(req,res);
