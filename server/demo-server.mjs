@@ -19,7 +19,7 @@ import { classifyMail, emptyMailGroups } from './mail-classifier.mjs';
 import { groupMailMessages,normalizeMailMessage } from './mail-calendar-sync.mjs';
 import { approveMailRule, approveReplyDraft, buildMailBriefing, createMailRule, createReplyDraft } from './mail-workflow.mjs';
 import { normalizePersonalService, personalServiceCatalog, testPersonalService } from './personal-services.mjs';
-import { authorizeCompanion, companionStatus, createCompanionPairing, initCompanionStore, redeemCompanionPairing, revokeCompanion, storeCompanionEvent } from './personal-companion.mjs';
+import { authorizeCompanion, companionDeviceStatus, companionStatus, createCompanionPairing, initCompanionStore, redeemCompanionPairing, revokeCompanion, storeCompanionEvent } from './personal-companion.mjs';
 import { connectorAction, governanceSnapshot, initGovernanceStore, recordAudit } from './personal-governance.mjs';
 import { applyNudgeFeedback, buildPersonalNudges, filterPersonalNudges, initNudgeStore, loadNudgeFeedbackProfile, loadNudgeSettings, quietNow, recordNudgeFeedback, resetNudgeFeedback, saveNudgeSettings } from './personal-nudges.mjs';
 import { forgetMemoryEntry, initPersonalMemoryStore, listMemoryEntries, saveMemoryEntry } from './personal-memory.mjs';
@@ -333,12 +333,13 @@ async function api(req,res,url){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
     try{
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/companion')return json(res,200,companionStatus(state.db,userId));
-      if(req.method==='POST'&&url.pathname==='/api/internal/personal/companion/pair')return json(res,201,{pairing:createCompanionPairing(state.db,{userId,pepper:companionPepper})});
-      if(req.method==='POST'&&url.pathname==='/api/internal/personal/companion/redeem'){const input=await body(req);return json(res,201,{device:redeemCompanionPairing(state.db,{userId,code:input.code,deviceName:input.deviceName,pepper:companionPepper})});}
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/companion/status'){const token=String(req.headers['x-agentone-device-token']||'');return json(res,200,companionDeviceStatus(state.db,{userId,deviceToken:token,pepper:companionPepper}));}
+      if(req.method==='POST'&&url.pathname==='/api/internal/personal/companion/pair'){const pairing=createCompanionPairing(state.db,{userId,pepper:companionPepper});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.pair.created',outcome:'OK',detail:JSON.stringify({expiresAt:pairing.expiresAt,scopes:pairing.scopes,secretsExposed:false})});return json(res,201,{pairing});}
+      if(req.method==='POST'&&(url.pathname==='/api/internal/personal/companion/confirm'||url.pathname==='/api/internal/personal/companion/redeem')){const input=await body(req),device=redeemCompanionPairing(state.db,{userId,code:input.code,deviceName:input.deviceName,pepper:companionPepper});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.pair.confirmed',outcome:'OK',detail:JSON.stringify({deviceId:device.deviceId,scopes:device.scopes,secretsExposed:false})});return json(res,201,{device,status:'CONNECTED',secretsExposed:false});}
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/companion/ingest'){const token=String(req.headers['x-agentone-device-token']||''),device=authorizeCompanion(state.db,{userId,deviceToken:token,pepper:companionPepper}),input=await body(req),scope={health:'health.summary',location:'location.temporary',calendar:'calendar.read',reminders:'reminders.read'}[input.kind];if(!scope||!device.scopes.includes(scope))return json(res,403,{error:'scope_not_granted'});return json(res,201,{event:storeCompanionEvent(state.db,{userId,deviceId:device.id,kind:input.kind,input:input.data})});}
       const deviceMatch=url.pathname.match(/^\/api\/internal\/personal\/companion\/devices\/([^/]+)$/);if(req.method==='DELETE'&&deviceMatch)return json(res,200,revokeCompanion(state.db,{userId,deviceId:decodeURIComponent(deviceMatch[1])}));
       return json(res,405,{error:'method_not_allowed'});
-    }catch(error){return json(res,error.status||400,{error:String(error.message||error).slice(0,180)});}
+    }catch(error){return json(res,error.status||400,{error:error.code||'COMPANION_REQUEST_FAILED',message:String(error.message||error).slice(0,180),secretsExposed:false});}
   }
   if(url.pathname==='/api/internal/personal/governance'||url.pathname.startsWith('/api/internal/personal/governance/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});

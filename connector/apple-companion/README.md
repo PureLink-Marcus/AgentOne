@@ -8,7 +8,7 @@ Dieses Paket verbindet Apple Kurzbefehle mit Günnis bestehender Companion-API. 
 2. Den einmaligen sechsstelligen Code innerhalb von zehn Minuten verwenden.
 3. Ein Kurzbefehl sendet per `POST` an:
 
-   `https://guenni.mwart.solutions/agentone/companion/redeem`
+   `https://guenni.mwart.solutions/agentone/companion/confirm`
 
    JSON:
 
@@ -17,6 +17,14 @@ Dieses Paket verbindet Apple Kurzbefehle mit Günnis bestehender Companion-API. 
    ```
 
 4. `device.deviceToken` aus der Antwort einmalig sicher auf dem iPhone speichern. Günni speichert nur dessen Hash.
+
+5. Die Kopplung ohne erneute Anmeldung prüfen:
+
+   `GET https://guenni.mwart.solutions/agentone/companion/status`
+
+   Header: `X-AgentOne-Device-Token: <lokal gespeicherter Geräteschlüssel>`
+
+   Eine erfolgreiche Antwort meldet `CONNECTED`, Gerätename und freigegebene Bereiche. Der Geräteschlüssel wird nie zurückgegeben. Die frühere Route `/redeem` bleibt als kompatibler Alias bestehen.
 
 ## Zusammenfassungen senden
 

@@ -1,8 +1,8 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-87`
-Deployment: Release 87 ergänzt einen sichtbaren privaten ICS-Kalenderimport, einen korrigierten Voice-Transkriptionspfad mit Formatdiagnose sowie die geprüfte WHOOP-Onboarding-Basis und wird auf Günni und Fressi ausgerollt.
+Release: `2026.11.07-88`
+Deployment: Release 88 vervollständigt das sichtbare iPhone-Pairing mit Confirm-/Status-API, Einmal-Token, Ablauf-/Fehleranzeige und aktualisiertem Apple-Downloadpaket; Rollout erfolgt auf Günni und Fressi.
 
 ## Abgenommen
 

@@ -2,8 +2,11 @@
   "schema": "agentone.apple-companion/v1",
   "instance": "Günni",
   "baseUrl": "https://guenni.mwart.solutions",
-  "pairEndpoint": "/agentone/companion/redeem",
+  "pairEndpoint": "/agentone/companion/confirm",
+  "legacyPairEndpoint": "/agentone/companion/redeem",
+  "statusEndpoint": "/agentone/companion/status",
   "ingestEndpoint": "/agentone/companion/ingest",
+  "deviceTokenHeader": "X-AgentOne-Device-Token",
   "scopes": [
     "health.summary",
     "location.temporary",

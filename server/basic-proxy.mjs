@@ -27,7 +27,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-87');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-88');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -61,7 +61,8 @@ const cookieName='agentone_access';
 const sessionSeconds=12*60*60;
 const attempts=new Map();
 const voiceRequests=new Map();
-const companionRequests=new Map();
+const companionPairRequests=new Map();
+const companionDataRequests=new Map();
 const siriRequests=new Map();
 const sessionApiKeys=new Map();
 const googleOauthPending=new Map();
@@ -138,7 +139,7 @@ function handleLogin(req,res){
   });
 }
 function voiceLimited(req){const key=clientKey(req),now=Date.now(),windowMs=15*60_000;let entry=voiceRequests.get(key)||{count:0,start:now};if(now-entry.start>windowMs)entry={count:0,start:now};entry.count++;voiceRequests.set(key,entry);return entry.count>30;}
-function companionLimited(req){const key=clientKey(req),now=Date.now(),windowMs=15*60_000;let entry=companionRequests.get(key)||{count:0,start:now};if(now-entry.start>windowMs)entry={count:0,start:now};entry.count++;companionRequests.set(key,entry);return entry.count>60;}
+function companionLimited(req,operation){const pairing=operation==='confirm',store=pairing?companionPairRequests:companionDataRequests,key=clientKey(req),now=Date.now(),windowMs=15*60_000,limit=pairing?10:180;let entry=store.get(key)||{count:0,start:now};if(now-entry.start>windowMs)entry={count:0,start:now};entry.count++;store.set(key,entry);return entry.count>limit;}
 function siriAuthorized(req){const value=String(req.headers.authorization||'');return siriApiKey.length>=32&&value.startsWith('Bearer ')&&safe(value.slice(7),siriApiKey);}
 function siriLimited(req){const key=clientKey(req),now=Date.now(),windowMs=60_000;let entry=siriRequests.get(key)||{count:0,start:now};if(now-entry.start>windowMs)entry={count:0,start:now};entry.count++;siriRequests.set(key,entry);return entry.count>30;}
 function readBody(req,max=8_000_000){return new Promise((resolve,reject)=>{const chunks=[];let size=0;req.on('data',chunk=>{size+=chunk.length;if(size>max){reject(Object.assign(new Error('Anfrage ist zu groß'),{status:413}));req.destroy();return;}chunks.push(chunk)});req.on('end',()=>resolve(Buffer.concat(chunks)));req.on('error',reject);});}
@@ -215,8 +216,8 @@ async function personalServices(req,res){
   try{const suffix=String(req.url||'').slice('/agentone/services'.length),headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},options={method:req.method,headers,signal:AbortSignal.timeout(25_000)};if(req.method!=='GET')options.body=(await readBody(req,32_768)).toString('utf8');const response=await fetch(`${personalApiUrl}/api/internal/personal/services${suffix}`,options),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_service_failed',detail:String(error.message||error).slice(0,100)});}
 }
 async function personalCompanion(req,res,{native=false}={}){
-  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'companion_store_unavailable'});if(native&&companionLimited(req))return jsonResponse(res,429,{error:'too_many_companion_requests'});if(!native&&req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
-  try{const suffix=String(req.url||'').slice('/agentone/companion'.length),headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'};if(req.headers['x-agentone-device-token'])headers['x-agentone-device-token']=String(req.headers['x-agentone-device-token']);const options={method:req.method,headers,signal:AbortSignal.timeout(15_000)};if(!['GET','HEAD'].includes(req.method||''))options.body=(await readBody(req,32_768)).toString('utf8');const response=await fetch(`${personalApiUrl}/api/internal/personal/companion${suffix}`,options),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'companion_service_failed',detail:String(error.message||error).slice(0,100)});}
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found',message:'Companion ist nur in persönlichen Instanzen verfügbar.',secretsExposed:false});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'COMPANION_SERVICE_NOT_CONFIGURED',message:'Der iPhone-Dienst ist serverseitig noch nicht konfiguriert.',secretsExposed:false});const suffix=String(req.url||'').slice('/agentone/companion'.length),operation=suffix==='/confirm'||suffix==='/redeem'?'confirm':suffix==='/status'?'status':suffix==='/ingest'?'ingest':'browser';if(native&&companionLimited(req,operation))return jsonResponse(res,429,{error:'COMPANION_RATE_LIMIT',message:operation==='confirm'?'Zu viele Pairing-Versuche. Bitte 15 Minuten warten.':'Zu viele Companion-Anfragen. Bitte kurz warten.',retryAfterSeconds:operation==='confirm'?900:60,secretsExposed:false});if(!native&&req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'COMPANION_ORIGIN_REJECTED',message:'Die Anfrage stammt nicht von dieser AgentOne-Instanz.',secretsExposed:false});
+  try{const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json','accept':'application/json'};if(req.headers['x-agentone-device-token'])headers['x-agentone-device-token']=String(req.headers['x-agentone-device-token']).slice(0,160);const options={method:req.method,headers,signal:AbortSignal.timeout(15_000)};if(!['GET','HEAD'].includes(req.method||''))options.body=(await readBody(req,32_768)).toString('utf8');const response=await fetch(`${personalApiUrl}/api/internal/personal/companion${suffix}`,options),payload=await response.text();auditLog('companion.request',{operation,status:response.status,ok:response.ok});res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){auditLog('companion.request',{operation,status:error.status||502,ok:false});return jsonResponse(res,error.status||502,{error:error.status===413?'COMPANION_BODY_TOO_LARGE':'COMPANION_SERVICE_UNAVAILABLE',message:error.status===413?'Die Companion-Anfrage ist zu groß.':'Der iPhone-Dienst ist vorübergehend nicht erreichbar.',secretsExposed:false});}
 }
 async function personalGovernance(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'governance_store_unavailable'});if(req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
@@ -361,7 +362,7 @@ const server=http.createServer((req,res)=>{
     if(!fs.existsSync(file)){res.writeHead(404);return res.end();}
     const body=fs.readFileSync(file);return asset(res,'font/ttf',body);
   }
-  if(req.method==='POST'&&(req.url==='/agentone/companion/redeem'||req.url==='/agentone/companion/ingest'))return personalCompanion(req,res,{native:true});
+  if((req.method==='POST'&&['/agentone/companion/confirm','/agentone/companion/redeem','/agentone/companion/ingest'].includes(req.url||''))||(req.method==='GET'&&req.url==='/agentone/companion/status'))return personalCompanion(req,res,{native:true});
   if(req.method==='POST'&&req.url==='/agentone/siri/v1/execute')return siriExecute(req,res);
   const user=authenticatedUser(req);
   if(req.url==='/login'&&req.method==='GET'){if(user)return redirect(res,'/');return showLogin(res);}

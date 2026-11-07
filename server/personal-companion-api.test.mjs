@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import net from 'node:net';
+import os from 'node:os';
+import path from 'node:path';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+
+const freePort=()=>new Promise((resolve,reject)=>{const server=net.createServer();server.once('error',reject);server.listen(0,'127.0.0.1',()=>{const {port}=server.address();server.close(()=>resolve(port));});});
+async function waitFor(url){for(let attempt=0;attempt<60;attempt+=1){try{if((await fetch(url)).ok)return;}catch{}await new Promise(resolve=>setTimeout(resolve,100));}throw new Error(`Dienst wurde nicht bereit: ${url}`);}
+async function stopChild(child){if(!child||child.exitCode!==null)return;await new Promise(resolve=>{const timer=setTimeout(resolve,5_000);child.once('exit',()=>{clearTimeout(timer);resolve();});child.kill();});}
+
+test('public companion completes Pair -> persisted Confirm -> token Status without exposing secrets',async()=>{
+  const apiPort=await freePort(),proxyPort=await freePort(),dataDir=mkdtempSync(path.join(os.tmpdir(),'agentone-companion-api-')),internalToken='companion-internal-test-token',pepper='companion-test-pepper-never-returned',origin=`http://127.0.0.1:${proxyPort}`,apiOrigin=`http://127.0.0.1:${apiPort}`;
+  const demoEnvironment={...process.env,HOST:'127.0.0.1',PORT:String(apiPort),AGENTONE_DATA_DIR:dataDir,DATABASE_URL:'',AGENTONE_BASIC_AUTH_USER:'',AGENTONE_BASIC_AUTH_PASSWORD:'',AGENTONE_INTERNAL_API_TOKEN:internalToken,AGENTONE_SECRET_KEY:pepper,AGENTONE_DEMO_MASTER_KEY:''};
+  const startDemo=()=>spawn(process.execPath,['server/demo-server.mjs'],{cwd:process.cwd(),env:demoEnvironment,stdio:'ignore'});
+  let demo=startDemo();
+  const proxy=spawn(process.execPath,['server/basic-proxy.mjs'],{cwd:process.cwd(),env:{...process.env,HOST:'127.0.0.1',PORT:String(proxyPort),UPSTREAM_URL:apiOrigin,PERSONAL_API_URL:apiOrigin,PERSONAL_API_TOKEN:internalToken,BASIC_AUTH_USER:'guenni-test',BASIC_AUTH_PASSWORD:'pairing-test-password',AUTHENTICATED_USER:'guenni-test@agentone.private',AGENTONE_DISPLAY_NAME:'Günni',AGENTONE_INSTANCE_TYPE:'personal',AGENTONE_RELEASE:'pairing-test',ACCESS_SESSION_SECRET:'pairing-session-secret-with-at-least-32-characters',PUBLIC_ORIGIN:origin},stdio:'ignore'});
+  try{
+    await waitFor(`${apiOrigin}/api/health`);await waitFor(`${origin}/proxy-health`);
+    assert.equal((await fetch(`${origin}/agentone/companion/pair`,{method:'POST',headers:{origin,'content-type':'application/json'},body:'{}'})).status,401);
+    const login=await fetch(`${origin}/login`,{method:'POST',headers:{origin,'content-type':'application/x-www-form-urlencoded'},body:'username=guenni-test&password=pairing-test-password',redirect:'manual'});assert.equal(login.status,303);const cookie=login.headers.get('set-cookie').split(';')[0];
+    const crossSite=await fetch(`${origin}/agentone/companion/pair`,{method:'POST',headers:{cookie,origin:'https://evil.example','content-type':'application/json'},body:'{}'});assert.equal(crossSite.status,403);assert.equal((await crossSite.json()).error,'COMPANION_ORIGIN_REJECTED');
+    const pairResponse=await fetch(`${origin}/agentone/companion/pair`,{method:'POST',headers:{cookie,origin,'content-type':'application/json'},body:'{}'});assert.equal(pairResponse.status,201);const pairPayload=await pairResponse.json(),code=pairPayload.pairing.code;assert.match(code,/^\d{6}$/);assert.ok(Date.parse(pairPayload.pairing.expiresAt)-Date.now()>9*60_000);assert.doesNotMatch(JSON.stringify(pairPayload),new RegExp(`${internalToken}|${pepper}`));
+    const pending=await fetch(`${origin}/agentone/companion`,{headers:{cookie}}).then(response=>response.json());assert.equal(pending.status,'PAIRING');assert.equal(pending.devices.length,0);assert.equal(JSON.stringify(pending).includes(code),false);
+
+    await stopChild(demo);demo=startDemo();await waitFor(`${apiOrigin}/api/health`);
+
+    const malformed=await fetch(`${origin}/agentone/companion/confirm`,{method:'POST',headers:{'content-type':'application/json'},body:'{"code":"123","deviceName":"Test iPhone"}'});assert.equal(malformed.status,400);const malformedPayload=await malformed.json();assert.equal(malformedPayload.error,'PAIRING_CODE_FORMAT_INVALID');assert.match(malformedPayload.message,/sechs Ziffern/);
+    const confirmResponse=await fetch(`${origin}/agentone/companion/confirm`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code,deviceName:'Marcus iPhone'})});assert.equal(confirmResponse.status,201);const confirmPayload=await confirmResponse.json(),deviceToken=confirmPayload.device.deviceToken;assert.equal(confirmPayload.status,'CONNECTED');assert.match(deviceToken,/^a1d_[A-Za-z0-9_-]{40,100}$/);assert.equal(confirmPayload.device.shownOnce,true);assert.doesNotMatch(JSON.stringify(confirmPayload),new RegExp(`${internalToken}|${pepper}`));
+    const replay=await fetch(`${origin}/agentone/companion/confirm`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code,deviceName:'Replay'})});assert.equal(replay.status,401);
+    const noToken=await fetch(`${origin}/agentone/companion/status`);assert.equal(noToken.status,401);assert.equal((await noToken.json()).error,'DEVICE_NOT_AUTHORIZED');
+    const deviceStatusResponse=await fetch(`${origin}/agentone/companion/status`,{headers:{'x-agentone-device-token':deviceToken}});assert.equal(deviceStatusResponse.status,200);const deviceStatus=await deviceStatusResponse.json();assert.equal(deviceStatus.status,'CONNECTED');assert.equal(deviceStatus.device.name,'Marcus iPhone');assert.equal(deviceStatus.secretsExposed,false);assert.equal(JSON.stringify(deviceStatus).includes(deviceToken),false);
+    const browserStatus=await fetch(`${origin}/agentone/companion`,{headers:{cookie}}).then(response=>response.json());assert.equal(browserStatus.status,'CONNECTED');assert.equal(browserStatus.devices.length,1);
+    const app=await fetch(`${origin}/agentone/app.js`,{headers:{cookie}}).then(response=>response.text());assert.match(app,/PAIRING-FEHLER/);assert.match(app,/watchApplePairing/);assert.match(app,/aria-live="polite"/);assert.match(app,/COMPANION_ORIGIN_REJECTED/);
+    const manifest=await fetch(`${origin}/manifest.webmanifest`).then(response=>response.json());assert.equal(manifest.display,'standalone');assert.equal(manifest.start_url,'/');
+  }finally{await stopChild(proxy);await stopChild(demo);rmSync(dataDir,{recursive:true,force:true});}
+});
