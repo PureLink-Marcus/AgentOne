@@ -10,7 +10,7 @@ test "$(grep -c "purelink/agentone:2026.11.07-90" "$file")" -eq 4
 test "$(grep -c "AGENTONE_RELEASE" "$file")" -eq 2
 cp "$file" "$dir/docker-compose.release90.backup.yml"
 sed -i "s/purelink\\/agentone:2026.11.07-90/purelink\\/agentone:2026.11.07-91/g" "$file"
-sed -i -E "s/(AGENTONE_RELEASE[=:][[:space:]]*)[^[:space:]\"]+/\\12026.11.07-91/g" "$file"
+sed -i -E "s/(AGENTONE_RELEASE:[[:space:]]*).*/\\12026.11.07-91/g" "$file"
 test "$(grep -c "purelink/agentone:2026.11.07-91" "$file")" -eq 4
 test "$(grep -c "AGENTONE_RELEASE.*2026.11.07-91" "$file")" -eq 2
 cd "$dir"
