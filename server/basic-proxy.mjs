@@ -29,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-103');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-104');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -420,7 +420,7 @@ async function streamPersonalHealthJobResponse(response,res,{collection=false}={
 async function personalHealth(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'health_store_unavailable'});
   const requestUrl=new URL(String(req.url||'/agentone/health'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/health'.length),method=String(req.method||'GET');
-  const jobCollection=suffix==='/import-jobs',jobDetail=/^\/import-jobs\/[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(suffix),allowed=(method==='GET'&&(['','/','/consents','/digest','/comparison'].includes(suffix)||jobCollection||jobDetail))||(method==='POST'&&(['/consents','/apple-import','/export'].includes(suffix)||jobCollection))||(method==='DELETE'&&(suffix==='/data'||/^\/consents\/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(suffix)||jobDetail));
+  const jobCollection=suffix==='/import-jobs',jobDetail=/^\/import-jobs\/[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(suffix),allowed=(method==='GET'&&(['','/','/consents','/digest','/comparison','/trends'].includes(suffix)||jobCollection||jobDetail))||(method==='POST'&&(['/consents','/apple-import','/export'].includes(suffix)||jobCollection))||(method==='DELETE'&&(suffix==='/data'||/^\/consents\/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(suffix)||jobDetail));
   if(!allowed)return jsonResponse(res,404,{error:'not_found'});
   if(method==='GET'){
     const queryKeys=suffix==='/digest'?new Set(['source','from','to']):suffix==='/comparison'?new Set(['periodDays','minimumCoverageDays','timeZone']):new Set();

@@ -608,7 +608,7 @@ und Image `purelink/agentone:2026.11.07-102` mit ID
 sind auf vier healthy privaten Containern ausgerollt. PWA, Voice und der
 vollständige iPhone-Pairing-Flow bleiben live grün.
 
-### Release 2026.11.07-103 · WHOOP und belastbarer iPhone-Tresor (**RELEASE CANDIDATE**)
+### Release 2026.11.07-103 · WHOOP und belastbarer iPhone-Tresor (**PASS LIVE**)
 
 WHOOP ist als echte persönliche read-only Quelle statt als Demo-Karte
 verdrahtet. Ein persistenter, benutzer- und Redirect-gebundener OAuth-State
@@ -636,8 +636,29 @@ automatisierte WebKit-Prüfung bestätigt sicheren Kontext, Fragmentbereinigung,
 AES-GCM-IndexedDB, nicht exportierbaren Schlüssel, Reload und Self-Revoke. Sie
 ersetzt keinen realen iPhone-Safari-/PWA-Hardwaretest. Ebenso bleibt WHOOP bis
 zur Registrierung und Autorisierung einer echten Developer App ausdrücklich
-nicht `LIVE`. Deployment, Image-Digest und produktive Browserabnahme werden
-erst nach dem Rollout ergänzt.
+nicht `LIVE`. Der gestufte Rollout auf Fressi und Günni, vier healthy Container
+sowie die produktive read-only Browserabnahme sind abgeschlossen. Der echte
+WHOOP-Providerroundtrip und ein iPhone-Hardwaretest bleiben externe Abnahmen.
+
+### Release 2026.11.07-104 · kontrollierte persönliche Auswertung (**LOCAL RC**)
+
+Mail Insight führt ausschließlich nach einem expliziten Klick einen exakt an
+Benutzer, Konto, UID und UIDVALIDITY gebundenen, begrenzten Nachrichtentext zu
+einer lokalen deterministischen Analyse. Anhänge und Remote-Bilder werden nicht
+geladen; Body und Analyseinput werden nicht persistiert und erscheinen nicht
+im Audit. Daraus entstehende Kalenderhinweise bleiben Entwürfe.
+
+Health Trends vergleicht sieben Tage mit der vorherigen 28-Tage-Basis. Quellen
+und Metriken, insbesondere HRV, bleiben getrennt; Ergebnisse sind deskriptiv
+und nicht medizinisch. Hermes Memory Review behandelt ADD, PATCH und REMOVE als
+Provenienz- und Hash-gebundene Kandidaten. Nur ein Mensch darf den exakten
+Kandidaten freigeben oder ablehnen.
+
+Die mobile Pairing-Oberfläche heißt eindeutig **Günni Companion · Web-App**.
+Sie funktioniert direkt in Safari und optional als Home-Bildschirm-PWA. Das
+ZIP ist nur eine Anleitung; eine native HealthKit-/EventKit-/Hintergrund-App
+existiert noch nicht. `PASS LIVE` folgt erst nach vollständiger Regression,
+gestuftem Rollout und produktiver Browserabnahme.
 
 ## Primärquellen und Lizenzgrenzen
 

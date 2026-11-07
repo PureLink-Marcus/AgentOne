@@ -113,9 +113,21 @@ Netzwerkanfrage, Zeitüberschreitungen sind begrenzt und der Gerätetoken besitz
 keinen Kopierpfad mehr. Live-Smokes arbeiten standardmäßig read-only und
 ersetzen deshalb keinen offenen Benutzer-Code. 296/296 Node-Tests sind im
 letzten vollständigen lokalen Lauf grün; automatisierte WebKit-/Chrome-
-Regression und Pairing-Security prüfen die Browserlogik. Release 103 ist bis
-zum separaten Rollout und zur echten WHOOP-/iPhone-Hardwareabnahme kein
-behaupteter Live-Providerstand.
+Regression und Pairing-Security prüfen die Browserlogik. Release 103 ist auf
+Fressi und Günni live; WHOOP bleibt ohne registrierte Provider-App ehrlich
+`NOT_CONFIGURED`, und die echte iPhone-Hardwareabnahme bleibt separat offen.
+
+Release 104 erweitert Personal um drei bewusst begrenzte, vom Benutzer
+steuerbare Funktionen. Eine einzelne, exakt an Konto, UID und UIDVALIDITY
+gebundene Mail kann auf Klick lokal analysiert werden; der Body wird weder in
+der Mail-Datenbank noch im Audit gespeichert. Die Health-Ansicht zeigt
+quellengetrennte 7-Tage-Trends gegen die vorherige 28-Tage-Basis, ohne
+medizinische Aussage. Hermes Memory Review erzeugt ADD-/PATCH-/REMOVE-
+Kandidaten mit Provenienz und exaktem Content-Hash; nur ein Mensch kann den
+unveränderten Kandidaten freigeben. Der mobile Pairing-Pfad heißt durchgehend
+**Günni Companion · Web-App** und ist direkt in Safari nutzbar. Sein ZIP ist
+nur eine optionale Anleitung; direkter HealthKit-, EventKit- und
+Hintergrundstandort-Zugriff bleibt Aufgabe einer künftigen signierten iOS-App.
 
 ## Administration
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { IMAP_CLASSIFICATION_HEADERS, buildImapFetchPlan, normalizeImapFetchMessage, syncImapMailbox } from './personal-imap-sync.mjs';
+import { IMAP_CLASSIFICATION_HEADERS, buildImapFetchPlan, fetchSingleImapInsightContent, normalizeImapFetchMessage, syncImapMailbox } from './personal-imap-sync.mjs';
 
 function rawMessage(uid,overrides={}){
   return {
@@ -73,4 +73,13 @@ test('incremental backlog is rejected without returning an advanced cursor',asyn
 test('normalizer never serializes raw headers, body or source',()=>{
   const value=normalizeImapFetchMessage({account:{id:'mail-a'},message:rawMessage(1,{source:Buffer.from('private body'),bodyParts:new Map([['text',Buffer.from('private body')]])}),uidValidity:'9'}),serialized=JSON.stringify(value);
   assert.doesNotMatch(serialized,/private body/i);assert.equal('source' in value,false);assert.equal('bodyParts' in value,false);assert.equal(value.uidValidity,'9');
+});
+
+test('single insight fetch is UIDVALIDITY-bound, partial, read-only and excludes attachments',async()=>{
+  const calls=[],client={mailbox:{uidValidity:9001n},getMailboxLock:async()=>({release:()=>calls.push({release:true})}),fetchOne:async(uid,query,options)=>{calls.push({uid,query,options});if(query.bodyStructure)return {uid,bodyStructure:{type:'multipart/mixed',childNodes:[{part:'1',type:'text/plain',encoding:'quoted-printable',parameters:{charset:'utf-8'},size:80},{part:'2',type:'application/pdf',disposition:'attachment',dispositionParameters:{filename:'secret.pdf'},size:9000}]}};return {uid,bodyParts:new Map([['1',Buffer.from('Bitte=20Termin=202026-11-10=20pr=C3=BCfen.')]])};}};
+  const result=await fetchSingleImapInsightContent({client,uid:42,uidValidity:'9001',maxBytes:4096});assert.match(result.text,/Bitte Termin 2026-11-10 prüfen/);assert.equal(result.attachmentCount,1);assert.equal(result.remoteContentFetched,false);assert.deepEqual(calls[1],{uid:42,query:{uid:true,bodyParts:[{key:'1',start:0,maxLength:4097}]},options:{uid:true}});assert.deepEqual(calls.at(-1),{release:true});assert.equal(calls.some(call=>call.query?.source),false);
+});
+
+test('single insight fetch rejects stale UIDVALIDITY before reading content',async()=>{
+  let fetched=false,released=false,client={mailbox:{uidValidity:9002n},getMailboxLock:async()=>({release:()=>{released=true;}}),fetchOne:async()=>{fetched=true;return false;}};await assert.rejects(()=>fetchSingleImapInsightContent({client,uid:42,uidValidity:'9001'}),error=>error.code==='MAIL_INSIGHT_NOT_FOUND'&&error.status===404);assert.equal(fetched,false);assert.equal(released,true);
 });

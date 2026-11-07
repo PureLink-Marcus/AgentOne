@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   deletePersonalMailAccountData,
+  getPersonalMailMessage,
   listDuePersonalMailSyncs,
   listPersonalMailMessages,
   normalizePersonalMailMessage,
@@ -48,6 +49,12 @@ test('message listing is user scoped, parameterized and returns deterministic pu
   }),result=await listPersonalMailMessages({pool},{userId:'user-a',accountId:'mail-1',category:'people',query:injection,limit:999});
   assert.equal(result.messages.length,1);assert.equal(result.messages[0].id,result.messages[0].idempotencyKey);assert.equal(result.messages[0].unread,true);assert.deepEqual(result.summary,{total:4,threads:3,people:1,newsletters:1,transactions:1,spam:1,categories:{people:1,newsletters:1,transactions:1,spam:1},needsReview:2,unread:3});assert.equal(result.contentExposed,false);
   assert.equal(pool.calls[0].sql.includes(injection),false);assert.equal(pool.calls[0].params[0],'user-a');assert.equal(pool.calls[0].params.at(-1),200);assert.match(pool.calls[0].sql,/ORDER BY received_at DESC,idempotency_key DESC/);await assert.rejects(()=>listPersonalMailMessages({pool},{userId:'user-a',category:'other'}),/Mail-Filter/);
+});
+
+test('single message lookup binds user, account, UID and UIDVALIDITY exactly',async()=>{
+  const pool=new FakeClient(()=>({rows:[{accountId:'mail-1',idempotencyKey:hash('a'),providerId:'imap-42',uid:'42',uidValidity:'9001',threadKey:hash('b'),sender:'person@example.test',subject:'Treffen morgen',receivedAt:'2026-11-07T09:00:00.000Z',labels:[],category:'people',confidence:.86,classificationSignals:['person-authenticated'],needsReview:false}]})),result=await getPersonalMailMessage({pool},{userId:'user-a',accountId:'mail-1',uid:42,uidValidity:'9001'});
+  assert.equal(result.userId,'user-a');assert.equal(result.accountId,'mail-1');assert.equal(result.uid,42);assert.equal(result.uidValidity,'9001');assert.equal(pool.calls.length,1);assert.deepEqual(pool.calls[0].params,['user-a','mail-1',42,'9001']);assert.match(pool.calls[0].sql,/user_id=\$1 AND account_id=\$2 AND uid=\$3 AND uid_validity=\$4/);assert.equal(pool.calls[0].sql.includes('user-a'),false);
+  await assert.rejects(()=>getPersonalMailMessage({pool},{userId:'user-a',accountId:'mail-1',uid:0,uidValidity:'9001'}),error=>error.code==='MAIL_INSIGHT_IDENTITY_INVALID');
 });
 
 test('failure state uses bounded backoff and due/delete operations remain user bound',async()=>{

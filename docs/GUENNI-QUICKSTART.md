@@ -28,7 +28,8 @@ Unter **Postfach hinzufügen** `1blu` oder `Anderer IMAP/SMTP-Anbieter` auswähl
 ## 4. Apple, Siri und iPhone
 
 - **Siri:** Einstellungen → Siri und Kurzbefehle → Vorlage laden.
-- **iPhone koppeln:** Verbindungen → iPhone Companion → iPhone koppeln. Der Code gilt zehn Minuten und einmalig.
+- **Companion koppeln:** Günni → Zugänge → Apple Schnellstart → Pairing-Code erzeugen. Danach [Günni Companion · Web-App](https://guenni.mwart.solutions/iphone) direkt in Safari öffnen und den sechsstelligen Code eingeben. Der Code gilt zehn Minuten und einmalig.
+- **Optional installieren:** In Safari **Teilen → Zum Home-Bildschirm**. Das Download-ZIP ist nur eine Anleitung, keine iOS-App. Eine native HealthKit-/EventKit-App gibt es noch nicht.
 - **Health:** nur gewählte Zusammenfassungen für Aktivität, Schlaf und Workouts; keine Rohdaten oder Diagnosen.
 - **Standort:** einmalig oder Ankunft/Abfahrt; temporäre Freigaben laufen spätestens nach 60 Minuten aus.
 - **Kalender und Erinnerungen:** read-only Zusammenfassungen über den Companion-Pfad.

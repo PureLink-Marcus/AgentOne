@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-103` (**LOCAL PASS · DEPLOYMENT PENDING**)
-Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Release 103 ist lokal geprüft, aber an dieser Stelle noch nicht als produktiv ausgerollt dokumentiert. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Release: `2026.11.07-104` (**LOCAL PASS · DEPLOYMENT PENDING**)
+Deployment: Release 103 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Release 104 ist lokal vollständig geprüft, aber noch nicht als produktiv ausgerollt dokumentiert. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL | Release 103: 296/296 Node-Tests im letzten vollständigen Lauf; WHOOP- und iPhone-Pairing-Regressionssuite grün. Deployment- und Live-Nachweise werden erst nach dem tatsächlichen Rollout ergänzt. |
+| Lokale Anwendung | PASS LOCAL | Release 104: 321/321 Node-Tests, Produktions-Build, mobiler Produktivitäts-Smoke sowie Health-, Chrome-, WebKit- und Pairing-Security-Abnahme grün. Deployment- und Live-Nachweise werden erst nach dem tatsächlichen Rollout ergänzt. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS LOCAL / RELEASE 102 LIVE | Release 103 ergänzt vor dem Confirm eine echte AES-GCM-/IndexedDB-Roundtrip-Probe mit nicht exportierbarem Schlüssel, Safari-/PWA-Erklärung, iOS-only Direktlink und begrenzte Timeouts. Live-Smokes sind standardmäßig read-only und erzeugen keinen Pairing-Code. Release 102 bleibt produktiv; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
+| Apple-Schnellstart | PASS LOCAL / RELEASE 103 LIVE | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. Automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
 | Gmail ohne OAuth-Client | PASS LIVE | Release 99: Günni hält 500 reale IMAP-Metadaten mit persistentem UID-/UIDVALIDITY-Cursor. Zwei direkte inkrementelle Läufe endeten im zweiten Lauf mit 0 Fetches und 0 neuen Datensätzen; nach vollständiger Containerrotation waren alle 500 Datensätze ohne neuen Sync verfügbar. Bodies, Snippets, Anhänge und Roh-Header werden weder geladen noch gespeichert. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -211,6 +211,16 @@ Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Safari/PWA-Handoff | PASS LIVE WEB-FLOW | Kontextgerechter iOS-Direktlink, Desktop zeigt nur secret-freien Basis-QR plus manuellen Code. Der read-only WebKit-Smoke auf Günni ist grün und kann keinen Benutzer-Code überschreiben. Ein echtes iPhone bleibt als Hardwareabnahme offen. |
 | Regression | PASS LIVE | 296/296 Node-Tests, Production-Build, Local-Smoke, npm-Audit mit 0 bekannten Produktionsschwachstellen sowie automatisierte WebKit-/Chrome- und Pairing-Security-Prüfung. PWA-Abnahme auf PureLink, Fressi und Günni; Günni-iPhone read-only mit HTTPS, Vault-Preflight, 54-px-Touchzielen, 0 Konsolenfehlern und ohne Secrets bestanden. |
 | Deployment | PASS LIVE | Feature-Commit `46c6e0e`; finaler Rollout-Stand `3379cda`; secret-freies Archiv SHA-256 `a12b0b02d9e261c95d858ea98dca8d05b8ce5cd949f6695895132ac81321da8e`; Image `purelink/agentone:2026.11.07-103`, ID `sha256:e7661fa2e8c0cd0bd7e346f2c6b5b97fe6e26fb2a9fdd3eecb054fe0a7bf845e`; vier private Container healthy. Der gestufte Rollout Günni → Fressi besitzt einen verifizierten automatischen Rollback auf das exakte Preflight-Image. |
+
+### Release 104 · Mail Insight, Health Trends und Memory Review (**LOCAL RC**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Mail Insight | IMPLEMENTIERT | Benutzer-, Konto-, UID- und UIDVALIDITY-gebundener Einzelfetch; begrenzter Textteil ohne Anhänge oder Remote-Bilder; lokale deterministische Analyse; weder Body noch Analyseinput werden persistiert oder auditiert. |
+| Health Trends | IMPLEMENTIERT | 7 Tage gegen vorherige 28 Tage; Quellen und Metriken bleiben getrennt, HRV wird nicht vermischt. Browserausgabe ist deskriptiv und enthält keine Diagnose. |
+| Hermes Memory Review | IMPLEMENTIERT | ADD-/PATCH-/REMOVE-Kandidaten mit Provenienz und exaktem Content-Hash; Freigabe und Ablehnung bleiben menschliche Aktionen. Unvollständige Herkunft blockiert die Aktivierung. |
+| Companion-Klarheit | IMPLEMENTIERT | Produktname **Günni Companion · Web-App**; direktes Safari-Pairing und optionale Home-Bildschirm-Installation. Das ZIP ist als optionale Anleitung gekennzeichnet; eine native iOS-App wird nicht als Download behauptet. |
+| Deployment und Live-Abnahme | AUSSTEHEND | Erst nach vollständiger Regression, Production-Build, mobilem Chrome-/WebKit-Smoke, gestuftem Rollout und Live-Releasecheck wird dieser Block auf `PASS LIVE` gesetzt. |
 
 ```powershell
 npm run verify:local

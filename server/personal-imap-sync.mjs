@@ -25,6 +25,20 @@ function safeUid(value){
   return Number.isSafeInteger(parsed)&&parsed>0?parsed:null;
 }
 
+function insightError(message,code,status=502){return Object.assign(new Error(message),{code,status,retryable:status>=500});}
+function decodeQuotedPrintable(value){const text=Buffer.from(value).toString('latin1').replace(/=\r?\n/g,'').replace(/=([0-9A-F]{2})/gi,(_match,hex)=>String.fromCharCode(Number.parseInt(hex,16)));return Buffer.from(text,'latin1');}
+function decodeInsightPart(value,part,{binary=false}={}){
+  let bytes=Buffer.from(value||Buffer.alloc(0));
+  if(!binary){const encoding=String(part.encoding||'').toLowerCase();if(encoding==='base64')bytes=Buffer.from(bytes.toString('ascii').replace(/\s+/g,''),'base64');else if(encoding==='quoted-printable')bytes=decodeQuotedPrintable(bytes);}
+  const requested=String(part.parameters?.charset||'utf-8').trim().toLowerCase(),charset=requested==='us-ascii'?'utf-8':requested;
+  try{return new TextDecoder(charset,{fatal:false}).decode(bytes);}catch{return bytes.toString('utf8');}
+}
+function insightTextParts(structure){
+  const parts=[],attachments=[];
+  const visit=node=>{if(!node||typeof node!=='object')return;for(const child of node.childNodes||[])visit(child);if(node.childNodes?.length)return;const disposition=String(node.disposition||'').toLowerCase(),filename=String(node.dispositionParameters?.filename||node.parameters?.name||'');if(disposition==='attachment'||filename){attachments.push(node);return;}const type=String(node.type||'').toLowerCase();if((type==='text/plain'||type==='text/html')&&node.part)parts.push(node);};
+  visit(structure);parts.sort((left,right)=>(left.type==='text/plain'?0:1)-(right.type==='text/plain'?0:1));return {parts,attachmentCount:attachments.length};
+}
+
 function address(value){
   if(!value||typeof value!=='object')return '';
   if(value.address)return String(value.address).trim().toLowerCase().slice(0,320);
@@ -118,5 +132,26 @@ export async function syncImapMailbox({client,account,cursor=null,maxInitial=DEF
       latencyMs:Date.now()-startedAt,
       policy:{bodyFetched:false,attachmentsFetched:false,providerMutations:false,maxInitial:boundedInteger(maxInitial,DEFAULT_INITIAL_WINDOW,{max:2_500}),maxIncremental:incrementalLimit},
     };
+  }finally{lock.release();}
+}
+
+export async function fetchSingleImapInsightContent({client,uid,uidValidity,maxBytes=128*1024,signal}={}){
+  if(!client?.getMailboxLock||!client?.fetchOne)throw insightError('imap_client_required','MAIL_INSIGHT_FETCH_UNAVAILABLE',503);
+  const safeMessageUid=safeUid(uid),safeValidity=String(uidValidity||''),limit=boundedInteger(maxBytes,128*1024,{min:1024,max:1024*1024});
+  if(!safeMessageUid||!/^\d+$/.test(safeValidity))throw insightError('imap_message_identity_required','MAIL_INSIGHT_FETCH_INVALID',400);
+  const lock=await client.getMailboxLock('INBOX');
+  try{
+    if(signal?.aborted)throw insightError('imap_fetch_aborted','MAIL_INSIGHT_FETCH_TIMEOUT',504);
+    if(String(client.mailbox?.uidValidity||'')!==safeValidity)throw insightError('imap_uidvalidity_changed','MAIL_INSIGHT_NOT_FOUND',404);
+    const metadata=await client.fetchOne(safeMessageUid,{uid:true,bodyStructure:true,size:true},{uid:true});
+    if(!metadata||Number(metadata.uid)!==safeMessageUid)throw insightError('imap_message_not_found','MAIL_INSIGHT_NOT_FOUND',404);
+    const {parts,attachmentCount}=insightTextParts(metadata.bodyStructure);if(!parts.length)throw insightError('imap_text_part_not_found','MAIL_INSIGHT_FETCH_INVALID',422);
+    const part=parts[0];if(Number(part.size)>limit)throw insightError('imap_text_part_too_large','MAIL_INSIGHT_TOO_LARGE',413);
+    const fetched=await client.fetchOne(safeMessageUid,{uid:true,bodyParts:[{key:part.part,start:0,maxLength:limit+1}]},{uid:true}),buffer=fetched&&fetched.bodyParts?.get(part.part);
+    if(!Buffer.isBuffer(buffer))throw insightError('imap_text_part_missing','MAIL_INSIGHT_FETCH_INVALID',502);
+    if(buffer.length>limit)throw insightError('imap_text_part_too_large','MAIL_INSIGHT_TOO_LARGE',413);
+    if(signal?.aborted)throw insightError('imap_fetch_aborted','MAIL_INSIGHT_FETCH_TIMEOUT',504);
+    const decoded=decodeInsightPart(buffer,part,{binary:Boolean(fetched.binaryParts?.has(part.part))}),bytes=Buffer.byteLength(decoded,'utf8');if(bytes>limit)throw insightError('imap_text_part_too_large','MAIL_INSIGHT_TOO_LARGE',413);
+    return {text:part.type.toLowerCase()==='text/plain'?decoded:'',html:part.type.toLowerCase()==='text/html'?decoded:'',bytes,attachmentCount,remoteContentFetched:false,attachments:[]};
   }finally{lock.release();}
 }

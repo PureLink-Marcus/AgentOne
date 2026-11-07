@@ -151,7 +151,7 @@ angezeigt.
     exakt zwei Messwerte und entfernte die Testdaten anschließend vollständig.
     Der isolierte Live-Smoke wiederholte dies auf Günni mit 35.652.207 Bytes;
     der Testuser endete mit null Messwerten und null Freigaben.
-16. **Release 103 lokal fertig, Rollout ausstehend:** Der iPhone-Companion
+16. **Release 103 deployed und live verifiziert:** Der iPhone-Companion
     validiert seinen tatsächlichen Tresor vor dem Confirm durch
     AES-GCM-Roundtrip und IndexedDB-Schreib-/Leseprobe mit nicht exportierbarem
     Schlüssel. Safari und installierte PWA werden getrennt erklärt; der direkte
@@ -159,8 +159,15 @@ angezeigt.
     read-only und kann keinen offenen Pairing-Code mehr überschreiben. Der
     WHOOP-Kern besitzt vollständigen OAuth-, begrenzten Sync- und ehrlichen
     Disconnect-Lebenszyklus. 296/296 Node-Tests sind im letzten vollständigen
-    Lauf grün. Produktivstatus folgt erst nach Deployment; `LIVE` bei WHOOP
-    folgt erst nach registrierter App und Provider-Abnahme.
+    Lauf grün. Vier private Container sind healthy; `LIVE` bei WHOOP folgt
+    weiterhin erst nach registrierter App und echter Provider-Abnahme.
+17. **Release 104 implementiert, Abnahme läuft:** Einzelne IMAP-Nachrichten
+    erhalten eine explizite, lokale Einmalanalyse ohne Body-Persistenz oder
+    Anhang-/Remote-Image-Abruf. Health-Trends vergleichen 7 Tage mit der
+    vorherigen 28-Tage-Basis und trennen Quellen und Metriken. Memory-
+    Änderungen werden als exakte Hash-Kandidaten gestaged und nur durch einen
+    Menschen freigegeben. Die Companion-Oberfläche benennt den aktuellen Stand
+    ehrlich als Web-App; Anleitung und spätere native iOS-App sind getrennt.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

@@ -10,24 +10,27 @@ import { createState, loadEnv } from './state.mjs';
 import { allowedModes, checkAdapter } from './adapters.mjs';
 import { assertLocalOrigin, completeEntraAuthorization, cookie, createEntraAuthorization, createSession, entraConfig, getSession, parseCookies, requireSession, tokenHash, verifyAccountCredentials, verifyBasicAuth } from './security.mjs';
 import { decryptDemoSecret, encryptDemoSecret, secretInventory } from './secrets.mjs';
-import { getPersonalMailAccount, getPersonalMailSyncState, getPersonalService, initPostgres, listDuePersonalMailSyncs, listPersonalConnectors, listPersonalMailAccounts, listPersonalMailMessages, listPersonalServices, persistPersonalMailSync, postgresHealth, recordPersonalMailSyncFailure, savePersonalConnector, savePersonalMailAccount, savePersonalService, updatePersonalMailSettings, updatePersonalMailTest, updatePersonalServiceTest } from './postgres.mjs';
+import { getPersonalMailAccount, getPersonalMailMessage, getPersonalMailSyncState, getPersonalService, initPostgres, listDuePersonalMailSyncs, listPersonalConnectors, listPersonalMailAccounts, listPersonalMailMessages, listPersonalServices, persistPersonalMailSync, postgresHealth, recordPersonalMailSyncFailure, savePersonalConnector, savePersonalMailAccount, savePersonalService, updatePersonalMailSettings, updatePersonalMailTest, updatePersonalServiceTest } from './postgres.mjs';
 import { personalReply } from './personal-ai.mjs';
 import { createPlatformEngine } from './platform-engine.mjs';
 import { createLiveEventBus, formatSseMessage } from './live-events.mjs';
 import { classifyMail, emptyMailGroups } from './mail-classifier.mjs';
 import { groupMailMessages } from './mail-calendar-sync.mjs';
-import { syncImapMailbox } from './personal-imap-sync.mjs';
+import { fetchSingleImapInsightContent, syncImapMailbox } from './personal-imap-sync.mjs';
+import { createPersonalMailInsight, personalMailInsightAuditProjection, publicPersonalMailInsightError } from './personal-mail-insight.mjs';
 import { approveMailRule, approveReplyDraft, buildMailBriefing, createMailRule, createReplyDraft } from './mail-workflow.mjs';
 import { normalizePersonalService, personalServiceCatalog, testPersonalService } from './personal-services.mjs';
 import { authorizeCompanion, companionDeviceStatus, companionStatus, createCompanionPairing, initCompanionStore, redeemCompanionPairing, revokeCompanion, storeCompanionEvent } from './personal-companion.mjs';
 import { connectorAction, governanceSnapshot, initGovernanceStore, recordAudit } from './personal-governance.mjs';
 import { applyNudgeFeedback, buildPersonalNudges, filterPersonalNudges, initNudgeStore, loadNudgeFeedbackProfile, loadNudgeSettings, quietNow, recordNudgeFeedback, resetNudgeFeedback, saveNudgeSettings } from './personal-nudges.mjs';
-import { forgetMemoryEntry, initPersonalMemoryStore, listMemoryEntries, saveMemoryEntry } from './personal-memory.mjs';
+import { forgetMemoryEntry, initPersonalMemoryStore, listMemoryEntries } from './personal-memory.mjs';
+import { approveMemoryCandidate, initPersonalMemoryReviewStore, listMemoryAreaPolicies, listMemoryCandidates, rejectMemoryCandidate, setMemoryAreaPolicy, stageMemoryCandidate } from './personal-memory-review.mjs';
 import { createRoutine, deleteRoutine, dueRoutines, initRoutineStore, listRoutines, recordRoutineRun, setRoutineState, simulateStoredRoutine } from './personal-routines.mjs';
 import { buildPersonalBrief } from './personal-intelligence.mjs';
 import { buildHealthDigest, createHealthConsent, healthConnectorCapabilities, importAppleHealth } from './personal-health.mjs';
 import { buildPersonalHealthComparison } from './personal-health-comparison.mjs';
-import { deleteHealthData, exportHealthData, getHealthConsent, healthStoreAuditSummary, initPersonalHealthStore, listHealthConsents, queryHealthMetrics, revokeHealthConsent, saveHealthConsent, storeHealthImport } from './personal-health-store.mjs';
+import { deleteHealthData, exportHealthData, getHealthConsent, healthStoreAuditSummary, initPersonalHealthStore, listHealthConsents, queryHealthMetrics, revokeHealthConsent, saveDerivedHealthSignal, saveHealthConsent, storeHealthImport } from './personal-health-store.mjs';
+import { buildPersonalHealthTrends } from './personal-health-trends.mjs';
 import { GoogleSyncError, syncGoogleReadOnly } from './google-live-sync.mjs';
 import { initPersonalPulseStore, listPersonalPulseDeliveries, planPersonalPulse, recordPersonalPulseDelivery, resetPersonalPulseDeliveries } from './personal-pulse.mjs';
 import { appendPersonalEvents, applyPersonalEventRetention, deletePersonalEvents, exportPersonalEvents, initPersonalEventLedger, personalEventLedgerAuditSummary, queryPersonalEvents, replacePersonalEvents } from './personal-event-ledger.mjs';
@@ -60,6 +63,7 @@ initCompanionStore(state.db);
 initGovernanceStore(state.db);
 initNudgeStore(state.db);
 initPersonalMemoryStore(state.db);
+initPersonalMemoryReviewStore(state.db);
 initRoutineStore(state.db);
 initPersonalHealthStore(state.db);
 initWhoopConnectionStore(state.db);
@@ -279,6 +283,14 @@ async function syncPersonalMailAccount(userId,accountId,{reason='manual'}={}){
   }finally{mailSyncLocks.delete(lockKey);}
 }
 
+async function fetchPersonalMailInsightContent(userId,stored,input){
+  const password=decryptDemoSecret(stored,env),account=runtimeMailAccount(stored),options=mailConnectionOptions(account,password),client=new ImapFlow(options.imap);
+  const abort=()=>{try{client.close();}catch{}};input.signal?.addEventListener('abort',abort,{once:true});
+  try{await client.connect();return await fetchSingleImapInsightContent({client,uid:input.uid,uidValidity:input.uidValidity,maxBytes:input.maxBytes,signal:input.signal});}
+  catch(error){error.mailStage='imap-insight';throw error;}
+  finally{input.signal?.removeEventListener('abort',abort);if(!client.isClosed)await client.logout().catch(()=>abort());}
+}
+
 let mailSchedulerBusy=false;
 async function syncDuePersonalMailAccounts(){if(mailSchedulerBusy||!postgres.pool)return;mailSchedulerBusy=true;try{for(const item of await listDuePersonalMailSyncs(postgres,{limit:20}))try{await syncPersonalMailAccount(item.userId,item.accountId,{reason:'scheduled'});}catch{}}finally{mailSchedulerBusy=false;}}
 setInterval(()=>void syncDuePersonalMailAccounts(),5*60_000).unref();setTimeout(()=>void syncDuePersonalMailAccounts(),60_000).unref();
@@ -464,6 +476,19 @@ async function api(req,res,url){
       return json(res,200,{schema:'agentone.personal-mail-review/v1',...result,sync,syncStates,policy:{readOnly:true,bodyStored:false,snippetsStored:false,attachmentsStored:false,providerMutations:false,userIsolated:true,secretsExposed:false}});
     }catch(error){return json(res,error.status||400,{error:error.code||'MAIL_REVIEW_QUERY_INVALID',message:String(error.message||error).slice(0,180),secretsExposed:false});}
   }
+  if(url.pathname==='/api/internal/personal/mail/insight'&&req.method==='POST'){
+    if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
+    let run=null,tool=null;
+    try{
+      const input=await body(req),accountId=String(input.accountId||'').trim(),uid=Number(input.uid),uidValidity=String(input.uidValidity||'').trim(),mode=String(input.mode||'local').toLowerCase();
+      if(mode!=='local')return json(res,400,{error:'MAIL_INSIGHT_MODE_UNAVAILABLE',message:'Diese Version analysiert Mailinhalte ausschließlich lokal und deterministisch.',secretsExposed:false});
+      const [stored,message]=await Promise.all([getPersonalMailAccount(postgres,userId,accountId),getPersonalMailMessage(postgres,{userId,accountId,uid,uidValidity})]);if(!stored||!message)return json(res,404,{error:'MAIL_INSIGHT_NOT_FOUND',message:'Die ausgewählte Nachricht ist nicht mehr verfügbar.',secretsExposed:false});
+      run=createCommandRun(state.db,{userId,label:'Ausgewählte Mail lokal analysieren',mode:'controlled',source:'chat'});appendCommandStep(state.db,{userId,runId:run.id,type:'OBSERVE',summary:'Exakte Mail-Identität und UIDVALIDITY prüfen'});tool=appendCommandStep(state.db,{userId,runId:run.id,type:'TOOL',summary:'Eine ausgewählte Nachricht read-only und flüchtig analysieren',toolId:'personal.mail-insight',operation:'mail.insight.local',access:'read',scopes:['mail.read'],idempotent:true,input:{accountRef:crypto.createHash('sha256').update(accountId).digest('hex').slice(0,16),messageRef:crypto.createHash('sha256').update(`${uidValidity}:${uid}`).digest('hex').slice(0,16),bodyPersisted:false}});
+      const result=await createPersonalMailInsight({request:{userId,accountId,uid,uidValidity},account:{userId,id:stored.id,uidValidity},message,fetchMessage:params=>fetchPersonalMailInsightContent(userId,stored,params)}),audit=personalMailInsightAuditProjection(result);
+      recordCommandResult(state.db,{userId,runId:run.id,toolStepId:tool.id,summary:'Lokale Einmalanalyse abgeschlossen',output:{classification:result.insight.classification,actionRequired:result.insight.actionRequired,calendarDraft:Boolean(result.calendarDraft),contentBytes:result.source.contentBytes,bodyStored:false,providerMutations:false}});completeCommandRun(state.db,{userId,runId:run.id});recordAudit(state.db,{userId,connectorId:`mail:${accountId}`,action:'mail.insight.local',outcome:'OK',detail:JSON.stringify(audit)});
+      return json(res,200,{...result,analysisMode:'LOCAL_DETERMINISTIC',commandStream:publicCommandTimeline(state.db,{userId,runId:run.id})});
+    }catch(error){const failure=publicPersonalMailInsightError(error);if(run&&tool)try{recordCommandError(state.db,{userId,runId:run.id,toolStepId:tool.id,code:failure.error,message:failure.message,retryable:failure.retryable});}catch{}recordAudit(state.db,{userId,connectorId:'mail-insight',action:'mail.insight.local',outcome:'ERROR',detail:JSON.stringify({code:failure.error,retryable:failure.retryable,secretsExposed:false,bodyStored:false})});return json(res,failure.status,{...failure,commandStream:run?publicCommandTimeline(state.db,{userId,runId:run.id}):null});}
+  }
   if(url.pathname==='/api/internal/personal/mail/accounts'||url.pathname.startsWith('/api/internal/personal/mail/accounts/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
     if(req.method==='GET'&&url.pathname==='/api/internal/personal/mail/accounts')return json(res,200,{accounts:await listPersonalMailAccounts(postgres,userId),plugin:{id:'imap',status:'LOADED',mode:'isolated-reader',smtpProvidedByPlugin:false}});
@@ -637,7 +662,15 @@ async function api(req,res,url){
   if(url.pathname==='/api/internal/personal/memory'||url.pathname.startsWith('/api/internal/personal/memory/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
     if(req.method==='GET'&&url.pathname==='/api/internal/personal/memory')return json(res,200,{entries:listMemoryEntries(state.db,{userId,query:url.searchParams.get('q')||'',area:url.searchParams.get('area')||''}),policy:{provenanceRequired:true,expirySupported:true,forgetSupported:true,secretsExposed:false}});
-    if(req.method==='POST'&&url.pathname==='/api/internal/personal/memory')try{return json(res,201,{entry:saveMemoryEntry(state.db,{id:crypto.randomUUID(),userId,input:await body(req)})});}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}
+    if(req.method==='POST'&&url.pathname==='/api/internal/personal/memory')try{
+      const candidate=stageMemoryCandidate(state.db,{userId,operation:'ADD',input:await body(req),provenanceClass:'owner',evidenceHashes:[]});
+      recordAudit(state.db,{userId,connectorId:'personal-memory',action:'memory.legacy-write.staged',outcome:'PENDING',detail:JSON.stringify({candidateId:candidate.id,operation:candidate.operation,area:candidate.area,contentIncluded:false,secretsExposed:false})});
+      return json(res,202,{candidate,reviewRequired:true,directWrite:false,secretsExposed:false});
+    }catch(error){return json(res,error.status||400,{error:error.code||'MEMORY_REVIEW_STAGE_FAILED',message:'Memory-Vorschlag konnte nicht vorgemerkt werden.',secretsExposed:false});}
+    if(req.method==='GET'&&url.pathname==='/api/internal/personal/memory/candidates')try{return json(res,200,{candidates:listMemoryCandidates(state.db,{userId,state:url.searchParams.get('state')||'',limit:Math.min(100,Number(url.searchParams.get('limit'))||100)}),policies:listMemoryAreaPolicies(state.db,{userId}),policy:{humanApprovalRequired:true,contentInAudit:false,secretsExposed:false}});}catch(error){return json(res,error.status||400,{error:error.code||'MEMORY_REVIEW_FAILED',message:'Memory-Prüfliste konnte nicht geladen werden.',secretsExposed:false});}
+    if(req.method==='POST'&&url.pathname==='/api/internal/personal/memory/candidates')try{const input=await body(req),candidate=stageMemoryCandidate(state.db,{userId,operation:input.operation||'ADD',input:input.input,targetEntryId:input.targetEntryId||null,provenanceClass:input.provenanceClass||'owner',evidenceHashes:input.evidenceHashes||[]});recordAudit(state.db,{userId,connectorId:'personal-memory',action:'memory.candidate.staged',outcome:'PENDING',detail:JSON.stringify({candidateId:candidate.id,operation:candidate.operation,area:candidate.area,contentIncluded:false,secretsExposed:false})});return json(res,201,{candidate,reviewRequired:true,secretsExposed:false});}catch(error){return json(res,error.status||400,{error:error.code||'MEMORY_REVIEW_STAGE_FAILED',message:'Memory-Vorschlag konnte nicht vorgemerkt werden.',secretsExposed:false});}
+    const decision=url.pathname.match(/^\/api\/internal\/personal\/memory\/candidates\/([^/]+)\/(approve|reject)$/);if(req.method==='POST'&&decision)try{const input=await body(req),params={userId,id:decodeURIComponent(decision[1]),candidateHash:String(input.candidateHash||''),actor:{type:'human',id:userId}},result=decision[2]==='approve'?approveMemoryCandidate(state.db,params):rejectMemoryCandidate(state.db,params);recordAudit(state.db,{userId,connectorId:'personal-memory',action:`memory.candidate.${decision[2]}`,outcome:result.candidate.state,detail:JSON.stringify({candidateId:result.candidate.id,operation:result.candidate.operation,contentIncluded:false,secretsExposed:false})});return json(res,200,{...result,secretsExposed:false});}catch(error){return json(res,error.status||400,{error:error.code||'MEMORY_REVIEW_DECISION_FAILED',message:'Memory-Entscheidung konnte nicht abgeschlossen werden.',secretsExposed:false});}
+    const areaPolicy=url.pathname.match(/^\/api\/internal\/personal\/memory\/policies\/([^/]+)$/);if(req.method==='POST'&&areaPolicy)try{const input=await body(req),policy=setMemoryAreaPolicy(state.db,{userId,area:decodeURIComponent(areaPolicy[1]),enabled:input.enabled,actor:{type:'human',id:userId}});return json(res,200,{policy,secretsExposed:false});}catch(error){return json(res,error.status||400,{error:error.code||'MEMORY_POLICY_FAILED',message:'Memory-Bereich konnte nicht geändert werden.',secretsExposed:false});}
     const match=url.pathname.match(/^\/api\/internal\/personal\/memory\/([^/]+)$/);if(req.method==='DELETE'&&match)try{return json(res,200,forgetMemoryEntry(state.db,{userId,id:decodeURIComponent(match[1])}));}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}
     return json(res,405,{error:'method_not_allowed'});
   }
@@ -745,6 +778,10 @@ async function api(req,res,url){
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/comparison'){
         const options=healthComparisonOptions(url.searchParams),metrics=queryHealthMetrics(state.db,{userId,limit:5_000,decrypt:healthDecrypt});
         return json(res,200,buildPersonalHealthComparison(metrics,{...options,now:new Date()}));
+      }
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/trends'){
+        assertHealthQuery(url.searchParams,healthEmptyQueryKeys);const report=buildPersonalHealthTrends({userId,timeZone:'Europe/Berlin',now:new Date(),loadMetrics:options=>queryHealthMetrics(state.db,{...options,decrypt:healthDecrypt}),saveDerivedSignal:input=>saveDerivedHealthSignal(state.db,{...input,encrypt:healthEncrypt})});
+        recordAudit(state.db,{userId,connectorId:'personal-health',action:'health.trends.read',outcome:'OK',detail:JSON.stringify({available:report.trends.filter(item=>item.status==='available').length,sources:report.sources.map(item=>({id:item.id,status:item.status,available:item.availableTrendCount})),rawRecordsIncluded:false,secretsExposed:false})});return json(res,200,report);
       }
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/health/export'){
         const input=await body(req);if(input.confirm!=='EXPORT_MY_HEALTH_DATA')return json(res,409,{error:'HEALTH_EXPORT_CONFIRMATION_REQUIRED'});

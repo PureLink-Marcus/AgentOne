@@ -30,6 +30,16 @@ und Pairing-Security-Abnahme. Der private Rollout und der read-only Günni-
 WebKit-Smoke sind live bestanden; mangels registrierter WHOOP-App bleibt nur die
 externe Provider-Abnahme ehrlich offen.
 
+Release 104 ergänzt drei kontrollierte Auswertungspfade: einzelne IMAP-
+Nachrichten können auf ausdrücklichen Klick einmalig, lokal und ohne
+Body-Persistenz analysiert werden; Health-Trends vergleichen sieben Tage mit
+der vorherigen 28-Tage-Basis und halten Quellen getrennt; Memory-Änderungen
+laufen über exakte Hash-Kandidaten und menschliche Freigabe. Gleichzeitig wird
+die mobile Oberfläche eindeutig als **Günni Companion · Web-App** bezeichnet.
+Das optionale ZIP ist nur eine Anleitung; eine native iOS-App wird nicht als
+vorhandener Download dargestellt. Der produktive Rollout wird erst nach
+vollständiger Regression und Live-Abnahme als `LIVE` markiert.
+
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle
 außerhalb des HTTP-Eventloops; User, Consent, Human Gate und Command Stream
@@ -46,13 +56,16 @@ Der Funktions- und UX-Abgleich mit Jarvis ist in [`docs/JARVIS-FEATURE-ALIGNMENT
 
 Alle AgentOne-Zugänge werden als installierbare PWA ausgeliefert. Die gemeinsame Instanzverwaltung kann HTTPS-Instanzen hinzufügen, zwischen ihnen wechseln und sie lokal aktivieren oder deaktivieren. Die Instanzliste wird beim Domainwechsel mitgeführt; Zugangsdaten, Sessions, Chats und API-Antworten werden weder übertragen noch offline gecacht.
 
-Die **iPhone Companion App** ist aktuell ebenfalls eine PWA und deshalb kein
-App-Store-Download oder ZIP: Auf dem iPhone
+Die **Günni Companion · Web-App** ist eine PWA, keine native App-Store-App:
+Auf dem iPhone
 [https://guenni.mwart.solutions/iphone](https://guenni.mwart.solutions/iphone)
-in Safari öffnen, **Teilen → Zum Home-Bildschirm** wählen und anschließend in
-genau dieser Home-Bildschirm-App koppeln. Alternativ ist direktes Pairing in
-Safari möglich; Safari und installierte PWA besitzen getrennte verschlüsselte
-Speicher und benötigen daher jeweils einen eigenen frischen Einmalcode.
+in Safari öffnen und den sechsstelligen Einmalcode eingeben. **Teilen → Zum
+Home-Bildschirm** ist für das App-Gefühl empfohlen, aber keine Voraussetzung.
+Safari und installierte PWA besitzen getrennte verschlüsselte Speicher und
+benötigen daher jeweils einen eigenen frischen Einmalcode. Das angebotene ZIP
+ist nur eine optionale Anleitung mit Shortcut-Konfiguration, keine
+installierbare App. Eine native iOS-App für direkten HealthKit-, EventKit- und
+Hintergrundstandort-Zugriff existiert derzeit noch nicht.
 
 Jede Instanz besitzt verpflichtend das Profil `PERSONAL` oder `BUSINESS`. Personal zeigt ausschließlich persönliche Werkzeuge; Business aktiviert Organisationsworkflows und validiertes Unternehmensbranding. Das verbindliche Modell steht in [`docs/INSTANCE-PROFILES-AND-BRANDING.md`](docs/INSTANCE-PROFILES-AND-BRANDING.md).
 
