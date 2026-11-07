@@ -151,8 +151,39 @@ Die Startseite ist kein Klickportal. Sie beantwortet direkt:
 4. Was kann Günni jetzt erledigen?
 5. Welche Freigabe oder Information fehlt?
 
-Jeder Vorschlag startet denselben Command Stream für Text und Voice. Er zeigt
-Status, Toolschritte, Quellen, Ergebnis, Fehler und Rückgängig-/Widerrufspfad.
+Jeder unterstützte Vorschlag startet denselben Command Stream für Text und
+Voice. Er zeigt Status, Toolschritte, Quellen, Ergebnis und Fehler. Ein
+Rückgängig-, Retry- oder Abbruchpfad wird nur angezeigt, wenn die konkrete
+Operation ihn technisch und nachweisbar unterstützt.
+
+#### Release 2026.11.07-92 · Command-Stream Center
+
+Der erste produktnahe vertikale Schnitt umfasst echte, pro Benutzer
+persistierte Runs für:
+
+- Personal Briefing;
+- IMAP-Verbindungstest und read-only Postfachscan;
+- Google Mail-/Kalender-Synchronisation im Read-only-Modus;
+- Apple-Health-Import als schreibende Operation.
+
+Der Apple-Health-Import darf erst nach einem serverbestätigten Human Gate
+laufen. Die Freigabe ist kryptografisch an den exakten, unveränderten
+Payload-Hash gebunden. Die öffentliche Timeline ist eine explizite Allowlist:
+Sie enthält Run- und Step-Status, Zeitstempel, Tool, Operation, Rechte, Scopes
+sowie retrybezogene Fehlermetadaten, aber niemals Input, Output, Prompts,
+Mailinhalte, Gesundheitsrohwerte oder sonstige Rohpayloads.
+
+Release 92 stellt bewusst keine generische Retry-/Cancel-API bereit. Dafür
+fehlen noch ein persistentes Effect-Ledger mit atomarem Claim und
+Idempotency-Key sowie ein bis zum jeweiligen Connector durchgereichter
+Abort-Pfad. Ohne diese Grenzen könnte eine Oberfläche einen Lauf als
+abgebrochen anzeigen, obwohl ein externer Seiteneffekt weiterläuft, oder einen
+Seiteneffekt beim Retry doppelt auslösen.
+
+**Abnahmestand:** 177/177 automatisierte Tests, Production-Build sowie Chrome
+Desktop/Mobil sind bestanden. Die Screenshots liegen unter
+`output/playwright/command-stream-release-92-*.png`. Deployment und
+PWA-Cache-Nachweis bleiben bis zum Remote-Rollout offen.
 
 ## Priorisierte vertikale Lieferpakete
 

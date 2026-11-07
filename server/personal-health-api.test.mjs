@@ -70,12 +70,19 @@ test('personal health API persists user-isolated scoped imports and requires con
       <Record type="HKQuantityTypeIdentifierBodyMass" unit="kg" startDate="2026-11-06 08:00:00 +0100" endDate="2026-11-06 08:00:00 +0100" value="80"/>
       <Workout workoutActivityType="HKWorkoutActivityTypeWalking" duration="45" startDate="2026-11-06 18:00:00 +0100" endDate="2026-11-06 18:45:00 +0100"/>
     </HealthData>`;
-    const uploadHeaders = internalHeaders(token, 'alice', { 'content-type': 'application/xml', 'x-agentone-health-consent-id': consentId });
+    const uploadHeaders = internalHeaders(token, 'alice', { 'content-type': 'application/xml', 'x-agentone-health-consent-id': consentId, 'x-agentone-human-actor': 'alice', 'x-agentone-human-action': 'health-import-confirmed' });
+    const deniedImport = await fetch(`${origin}/api/internal/personal/health/apple-import`, { method: 'POST', headers: internalHeaders(token, 'alice', { 'content-type': 'application/xml', 'x-agentone-health-consent-id': consentId }), body: xml });
+    assert.equal(deniedImport.status, 403); const deniedPayload = await deniedImport.json(); assert.equal(deniedPayload.error, 'COMMAND_HUMAN_GATE_REQUIRED'); assert.equal(deniedPayload.commandStream.run.status, 'FAILED');
     const imported = await fetch(`${origin}/api/internal/personal/health/apple-import`, { method: 'POST', headers: uploadHeaders, body: xml });
     assert.equal(imported.status, 201); const importedPayload = await imported.json();
     assert.equal(importedPayload.import.normalizedMetrics, 1); assert.equal(importedPayload.import.excludedByConsent.count, 4);
     assert.deepEqual(importedPayload.import.excludedByConsent.metricTypes, ['body_mass_kg', 'heart_rate_bpm', 'steps', 'workout_minutes']);
     assert.equal(importedPayload.policy.medicalDiagnosis, false); assert.equal(importedPayload.policy.sourceArchiveRetained, false);
+    assert.equal(importedPayload.commandStream.run.status, 'COMPLETED'); assert.deepEqual(importedPayload.commandStream.steps.map((step) => step.type), ['OBSERVE', 'TOOL', 'APPROVAL', 'RESULT']);
+    const publicTimeline = JSON.stringify(importedPayload.commandStream); assert.equal(publicTimeline.includes('4200'), false); assert.equal(publicTimeline.includes('<HealthData>'), false); assert.equal(publicTimeline.includes('payloadHash'), false);
+    const commandListResponse = await fetch(`${origin}/api/internal/personal/commands?limit=5`, { headers: internalHeaders(token, 'alice') }); assert.equal(commandListResponse.status, 200); const commandList = await commandListResponse.json(); assert.equal(commandList.runs[0].label, 'Apple Health sicher importieren'); assert.equal(JSON.stringify(commandList).includes('4200'), false);
+    const commandTimelineResponse = await fetch(`${origin}/api/internal/personal/commands/${importedPayload.commandStream.run.id}`, { headers: internalHeaders(token, 'alice') }); assert.equal(commandTimelineResponse.status, 200); assert.equal((await commandTimelineResponse.json()).run.status, 'COMPLETED');
+    const foreignTimeline = await fetch(`${origin}/api/internal/personal/commands/${importedPayload.commandStream.run.id}`, { headers: internalHeaders(token, 'bob') }); assert.equal(foreignTimeline.status, 404);
 
     const duplicate = await fetch(`${origin}/api/internal/personal/health/apple-import`, { method: 'POST', headers: uploadHeaders, body: xml });
     assert.equal(duplicate.status, 200); assert.equal((await duplicate.json()).import.alreadyImported, true);

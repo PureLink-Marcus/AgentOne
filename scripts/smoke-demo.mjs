@@ -31,13 +31,16 @@ try{
   await page.getByText('PERSISTENT ENGINE').waitFor();
   const platform=await page.evaluate(()=>fetch('/api/platform/snapshot').then(response=>response.json()));
   assert.equal(platform.runs.length,4);assert.equal(platform.gates.filter(item=>item.status==='PENDING').length,1);
-  const liveEvent=await page.evaluate(()=>new Promise((resolve,reject)=>{
-    const source=new EventSource('/api/platform/events?worlds=product');
+  const reversibleRun=platform.runs.find(run=>['RUNNING','PAUSED'].includes(run.status));assert.ok(reversibleRun,'SSE-Smoke benötigt einen reversibel pausierbaren Lauf');
+  const initialStatus=reversibleRun.status,action=initialStatus==='PAUSED'?'start':'pause',restore=initialStatus==='PAUSED'?'pause':'start',eventName=`run_${action}`;
+  const liveEvent=await page.evaluate(({runId,worldId,action,eventName})=>new Promise((resolve,reject)=>{
+    const source=new EventSource('/api/platform/events?worlds='+encodeURIComponent(worldId));
     const timeout=setTimeout(()=>{source.close();reject(new Error('SSE event timeout'));},5000);
-    source.addEventListener('run_advance',event=>{clearTimeout(timeout);source.close();resolve(JSON.parse(event.data));},{once:true});
-    source.onopen=()=>fetch('/api/platform/runs/RUN-DEMO-PRODUCT/advance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({payload:{smoke:true},output:{verified:true},cost:.1})}).catch(reject);
-  }));
-  assert.equal(liveEvent.worldId,'product');
+    source.addEventListener(eventName,event=>{clearTimeout(timeout);source.close();resolve(JSON.parse(event.data));},{once:true});
+    source.onopen=async()=>{try{const response=await fetch('/api/platform/runs/'+encodeURIComponent(runId)+'/'+action,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});if(!response.ok)throw new Error('SSE trigger HTTP '+response.status);}catch(error){clearTimeout(timeout);source.close();reject(error);}};
+  }),{runId:reversibleRun.id,worldId:reversibleRun.worldId,action,eventName});
+  assert.equal(liveEvent.worldId,reversibleRun.worldId);
+  const restored=await page.evaluate(({runId,restore})=>fetch('/api/platform/runs/'+encodeURIComponent(runId)+'/'+restore,{method:'POST',headers:{'content-type':'application/json'},body:'{}'}).then(response=>response.ok),{runId:reversibleRun.id,restore});assert.equal(restored,true);
   await page.getByRole('button',{name:/AgentOne Personal/}).click();
   await page.getByText('Ein AgentOne für deine Themen.').waitFor();
   await page.getByRole('button',{name:/Admin Control/}).click();

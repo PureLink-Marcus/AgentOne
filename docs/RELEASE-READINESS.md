@@ -1,14 +1,14 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-91`
-Deployment: Release 91 schließt das bisher nur serverseitige iPhone-Pairing mit einer mobilen Web-Companion-PWA, expliziten Rechten, verschlüsselter lokaler Tokenablage, Geräteverwaltung und echtem Lifecycle-Smoke.
+Release: `2026.11.07-92`
+Deployment: Release 92 ist lokal vollständig abgenommen und wird als nächstes auf die beiden Personal-Instanzen ausgerollt. Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import erzeugen echte benutzergebundene Runs.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS | 174/174 Node-Tests, Vite-Production-Build und Chrome-Smoke |
+| Lokale Anwendung | PASS | Release 92: 177/177 Node-Tests, Vite-Production-Build, reversibler Plattform-Smoke und dedizierte Chrome-Abnahme bestanden. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, 343 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS für Web-Companion | Release 91: öffentlicher mobiler Pairing-Wizard, Code-Übergabe im URL-Fragment, AES-GCM/IndexedDB-Tokenablage, Token-Status, explizites Health-/Standort-Opt-in, Geräteliste, Widerruf und Ereignislöschung. Der Browser-Smoke prüft `Pair → Confirm → Status → Ingest → Revoke`; native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
@@ -24,6 +24,7 @@ Deployment: Release 91 schließt das bisher nur serverseitige iPhone-Pairing mit
 | Mobiler Gateway-Login | PASS | AgentOne-Formular → signierte Session → Trusted Proxy → WebSocket; kein Gateway-Token-Dialog |
 | Produktidentität | PASS | Auth-Realm, Agentenname und mobile Chatoberfläche zeigen `AgentOne` |
 | Command Center | PASS | eigene AgentOne-Hülle mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools und Schnellaktionen; keine sichtbare OpenClaw-Navigation |
+| Command-Stream Center | PASS LOKAL | Release 92 persistiert echte Runs für Personal Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import. Der Health-Import benötigt vor der Ausführung ein serverbestätigtes Human Gate für den exakten Payload-Hash. Die öffentliche Timeline enthält ausschließlich freigegebene Run-/Step-Metadaten und niemals Input, Output oder Rohpayload. Desktop und 390-px-Mobilansicht wurden in Google Chrome geprüft. |
 | Bedienbarer AI Core | PASS | Luna-Standard, Terra für Dokumente/Bilder und Sol für komplexe Aufgaben synchronisieren sich persistent mit dem HUD; Ollama bleibt bis zum Connector-Healthcheck ehrlich gesperrt. |
 | Lokaler Modellpfad | READY | Connector v4 und App-Pfad sind getestet, allowlist-begrenzt und signiert. Live-Status, `LOCAL`-Datenschutz und Latenz werden sichtbar; ein reales Ollama-Modell auf dem Pi fehlt noch. |
 | Chat-/Voice-Trace | PASS | Release 83: echter Browserchat und Voice-Texteingabe antworten über Luna mit HTTP 200; PWA-Erststart bleibt stabil, keine Konsolenfehler. Jarvis Core wählt Stefan, Gerätestimme `Anna` ist ausgeschlossen. |
@@ -50,6 +51,7 @@ Deployment: Release 91 schließt das bisher nur serverseitige iPhone-Pairing mit
 | Bereich | Grund / Abschlusskriterium |
 |---|---|
 | Produktive Schreibadapter | Bleiben technisch blockiert, bis Zielsystem, Testlauf, Audit und Human Gate je Adapter freigegeben sind. |
+| Generisches Command-Retry/-Cancel | Wird in Release 92 nicht öffentlich angeboten. Erst ein persistentes Effect-Ledger mit atomarem Claim, Idempotency-Key sowie vollständig verdrahtetem Abort-/Cancel-Pfad darf Retry oder Cancel für reale Seiteneffekte freigeben. |
 | Self-Service-Anmeldung | Das normale Einzelkonto-Formular ist aktiv. Vor breiter Benutzerfreigabe folgen Einmal-Einladung, Passwortwechsel/-Reset und optional Passkeys/TOTP; Entra/PKCE ist vorbereitet. |
 | PureLink Platform Domain | `agentone-platform.purelink.de` ist eingetragen, aber öffentlich noch nicht auflösbar. Route und TLS folgen nach DNS-Propagation. |
 | Private Domains | PASS: `fressi.mwart.solutions` und `guenni.mwart.solutions` sind mit gültigem TLS, AgentOne-Login und getrennten Apps, Datenbanken, Gateways und Volumes im Projekt `agentone-private` online. |
@@ -70,6 +72,17 @@ Deployment: Release 91 schließt das bisher nur serverseitige iPhone-Pairing mit
 | Git-basierte Lieferung | Das Deployment verwendet ein auf dem Host gebautes, gehashtes Release-Archiv. Der private Git-Workflow benötigt befüllte Haupt-/Entwicklungszweige und CI-Zugang. |
 
 ## Reproduzierbare Prüfung
+
+### Release 92 · Abnahme
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Command-Stream Unit-/API-Tests einschließlich Benutzertrennung und payloadfreier öffentlicher Projektion | PASS | 177/177 Gesamttests; fokussierte Command-Stream-, Proxy- und Health-API-Tests grün |
+| Echte Runs für Briefing, IMAP-Test/-Scan und Google-Read-only-Sync | PASS IMPLEMENTIERT | Briefing in Chrome ausgeführt; IMAP- und Google-Pfade sind serverseitig verdrahtet und regressionsgetestet. Live-Provider-Nachweis folgt nach Deployment. |
+| Apple-Health-Import mit serverbestätigtem Exact-Payload-Gate | PASS | Browserimport mit `OBSERVE → TOOL → APPROVAL → RESULT`; falsche/fehlende Human-Attestierung wird mit HTTP 403 abgewiesen |
+| Chrome Desktop/Mobil: Center öffnen, Run-Details aufrufen und Statuswechsel prüfen | PASS | `output/playwright/command-stream-release-92-desktop.png` und `command-stream-release-92-mobile.png`; kein Root-Horizontalscroll bei 390 px |
+| Production-Build | PASS | Vite-Production-Build erfolgreich |
+| Deployment, PWA-Cachewechsel und Remote-Smoke | OFFEN | Wird im nächsten Release-Schritt ergänzt |
 
 ```powershell
 npm run verify:local

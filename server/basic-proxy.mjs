@@ -28,7 +28,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-91');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-92');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -257,7 +257,29 @@ async function personalEvents(req,res){
 }
 async function personalBriefingCommand(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_commands_unavailable'});if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
-  try{const response=await fetch(`${personalApiUrl}/api/internal/personal/commands/briefing`,{method:'POST',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},body:'{}',signal:AbortSignal.timeout(30_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_command_failed',detail:String(error.message||error).slice(0,100)});}
+  try{const response=await fetch(`${personalApiUrl}/api/internal/personal/commands/briefing`,{method:'POST',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},body:'{}',signal:AbortSignal.timeout(30_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch{return jsonResponse(res,502,{error:'personal_command_failed',message:'Persönliches Tagesbild ist vorübergehend nicht erreichbar.',secretsExposed:false});}
+}
+async function personalCommandsRead(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});
+  if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_commands_unavailable',secretsExposed:false});
+  let upstreamPath;
+  try{
+    const requestUrl=new URL(String(req.url||''),publicOrigin||'http://127.0.0.1');
+    if(requestUrl.pathname==='/agentone/commands'){
+      const keys=[...requestUrl.searchParams.keys()];
+      if(keys.some(key=>key!=='limit')||requestUrl.searchParams.getAll('limit').length>1)return jsonResponse(res,400,{error:'invalid_command_query',secretsExposed:false});
+      const rawLimit=requestUrl.searchParams.get('limit'),limit=rawLimit==null?20:Number(rawLimit);
+      if(rawLimit!=null&&!/^(?:[1-9]|[1-4][0-9]|50)$/.test(rawLimit))return jsonResponse(res,400,{error:'invalid_command_limit',secretsExposed:false});
+      upstreamPath=`/api/internal/personal/commands?limit=${limit}`;
+    }else{
+      const match=requestUrl.pathname.match(/^\/agentone\/commands\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+      if(!match||requestUrl.search)return jsonResponse(res,400,{error:'invalid_command_id',secretsExposed:false});
+      upstreamPath=`/api/internal/personal/commands/${encodeURIComponent(match[1])}`;
+    }
+    const response=await fetch(`${personalApiUrl}${upstreamPath}`,{method:'GET',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(15_000)});
+    if(!response.ok){await response.body?.cancel();return jsonResponse(res,response.status===404?404:502,{error:response.status===404?'command_run_not_found':'personal_commands_failed',secretsExposed:false});}
+    const payload=await response.json();return jsonResponse(res,200,payload);
+  }catch{return jsonResponse(res,502,{error:'personal_commands_unavailable',secretsExposed:false});}
 }
 async function personalIcsCalendar(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'ics_calendar_unavailable'});
@@ -291,7 +313,7 @@ async function personalHealth(req,res){
       const max=32*1024*1024,declared=req.headers['content-length'];if(declared!=null&&(!/^\d+$/.test(String(declared))||Number(declared)<=0))return jsonResponse(res,400,{error:'HEALTH_UPLOAD_SIZE_INVALID'});if(declared!=null&&Number(declared)>max)return jsonResponse(res,413,{error:'HEALTH_UPLOAD_TOO_LARGE'});
       const contentType=String(req.headers['content-type']||'application/octet-stream').split(';')[0].trim().toLowerCase();if(!['application/xml','text/xml','application/zip','application/x-zip-compressed','application/octet-stream'].includes(contentType))return jsonResponse(res,415,{error:'HEALTH_UPLOAD_TYPE_UNSUPPORTED'});
       const consentId=String(req.headers['x-agentone-health-consent-id']||'').trim();if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(consentId))return jsonResponse(res,400,{error:'HEALTH_CONSENT_REQUIRED'});
-      headers['content-type']=contentType;headers['x-agentone-health-consent-id']=consentId;let transferred=0,limitFailure=null;
+      headers['content-type']=contentType;headers['x-agentone-health-consent-id']=consentId;headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='health-import-confirmed';let transferred=0,limitFailure=null;
       options.duplex='half';options.body=(async function*(){for await(const chunk of req){transferred+=chunk.length;if(transferred>max){limitFailure=Object.assign(new Error('Upload too large'),{status:413});throw limitFailure;}yield chunk;}if(!transferred){limitFailure=Object.assign(new Error('Upload empty'),{status:400});throw limitFailure;}})();
       try{const response=await fetch(`${personalApiUrl}/api/internal/personal/health/apple-import`,options);return await streamHealthResponse(response,res);}catch(error){if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'HEALTH_UPLOAD_TOO_LARGE':'HEALTH_UPLOAD_EMPTY'});throw error;}
     }
@@ -395,6 +417,10 @@ const server=http.createServer((req,res)=>{
   if(req.url?.startsWith('/agentone/pulse')&&['GET','POST','DELETE'].includes(req.method||''))return personalPulse(req,res);
   if(req.url?.startsWith('/agentone/events')&&['GET','POST','DELETE'].includes(req.method||''))return personalEvents(req,res);
   if(req.method==='POST'&&req.url==='/agentone/commands/briefing')return personalBriefingCommand(req,res);
+  if(/^\/agentone\/commands(?:\/|\?|$)/.test(req.url||'')){
+    if(req.method==='GET')return personalCommandsRead(req,res);
+    return jsonResponse(res,405,{error:'method_not_allowed',secretsExposed:false});
+  }
   if(/^\/agentone\/calendar\/ics(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalIcsCalendar(req,res);
   if(req.method==='GET'&&/^\/agentone\/whoop\/status(?:\?|$)/.test(req.url||''))return personalWhoopStatus(res);
   if(/^\/agentone\/health(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalHealth(req,res);

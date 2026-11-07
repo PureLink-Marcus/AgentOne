@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-91` erweitert den live geprüften Release 90 um ein tatsächlich nutzbares iPhone-Web-Pairing. Ein mobiler Wizard löst den einmaligen Code ein, speichert den Gerätetoken AES-GCM-verschlüsselt in IndexedDB, prüft ihn, zeigt die explizit gewährten Rechte und erlaubt serverseitigen Widerruf samt Ereignislöschung. Auf Günni sind aktuell:
+Release `2026.11.07-91` ist der zuletzt live ausgerollte Stand und erweitert Release 90 um ein tatsächlich nutzbares iPhone-Web-Pairing. Release `2026.11.07-92` ist lokal abgenommen: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Der Health-Import bleibt bis zu einem serverbestätigten Human Gate für den exakten Payload-Hash gesperrt. 177/177 Tests, Production-Build sowie Chrome Desktop/Mobil sind bestanden; Deployment und Remote-Nachweis folgen im Release-Schritt. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
@@ -28,8 +28,11 @@ angezeigt.
 
 1. Personal Event Ledger als einzige persistente Zeitachse für Mail, Kalender,
    Health und Connector-Ergebnisse an die API anbinden.
-2. Jarvis Command Stream an Gmail-Sync, Briefing, Health-Import und Entwürfe
-   anbinden; jeder Schritt zeigt Quelle, Recht, Status und redigiertes Ergebnis.
+2. **Release 92 implementiert und lokal abgenommen:** Command Stream an Briefing,
+   IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import anbinden. Die
+   öffentliche Timeline zeigt nur freigegebene Metadaten; Input, Output,
+   Rohpayloads, Secrets und Gesundheitswerte bleiben serverseitig. Der
+   Health-Write-Pfad verlangt ein serverbestätigtes Exact-Payload-Gate.
 3. ICS/iCal als einfacher Kalenderweg ohne eigene Google-OAuth-App in UI und
    Intelligence integrieren.
 4. WHOOP-OAuth-/Sync-Kern einbinden und ohne Credentials ehrlich `SETUP`
@@ -38,8 +41,9 @@ angezeigt.
    anbinden; keine autonome Selbstfreigabe.
 6. Alle festen `LIVE`-Texte entfernen und Status ausschließlich aus
    Healthchecks oder gespeicherten Ergebnissen ableiten.
-7. Release 87: Vollsuite, Chrome Desktop/Mobil, PWA-Cachewechsel, Deployment,
-   Screenshot und Git-Push auf alle vier vereinbarten Branches.
+7. **Release 92 lokal bestanden, Remote-Schritt offen:** PWA-Cachewechsel,
+   Deployment und Git-Push auf die vereinbarten Branches ausführen; danach
+   die realen Remote-Nachweise in der Release Readiness ergänzen.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 
@@ -61,7 +65,11 @@ angezeigt.
 2. Restore, Backup, Schlüsselrotation, Connector-Widerruf und Löschung pro
    Benutzer testen.
 3. PWA-Push nur nach Opt-in; Ruhezeiten, Dedupe und Tagesbudget verifizieren.
-4. Command-Stream-Fehler, Retry, Cancel und Human Gates vollständig testen.
+4. Vor einem generischen Command-Retry/-Cancel ein persistentes Effect-Ledger
+   mit atomarem Ausführungs-Claim, wiederverwendetem Idempotency-Key und
+   vollständig verdrahtetem Abort-Pfad bauen und testen. Bis dahin bleiben
+   Retry und Cancel für reale Operationen bewusst ohne öffentliche API; Human
+   Gates und Fehlerdarstellung werden unabhängig davon vollständig geprüft.
 5. Finales Security-/Secret-/PII-Review und mobile Drei-Stunden-Abnahme.
 
 ## Externe Freigaben, die Code nicht ersetzen kann
