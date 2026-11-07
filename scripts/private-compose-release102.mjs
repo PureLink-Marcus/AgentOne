@@ -34,12 +34,14 @@ healthKeyLength=$(sed -n 's/^AGENTONE_HEALTH_MASTER_KEY=//p' "$envfile" | tail -
 test "$healthKeyLength" -ge 32
 chmod 600 "$envfile"
 if [ "$healthKeyLines" -eq 0 ]; then sed -i '/^[[:space:]]*AGENTONE_INTERNAL_API_TOKEN:/a\      AGENTONE_HEALTH_MASTER_KEY: \${AGENTONE_HEALTH_MASTER_KEY}' "$file"; fi
+sed -i 's/^AGENTONE_HEALTH_MASTER_KEY:/      AGENTONE_HEALTH_MASTER_KEY:/' "$file"
 test "$(grep -c "AGENTONE_HEALTH_MASTER_KEY:" "$file")" -eq 2
 sed -i "s/purelink\\/agentone:2026.11.07-101/purelink\\/agentone:2026.11.07-102/g" "$file"
 sed -i -E "s/(AGENTONE_RELEASE:[[:space:]]*).*/\\12026.11.07-102/g" "$file"
 test "$(grep -c "purelink/agentone:2026.11.07-102" "$file")" -eq 4
 test "$(grep -c "AGENTONE_RELEASE.*2026.11.07-102" "$file")" -eq 2
 cd "$dir"
+if ! docker compose config --quiet; then cp "$dir/docker-compose.release101.backup.yml" "$file"; echo 'compose validation failed; backup restored' >&2; exit 1; fi
 docker compose up -d --no-deps --force-recreate fressi-app fressi-access guenni-app guenni-access
 i=0; ready=0
 while [ "$i" -lt 60 ]; do ready=$(docker ps --format '{{.Names}}|{{.Image}}|{{.Status}}' | awk -F'|' '$1 ~ /^(fressi|guenni)-(app|access)-/ && $2 == "purelink/agentone:2026.11.07-102" && $3 ~ /\\(healthy\\)/ {count++} END {print count+0}'); [ "$ready" -eq 4 ] && break; i=$((i+1)); sleep 2; done

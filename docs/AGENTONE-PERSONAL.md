@@ -68,6 +68,29 @@ weiterhin nicht in Query, QR, Audit oder sichtbarer Oberfläche persistiert;
 der Gerätetoken liegt AES-GCM-verschlüsselt in IndexedDB und wird beim
 Self-Revoke erst nach bestätigtem Serverwiderruf entfernt.
 
+Release 102 macht große Apple-Health-Exporte zu restartfesten, persistenten
+Importjobs. XML und ZIP werden bis 512 MiB mit Backpressure gestreamt; auf
+Datenträger liegt ausschließlich AES-256-GCM-Ciphertext mit benutzer- und
+jobgebundenem AAD. Ein eigener, zeit- und speicherbegrenzter Child-Prozess
+entschlüsselt und prüft die Quelle außerhalb des HTTP-Eventloops. Aktive
+Freigabe, Benutzeridentität und ein serverbestätigtes Human Gate werden vor
+dem Import gebunden; der Lauf erscheint im Command Stream, ohne Rohwerte,
+Consent, Hash, Dateipfad oder Kryptometadaten öffentlich zu projizieren.
+
+Nach einem Neustart werden nur strukturell intakte Jobs fortgesetzt.
+Abbruch und Datencommit konkurrieren über einen atomaren Job-State-CAS: Entweder
+der Abbruch gewinnt und es wird kein Messwert gespeichert, oder der Import
+committet vollständig und bleibt `COMPLETED`. Die Oberfläche zeigt Upload-
+Fortschritt, serverseitige Phasen, Reload-Persistenz und Abbruch. Ergebnisse
+enthalten nur sichere Zähler; alle Health-Auswertungen bleiben ausdrücklich
+deskriptiv und nicht medizinisch. Lokal verifiziert sind 273/273 Tests, der
+Production-Build, `verify:local`, der npm-Produktionsaudit mit 0 bekannten Schwachstellen
+und ein Chrome-Mobile-Flow mit 35.652.165 Bytes, zwei Messwerten, Reload und
+vollständigem Testdaten-Cleanup. Release 102 ist auf Fressi und Günni live. Ein
+isolierter Günni-Testuser importierte 35.652.207 Bytes und zwei Messwerte; sein
+Cleanup endete mit null Messwerten und null Freigaben. Alle vier privaten
+Container, die PWA-Flows und das direkte iPhone-Pairing sind live grün.
+
 ## Administration
 
 Autorisierte Administratoren können Instanzen und Sessions vollständig analysieren, neu starten, sperren, neu aufbauen, in Quarantäne verschieben und wiederherstellen. Jeder Zugriff auf Sessioninhalte und jede administrative Aktion wird unveränderbar auditiert. Secret-Werte bleiben maskiert.

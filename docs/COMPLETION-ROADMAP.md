@@ -8,9 +8,13 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-101` ist auf Fressi und Günni live. 257/257 Tests,
-Production-Build, API-Smoke, Pairing-Sicherheitsprüfung und mobile
-HTTPS-Chrome-Abnahme sind grün. Release 99 liefert den persistenten read-only
+Release `2026.11.07-102` ist auf Fressi und Günni live. 273/273 Tests,
+Production-Build, `verify:local`, Pairing-Sicherheitsprüfung,
+iPhone-Browserregression und npm-Produktionsaudit ohne bekannte Schwachstelle
+sind grün. Vier private Container, PWA, iPhone-Pairing und ein isolierter
+35.652.207-Byte-Health-Live-Import einschließlich vollständigem Cleanup sind
+produktiv verifiziert.
+Release 99 liefert den persistenten read-only
 IMAP-Bestand und das Mail Review Center. Release 100 ergänzt das kontrollierte
 Learning Lab mit `personal-briefing.v1`; Günni führte es mit echten minimierten
 Mail-Signalen aus und behielt den Zustand über zwei Containerrotationen.
@@ -26,6 +30,8 @@ WHOOP strikt getrennt. Auf Günni sind aktuell:
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
 - Feedback pro Signal wirksam und benutzerisoliert;
 - Apple-Health-Import, Verschlüsselung, Consent, Export und Löschung bereit;
+  Release 102 verarbeitet XML/ZIP bis 512 MiB als restartfeste Jobs mit
+  verschlüsseltem Staging, Fortschritt, Reload-Fortsetzung und Abbruch;
 - der Kalenderplan produktiv über ICS-Datei nutzbar; der persistente `https://`-/`webcal://`-Feed ist live ausgerollt und bleibt mangels persönlichem Link ehrlich `NOT_CONNECTED`;
 - Health noch ohne persönliche Messwerte; der Apple-/WHOOP-Vergleich und seine sichtbare Release-95-Zentrale sind implementiert und warten auf echte Daten;
 - Google OAuth und WHOOP ohne registrierte Anbieter-Credentials nicht live.
@@ -128,6 +134,16 @@ angezeigt.
     Home-Bildschirm-App ist optional; Fragmentcodes werden vor dem API-Aufruf
     aus der URL entfernt. Safari- und PWA-Flow bestehen AES-GCM-Vault, Reload,
     Status, Ingest, Self-Revoke-Retry, Recovery und Rollback ohne Secret-Leak.
+15. **Release 102 deployed und live verifiziert:** Apple-Health-
+    XML/ZIP bis 512 MiB läuft als persistenter, benutzer- und consentgebundener
+    Importjob. Streaming-Upload und AES-256-GCM-Staging halten Klartext aus dem
+    Dateisystem; ein begrenzter Child-Worker verarbeitet außerhalb des HTTP-
+    Eventloops. Restart-Recovery, Human Gate, Command Stream, atomarer Cancel-
+    oder-Commit-CAS und sichere Ergebnisprojektion sind getestet. Chrome Mobile
+    importierte 35.652.165 Bytes, zeigte Upload und Reload-Persistenz, speicherte
+    exakt zwei Messwerte und entfernte die Testdaten anschließend vollständig.
+    Der isolierte Live-Smoke wiederholte dies auf Günni mit 35.652.207 Bytes;
+    der Testuser endete mit null Messwerten und null Freigaben.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

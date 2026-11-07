@@ -1,13 +1,25 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-101` (**PASS LIVE**) mit Jarvis-inspiriertem Command Center, kontrolliertem Learning Lab, dauerhaftem Mail Review Center, Health & Recovery, Voice, Apple-Schnellstart und direktem sicherem iPhone-Pairing in Safari oder optional als PWA
+Status: Release `2026.11.07-102` (**PASS LIVE**) mit restartfesten Apple-Health-Importjobs bis 512 MiB, Jarvis-inspiriertem Command Center, kontrolliertem Learning Lab, dauerhaftem Mail Review Center, Voice und direktem sicherem iPhone-Pairing
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
-Der aktuelle Release läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 101 behebt die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+Release 102 läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+
+Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
+AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle
+außerhalb des HTTP-Eventloops; User, Consent, Human Gate und Command Stream
+bleiben gebunden. Restart-Recovery und atomarer Cancel-/Commit-CAS verhindern
+halbe Imports. Im Browser sind Upload, Jobphase, Reload-Persistenz und Abbruch
+sichtbar, während API und Audit nur sichere Zähler projizieren. Der lokale
+390×844-Chrome-Smoke importierte 35.652.165 Bytes und zwei Messwerte und
+entfernte die Testdaten vollständig. Der isolierte Live-Smoke auf Günni
+importierte 35.652.207 Bytes und zwei Messwerte unter einem eigenen Testuser;
+anschließend standen Messwerte und Freigaben dieses Testusers wieder auf null.
+Health-Ausgaben bleiben nicht medizinisch.
 
 Der Funktions- und UX-Abgleich mit Jarvis ist in [`docs/JARVIS-FEATURE-ALIGNMENT.md`](docs/JARVIS-FEATURE-ALIGNMENT.md) festgehalten. Der konkrete Gap-, Architektur- und Lieferplan steht in [`docs/JARVIS-PRODUCT-PLAN.md`](docs/JARVIS-PRODUCT-PLAN.md), der belastbare Restaufwand mit Fertig-Definition in [`docs/COMPLETION-ROADMAP.md`](docs/COMPLETION-ROADMAP.md). AgentOne Personal übernimmt daraus die Prinzipien sichtbare Tool-Ausführung, ein gemeinsames Command Center, Feedback, Memory, kontrolliertes Lernen, Modell-Routing, Voice und persönliche Datenfusion, bleibt aber ein eigenes Produkt auf Basis der AgentOne-/OpenClaw-Architektur.
 

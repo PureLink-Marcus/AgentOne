@@ -1,14 +1,14 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-101` (**PASS LIVE**)
-Deployment: Release 101 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Direktes iPhone-Pairing funktioniert nun in normalem Safari, die Home-Bildschirm-PWA bleibt optional.
+Release: `2026.11.07-102` (**PASS LIVE**)
+Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Persistente Apple-Health-Importjobs, PWA, Voice und direktes iPhone-Pairing sind produktiv verifiziert.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LIVE | Release 101: 257/257 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build, lokaler API-Smoke und Produktions-Audit mit 0 bekannten Schwachstellen bestanden. |
+| Lokale Anwendung | PASS LIVE | Release 102: 273/273 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build, API-Smoke und npm-Produktionsaudit mit 0 bekannten Schwachstellen bestanden. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 101 besteht auf Günni den Flow `QR-BASE → SAFARI-PAIR → PWA-PAIR → STATUS → INGEST → RELOAD → SELF-REVOKE-RETRY → RECOVER → VAULT-ROLLBACK`. Safari ist nicht mehr künstlich gesperrt; PWA-Installation ist optional. Der Serverwiderruf kommt vor dem lokalen Tresor-Cleanup, Netz-/503-Fehler behalten den AES-GCM-geschützten Token. Die Abnahme läuft in echtem Chrome mit iPhone-UA; ein echter Safari-/WebKit-Hardwaretest bleibt separat. |
@@ -34,7 +34,7 @@ Deployment: Release 101 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Proaktive Hinweise | PASS | Release 85: automatisch geladener Personal Pulse mit echten Mail-/Kalender-/Health-Signalen, maximal drei neue Hinweise pro Tag, Ruhezeit, persistente Deduplizierung und wirksames Feedback (`hilfreich`, `nicht hilfreich`, `falsch`, `später`, `nie wieder`). Live in Chrome ohne Secret-Leak geprüft. |
 | Personal Event Ledger | PASS | Immutable, idempotent, user-isoliert, Retention/Export/Löschung; Mail-Bodies und Secret-Felder werden an der Speichergrenze abgewiesen. |
 | Google Live Sync | PREPARED | OAuth-, Gmail-Metadaten- und Kalender-Sync inklusive Paging, Cursor, Retention, Kalenderauswahl und Teilerfolg ist implementiert und getestet. Auf Günni fehlt noch die serverseitige Google-OAuth-Konfiguration; das vorhandene App-Passwort bleibt bewusst nur IMAP. |
-| Health Ledger | DEPLOYED / DATA READY | Verschlüsselte, benutzerisolierte Apple-Health-XML/ZIP-Imports mit Consent, Deduplizierung, Digest, Export und Löschung sind bereit. Release 95 macht den deterministischen Apple-Health-/WHOOP-Vergleich als **Health & Recovery** sichtbar: getrennte Quellkarten, 14-Tage-Abdeckung, ausschließlich datenbasierte Konfidenz, kompatible Vergleiche, Methodentrennung und Datenqualität. Der 390-px-Chrome-Smoke importierte drei synthetische Apple-Werte, verglich sie mit drei WHOOP-Werten und entfernte alle Testdaten wieder. Die Oberfläche ist ausgerollt; auf Günni fehlen weiterhin persönliche Health-Daten und WHOOP-Credentials. |
+| Health Ledger | PASS LIVE | Release 102 verarbeitet Apple-Health-XML/ZIP bis 512 MiB als persistente Jobs: Streaming-Upload, AES-256-GCM-Ciphertext-Staging, begrenzter Child-Worker, User-/Consent-Isolation, Human Gate, Command Stream, Restart-Recovery und atomarer Cancel-/Commit-CAS. Browser und Audit sehen nur Status, Fortschritt und sichere Zähler; medizinische Diagnosen bleiben ausgeschlossen. Der lokale Chrome-Mobile-Smoke importierte 35.652.165 Bytes; der isolierte Günni-Live-Smoke importierte 35.652.207 Bytes und zwei Messwerte und endete nach Cleanup bei null Messwerten und null Freigaben. Der frühere Health-&-Recovery-Vergleich bleibt unverändert verfügbar; persönliche Günni-Daten und WHOOP-Credentials fehlen weiterhin. |
 | Persönliches Memory | PASS | persistente, benutzerisolierte Einträge mit Herkunft, Quellenreferenz, Bereich, Schutzklasse, Ablaufdatum, Suche und gezieltem Vergessen; Server- und Browsertests bestanden |
 | Persönliche Routinen | PASS | Read-only-Routinen mit Aktion, Berliner Zeitplan, Wochentagen, Simulation, payloadgebundenem Freigabe-Hash, Aktivieren/Pausieren, täglicher Einmallauf-Garantie und sicherem Löschen |
 | Live-Chat-Theme | PASS | eingebettete Runtime in AgentOne-Farben, dunkle Composer-/Verlaufskanten und aktive WebSocket-Verbindung |
@@ -188,9 +188,22 @@ Deployment: Release 101 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Regression | PASS LIVE | 257/257 Tests, lokale Release-Verifikation, Production-Build, API-Smoke, Pairing-Security-Smoke, PWA auf PureLink/Fressi/Günni und redigierter Container-/Auditcheck grün; 0 bekannte Produktions-Schwachstellen. |
 | Deployment | PASS LIVE | Source-Commit `aa1a481`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-101.tgz`, SHA-256 `af8a5c4a4b25b981128ef70cc7a3d23e7eaef094eda3cf47ec5399107d626f75`; Image `purelink/agentone:2026.11.07-101`, ID `sha256:6e20cd329733ae65a735c8a9e0a5aa20b6c1195f95560a784c3d5bbaefec16f1`; vier private Container healthy. |
 
+### Release 102 · persistente Apple-Health-Importjobs (**PASS LIVE**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Großer Importpfad | PASS LIVE | XML und ZIP bis 512 MiB werden mit Backpressure gestreamt. Auf Datenträger liegt ausschließlich AES-256-GCM-Ciphertext mit benutzer-/jobgebundenem AAD; ein separater Child-Worker besitzt Laufzeit-, Speicher-, Record- und Größenlimits. |
+| Persistenz und Recovery | PASS LIVE | Jobs überleben Reload und Prozessneustart; `RUNNING` wird nur bei strukturell intaktem Ciphertext erneut `QUEUED`. Terminale Quellen werden sicher entfernt, auch nach vorübergehend fehlgeschlagenem Unlink. |
+| Freigabe und Isolation | PASS LIVE | User und aktive Health-Freigabe werden serverseitig gebunden. Human Gate und Command Stream verwenden nur freigegebene Metadaten; fremde Benutzer erhalten 404. Public API enthält weder Rohwerte noch User-/Consent-ID, Hash, Pfad, AAD, IV, Tag oder Secret. Der Live-Smoke nutzte einen eigenen Testuser. |
+| Abbruch und Atomizität | PASS LIVE | Abbruch beendet den Child-Worker. Job-State-CAS und Health-Persistenz liegen in derselben SQLite-Transaktion: Entweder `CANCELLED` ohne Messwerte oder `COMPLETED` mit vollständig committeten Daten. |
+| Mobile Oberfläche | PASS LIVE | Chrome 390×844: 35.652.165-Byte-XML, sichtbarer Upload 100 %, derselbe Job nach Reload, `COMPLETED`, exakt zwei Messwerte, mindestens 44 px Touchziel und Cleanup auf 0. Fortschritt, Polling und Jobabbruch sind über die UI verfügbar. |
+| Sicherheits- und Regressionssuite | PASS LIVE | 273/273 Tests, Production-Build, `verify:local`, npm-Produktionsaudit mit 0 bekannten Schwachstellen sowie lokale und live ausgeführte iPhone-Browser-/Pairing-Security-Regression grün. Health-Ausgaben bleiben deskriptiv und nicht medizinisch. |
+| Deployment | PASS LIVE | Source-Commit `ae1c47b`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-102.tgz`, SHA-256 `a86e200f2250264150e178a81a9eff4ddf84aa46f0799e3f47465d6fc0352395`; Image `purelink/agentone:2026.11.07-102`, ID `sha256:28346c687f8ddcff7d4cc08b37aea5e54d71761cf2f5f979539b2a7718dc8826`; vier private Container healthy. Der isolierte Günni-Smoke importierte 35.652.207 Bytes und zwei Messwerte; Cleanup: 0 Messwerte, 0 Freigaben, keine Secrets exponiert. PWA- und iPhone-Pairing-Live-Smokes bestanden. |
+
 ```powershell
 npm run verify:local
 npm run verify:health-recovery
+npm run verify:health-import
 npm run verify:iphone-browser
 npm run verify:iphone-security
 npm run screenshots

@@ -573,6 +573,41 @@ und Image-ID
 `sha256:6e20cd329733ae65a735c8a9e0a5aa20b6c1195f95560a784c3d5bbaefec16f1`
 sind live auf vier healthy privaten Containern ausgerollt.
 
+### Release 2026.11.07-102 · persistente Apple-Health-Importjobs (**PASS LIVE**)
+
+Große Apple-Health-Exporte sind kein synchroner Browser-/HTTP-Block mehr.
+XML und ZIP werden bis 512 MiB gestreamt und ausschließlich als AES-256-GCM-
+Ciphertext mit benutzer- und jobgebundenem AAD gestagt. Ein getrennter,
+zeit- und speicherbegrenzter Child-Worker übernimmt Entschlüsselung, Parser-
+Grenzen, ZIP-Bomb-Prüfung, Normalisierung und atomare Persistenz außerhalb des
+HTTP-Eventloops. Quelle, Freigabe und Benutzer bleiben strikt gebunden.
+
+Jeder Import besitzt einen persistenten Zustand von `QUEUED` bis
+`COMPLETED`, `FAILED` oder `CANCELLED`. Ein Neustart setzt nur nachweislich
+intakte Quellen fort. Human Gate und Command Stream machen die Operation
+sichtbar; die öffentliche Projektion enthält nur Status, Fortschritt und
+sichere Zähler. Abbruch und Commit sind atomar gegeneinander abgesichert, so
+dass niemals ein Job als abgebrochen erscheint, dessen Messwerte gespeichert
+wurden. Rohwerte, Hash, Consent, Pfad, AAD, IV, Tag und Secrets bleiben
+außerhalb von Browser und Audit. Die Analyse bleibt deskriptiv und stellt
+keine medizinische Diagnose.
+
+Die mobile Oberfläche zeigt XHR-Uploadfortschritt, Jobphasen, Polling,
+Reload-Persistenz und Abbruch. **Lokale Abnahme:** 273/273 Tests,
+Production-Build, `verify:local`, npm-Produktionsaudit mit 0 bekannten
+Schwachstellen sowie iPhone-Browser- und Security-Regression sind grün. Ein
+Chrome-Mobile-Lauf bei 390×844 importierte 35.652.165 Bytes, zeigte denselben
+Job nach Reload als `COMPLETED`, speicherte exakt zwei Messwerte und endete
+nach Cleanup mit null Testmesswerten. Der isolierte Live-Smoke auf Günni
+verarbeitete 35.652.207 Bytes und zwei Messwerte; Cleanup endete bei null
+Messwerten und null Freigaben. Source-Commit `ae1c47b`, secret-freies Archiv
+`agentone-release-2026.11.07-102.tgz` mit SHA-256
+`a86e200f2250264150e178a81a9eff4ddf84aa46f0799e3f47465d6fc0352395`
+und Image `purelink/agentone:2026.11.07-102` mit ID
+`sha256:28346c687f8ddcff7d4cc08b37aea5e54d71761cf2f5f979539b2a7718dc8826`
+sind auf vier healthy privaten Containern ausgerollt. PWA, Voice und der
+vollständige iPhone-Pairing-Flow bleiben live grün.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —
