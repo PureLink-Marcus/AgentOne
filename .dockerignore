@@ -1,6 +1,13 @@
 node_modules
 dist
-output
+output/*
+!output/connector
+output/connector/*
+!output/connector/agentone-home-connector-raspberry.zip
+!output/connector/agentone-home-connector-raspberry.zip.sig
+!output/connector/home-connector-release.json
+!output/connector/agentone-siri-shortcuts.zip
+!output/connector/agentone-apple-companion.zip
 master
 design
 docs
