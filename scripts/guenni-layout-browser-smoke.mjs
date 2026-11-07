@@ -5,7 +5,7 @@ import { loadEnv } from '../server/state.mjs';
 
 const env=loadEnv(path.resolve('.'));
 const origin=env.AGENTONE_GUENNI_ORIGIN;
-const release='2026.11.07-83';
+const release='2026.11.07-85';
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const page=await browser.newPage({viewport:{width:1280,height:900}});
 const errors=[];

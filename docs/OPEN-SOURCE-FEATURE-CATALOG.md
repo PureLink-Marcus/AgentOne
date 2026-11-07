@@ -4,8 +4,11 @@ Statuswerte: `geplant`, `bewertet`, `übernommen`, `angepasst`, `abgelehnt`, `im
 
 | Quelle | Relevante Funktionen | AgentOne-Ziel | Status |
 |---|---|---|---|
-| OpenClaw | Omnichannel Gateway, Sessions, Memory, Skills, Automationen, Geräte | AgentOne Personal | bewertet |
-| OpenJarvis | lokale Modelle, Hardwarewahl, MCP, Traces, Lernschleifen | Personal Runtime | bewertet |
+| OpenClaw | Omnichannel Gateway, Sessions, Memory, Skills, Automationen, Geräte und Plugin-Policies | AgentOne Personal Runtime | übernommen |
+| Hermes Agent | Memory/Skill-Trennung, Skill-Kandidaten, Diff-Freigabe, Locks, Curator und Rollback | AgentOne Learning Lab | angepasst |
+| OpenJarvis | lokale Modelle, Morning Digest, scheduled/continuous Agents, Kosten-/Latenz-/Energieevaluation | Local-AI- und Evaluation-Sidecar | bewertet |
+| Leon | Controlled-/Smart-/Agent-Modus, geschichtetes Memory, Voice und begrenzter Proactive Pulse | Execution Mode und Voice-Referenz | bewertet |
+| Jarvis Institute | Command Center, sichtbare Toolkette, gemeinsamer Text-/Voice-Agent und Modellrouting | eigene AgentOne-UX; keine Code-/Markenübernahme | angepasst |
 | CrewAI | Rollen, Tasks, Crews, Flows und Delegation | Agententeams | geplant |
 | Microsoft Agent Framework | sequentielle/parallele Workflows, Handoffs, Group Chat, Checkpoints | Workflow Engine | geplant |
 | LangGraph | langlebige Zustände, Resume, Memory, Human-in-the-loop | Workflow Engine | geplant |

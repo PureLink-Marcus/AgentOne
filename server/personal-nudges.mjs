@@ -6,9 +6,38 @@ export function loadNudgeSettings(db,userId){const row=db.prepare('SELECT settin
 
 export function saveNudgeSettings(db,userId,input){const settings=normalizeNudgeSettings(input),updatedAt=new Date().toISOString();db.prepare('INSERT INTO personal_nudge_settings(user_id,settings,updated_at) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET settings=excluded.settings,updated_at=excluded.updated_at').run(userId,JSON.stringify(settings),updatedAt);return {...settings,updatedAt};}
 
-export function recordNudgeFeedback(db,{id,userId,nudgeId,value}){if(!/^[a-z0-9][a-z0-9-]{1,80}$/i.test(String(nudgeId||''))||!['helpful','not_helpful','dismissed'].includes(value))throw Object.assign(new Error('invalid_nudge_feedback'),{status:400});const createdAt=new Date().toISOString();db.prepare('INSERT INTO personal_nudge_feedback(id,user_id,nudge_id,value,created_at) VALUES(?,?,?,?,?)').run(id,userId,nudgeId,value,createdAt);return {id,nudgeId,value,createdAt};}
+export function recordNudgeFeedback(db,{id,userId,nudgeId,value}){if(!/^[a-z0-9][a-z0-9._-]{1,120}$/i.test(String(nudgeId||''))||!['helpful','not_helpful','wrong','later','never','dismissed'].includes(value))throw Object.assign(new Error('invalid_nudge_feedback'),{status:400});const createdAt=new Date().toISOString();db.prepare('INSERT INTO personal_nudge_feedback(id,user_id,nudge_id,value,created_at) VALUES(?,?,?,?,?)').run(id,userId,nudgeId,value,createdAt);return {id,nudgeId,value,createdAt};}
 
-export function dismissedNudgeIds(db,userId){return new Set(db.prepare("SELECT DISTINCT nudge_id FROM personal_nudge_feedback WHERE user_id=? AND value='dismissed'").all(userId).map(row=>row.nudge_id));}
+export function dismissedNudgeIds(db,userId){return new Set(db.prepare("SELECT DISTINCT nudge_id FROM personal_nudge_feedback WHERE user_id=? AND value IN ('dismissed','never')").all(userId).map(row=>row.nudge_id));}
+
+export function loadNudgeFeedbackProfile(db,userId,{now=new Date(),laterHours=12,wrongHours=24}={}){
+  const current=now instanceof Date?now:new Date(now);
+  if(Number.isNaN(current.getTime()))throw new TypeError('now must be a valid date');
+  const latest=new Map();
+  for(const row of db.prepare('SELECT nudge_id as nudgeId,value,created_at as createdAt FROM personal_nudge_feedback WHERE user_id=? ORDER BY created_at ASC,id ASC').all(userId))latest.set(row.nudgeId,row);
+  const decisions={};
+  for(const [nudgeId,row] of latest){
+    const createdAt=new Date(row.createdAt),age=current.getTime()-createdAt.getTime();
+    let effect='none';
+    if(row.value==='never'||row.value==='dismissed')effect='hidden';
+    else if(row.value==='later'&&age<laterHours*3_600_000)effect='snoozed';
+    else if(row.value==='wrong'&&age<wrongHours*3_600_000)effect='wrong-cooldown';
+    else if(row.value==='not_helpful')effect='deprioritized';
+    decisions[nudgeId]={value:row.value,effect,createdAt:row.createdAt};
+  }
+  return decisions;
+}
+
+export function applyNudgeFeedback(items,profile={}){
+  return items.flatMap(item=>{
+    const decision=profile[item.id];
+    if(['hidden','snoozed','wrong-cooldown'].includes(decision?.effect))return [];
+    if(decision?.effect==='deprioritized')return [{...item,severity:item.severity==='attention'?'info':item.severity,priority:item.priority==='critical'?'high':'low',feedbackEffect:'deprioritized'}];
+    return [{...item,feedbackEffect:decision?.value==='helpful'?'confirmed':null}];
+  });
+}
+
+export function resetNudgeFeedback(db,userId){const result=db.prepare('DELETE FROM personal_nudge_feedback WHERE user_id=?').run(userId);return {deleted:Number(result.changes||0)};}
 
 export function normalizeNudgeSettings(input={}){
   const quietHours=/^(?:[01]\d|2[0-3]):[0-5]\d-(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(input.quietHours||''))?String(input.quietHours):'22:00-07:00';

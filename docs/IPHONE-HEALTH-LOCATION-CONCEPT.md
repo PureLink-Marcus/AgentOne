@@ -2,6 +2,8 @@
 
 Stand: 30. Oktober 2026
 
+Die normalisierte Import- und Vergleichspipeline ist inzwischen implementiert. Der aktuelle technische und datenschutzbezogene Stand steht in [HEALTH-DATA-INTEGRATIONS.md](./HEALTH-DATA-INTEGRATIONS.md). Diese Datei beschreibt weiterhin den geplanten iPhone-Companion und die Standortmodi.
+
 ## Technische Grenze
 
 Eine PWA oder ein Server kann nicht direkt auf HealthKit, Apple Erinnerungen oder dauerhaft auf den iPhone-Standort zugreifen. Dafür wird eine kleine native **AgentOne Companion** App benötigt. Sie hält Apples Berechtigungsdialoge auf dem iPhone und überträgt ausschließlich ausdrücklich freigegebene Daten an die persönliche Instanz.

@@ -1,0 +1,26 @@
+import path from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import { chromium } from 'playwright';
+import { loadEnv } from '../server/state.mjs';
+
+const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-85';
+if(!origin||!env.AGENTONE_GUENNI_USER||!env.AGENTONE_GUENNI_PASSWORD)throw new Error('Günni Browser-Abnahme ist nicht konfiguriert');
+const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
+page.on('pageerror',error=>errors.push(String(error.message||error)));
+page.on('console',message=>{if(message.type()==='error'&&!message.text().startsWith('Failed to load resource:'))errors.push(message.text());});
+try{
+  await page.goto(origin+'/login',{waitUntil:'networkidle'});
+  await page.locator('#username').fill(env.AGENTONE_GUENNI_USER);await page.locator('#password').fill(env.AGENTONE_GUENNI_PASSWORD);
+  await Promise.all([page.waitForURL(origin+'/'),page.getByRole('button',{name:'Sicher anmelden'}).click()]);
+  const snapshot=await page.evaluate(async()=>{const [releaseResponse,intelligenceResponse,pulseResponse,healthResponse,servicesResponse]=await Promise.all([fetch('/agentone/release.json?release85=1',{cache:'no-store'}),fetch('/agentone/intelligence',{cache:'no-store'}),fetch('/agentone/pulse',{cache:'no-store'}),fetch('/agentone/health',{cache:'no-store'}),fetch('/agentone/services',{cache:'no-store'})]);return {release:await releaseResponse.json(),intelligence:{status:intelligenceResponse.status,data:await intelligenceResponse.json()},pulse:{status:pulseResponse.status,data:await pulseResponse.json()},health:{status:healthResponse.status,data:await healthResponse.json()},services:{status:servicesResponse.status,data:await servicesResponse.json()}};});
+  if(snapshot.release.release!==release)throw new Error('Live-Release ist '+snapshot.release.release+' statt '+release);
+  if(snapshot.intelligence.status!==200||snapshot.intelligence.data.schema!=='agentone.personal-intelligence/v1')throw new Error('Intelligence API ist nicht produktiv erreichbar');
+  if(snapshot.pulse.status!==200||!Array.isArray(snapshot.pulse.data.items))throw new Error('Pulse API ist nicht produktiv erreichbar');
+  if(snapshot.health.status!==200||snapshot.health.data.policy?.userIsolated!==true)throw new Error('Health API ist nicht benutzerisoliert erreichbar');
+  await page.locator('[data-view="command"]').click();await page.locator('.personal-pulse-feed').waitFor({state:'visible'});await page.locator('#pulse-state').waitFor();
+  await mkdir(path.resolve('output/playwright'),{recursive:true});const screenshots={pulse:path.resolve('output/playwright/guenni-pulse-release-85.png'),briefing:path.resolve('output/playwright/guenni-briefing-feedback-release-85.png'),google:path.resolve('output/playwright/guenni-google-live-release-85.png')};await page.locator('.personal-pulse-feed').screenshot({path:screenshots.pulse});
+  await page.locator('[data-view="tasks"]').click();await page.locator('#personal-briefing-result').waitFor({state:'visible'});const signals=await page.locator('#personal-briefing-facts .signal-feedback').count();if(snapshot.intelligence.data.signals.length&&signals!==snapshot.intelligence.data.signals.length)throw new Error('Feedback fehlt an einem Intelligence-Signal');if(signals){const labels=await page.locator('#personal-briefing-facts .signal-feedback').first().getByRole('button').allTextContents();for(const label of ['Hilfreich','Nicht hilfreich','Falsch','Später','Nie wieder'])if(!labels.includes(label))throw new Error('Feedback-Aktion fehlt: '+label);}await page.locator('#personal-briefing-result').screenshot({path:screenshots.briefing});
+  await page.locator('[data-view="tools"]').click();await page.locator('.mail-center').waitFor({state:'visible'});await page.locator('#google-sync').waitFor();const google=(snapshot.services.data.services||[]).find(service=>service.id==='google');if(google?.settings?.calendars?.length&&!await page.locator('.mail-provider-help input[type="checkbox"]').count())throw new Error('Google-Kalenderauswahl fehlt trotz synchronisierter Kalender');await page.locator('.mail-center').screenshot({path:screenshots.google});
+  if(errors.length)throw new Error('Browserfehler: '+errors.join(' | '));
+  console.log(JSON.stringify({origin,release,chrome:true,intelligence:{events:snapshot.intelligence.data.eventCount,signals:snapshot.intelligence.data.signals.length,sources:snapshot.intelligence.data.sources.map(source=>({id:source.id,status:source.status,records:source.records}))},pulse:{newItems:snapshot.pulse.data.items.length,deliveredToday:snapshot.pulse.data.deliveredToday,quietNow:snapshot.pulse.data.quietNow},health:{encryptionReady:snapshot.health.data.encryptionReady,metrics:snapshot.health.data.store?.metrics||0},google:{configured:Boolean(google),state:google?.lastTest?.state||'NOT_CONNECTED',calendarSelection:Boolean(google?.settings?.calendars?.length)},feedbackButtons:signals,consoleErrors:0,screenshots,secretsExposed:false},null,2));
+}finally{await browser.close();}

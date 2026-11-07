@@ -12,10 +12,10 @@ AgentOne wurde als neuer, isolierter Coolify-Service auf `container2.purelink.de
 | Service | `agentone-platform-stack` · `sir37msobwojpocmdw3l6sbp` | `running:healthy` |
 | AgentOne Platform | separater PureLink-Stack | healthy; eigener Release- und Abnahmepfad |
 | AgentOne PostgreSQL | `postgres:17-alpine` | healthy, 4 Migrationstabellen |
-| AgentOne Personal | `purelink/agentone:2026.11.07-83` | Günni/Fressi healthy, Jarvis Core, Gmail-/Kalender-Auswahl, Routinen, Memory und lokaler Modellpfad |
+| AgentOne Personal | `purelink/agentone:2026.11.07-85` | Günni/Fressi, Google Live Sync, Apple Health Import, Personal Pulse, Feedback, Jarvis Core, Mail-Entwürfe, Routinen und Memory |
 | Personal PostgreSQL | `postgres:17-alpine` | healthy, 4 Migrationstabellen |
 | AgentOne Personal Gateway | `ghcr.io/openclaw/openclaw:2026.10.8` | healthy, Gateway-Health erfolgreich |
-| AgentOne Access Proxy | `purelink/agentone:2026.11.07-83` | healthy, PWA, Luna/Terra/Sol-Routing, Connector-Governance und LIVE Home Connector |
+| AgentOne Access Proxy | `purelink/agentone:2026.11.07-85` | PWA, Pulse-/Intelligence-Proxy, Luna/Terra/Sol-Routing, Connector-Governance und LIVE Home Connector |
 
 ### Private Instanzen
 
@@ -85,10 +85,10 @@ Das Projekt `agentone-purelink` enthält nur PureLink-Identitäten, Quellen, Dat
 
 ## Release und Wiederholbarkeit
 
-- Release-Archiv: `output/demo/agentone-release-2026.11.07-83.tgz`
-- SHA-256: `99C8370A3314AB215D46D5D2865EAA2C71EB1C1FD1C4DEA0F07FBB6C8A23951F`
+- Release-Archiv: `output/demo/agentone-release-2026.11.07-85.tgz`
+- SHA-256: `A393B2D74855F4915F7C796147118FAD5BDA73415DAFD39637D43885B216F290`
 - Coolify-Manifest: `output/demo/coolify-deployment.json`
-- Image: `purelink/agentone:2026.11.07-83`
+- Image: `purelink/agentone:2026.11.07-85`
 
 Prüfskripte:
 
@@ -103,4 +103,4 @@ npm run deploy:remote
 npm run verify:remote
 ```
 
-Das Deployment wird aktuell aus einem lokalen, secret-freien Release-Archiv als versioniertes Image direkt auf dem Hetzner-Host gebaut. Der Arbeitsordner ist als Git-Checkout mit `origin` auf `PureLink-Marcus/AgentOne` eingerichtet. Die Branches `agentone-main`, `agentone-dev`, `agentone-personal-main` und `agentone-personal-dev` werden aus demselben geprüften Release-83-Commit veröffentlicht.
+Das Deployment wird aktuell aus einem lokalen, secret-freien Release-Archiv als versioniertes Image direkt auf dem Hetzner-Host gebaut. Der Arbeitsordner ist als Git-Checkout mit `origin` auf `PureLink-Marcus/AgentOne` eingerichtet. Die Branches `agentone-main`, `agentone-dev`, `agentone-personal-main` und `agentone-personal-dev` werden aus demselben geprüften Release-84-Commit veröffentlicht.

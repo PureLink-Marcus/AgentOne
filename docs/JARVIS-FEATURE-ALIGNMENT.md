@@ -2,6 +2,10 @@
 
 Stand: 7. November 2026
 
+Der verbindliche Architektur-, Gap- und Lieferplan steht in
+[`JARVIS-PRODUCT-PLAN.md`](JARVIS-PRODUCT-PLAN.md). Dieses Dokument bleibt der
+kompakte Abgleich der bereits sichtbaren Oberfläche.
+
 AgentOne Personal übernimmt nicht das Jarvis-Produkt oder dessen Branding. Die öffentlich dokumentierten Jarvis-Funktionsgruppen dienen als UX-Referenz für einen Assistenten, der Aufgaben sichtbar ausführt statt nur Antworten zu formulieren. OpenClaw bleibt die interne Agenten- und Werkzeugruntime; Günni und Fressi bleiben eigenständige AgentOne-Personal-Instanzen.
 
 ## Zielbild

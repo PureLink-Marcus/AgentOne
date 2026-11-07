@@ -20,6 +20,8 @@
     "verify:guenni-connectors": "node scripts/guenni-connector-audit.mjs",
     "verify:guenni-communication": "node scripts/guenni-communication-browser-smoke.mjs",
     "verify:guenni-google": "node scripts/guenni-google-account-browser-smoke.mjs",
+    "verify:guenni-mail-draft": "node scripts/guenni-mail-draft-browser-smoke.mjs",
+    "verify:guenni-jarvis85": "node scripts/guenni-jarvis-release85-browser-smoke.mjs",
     "diagnose:guenni-chat": "node scripts/guenni-chat-runtime-diagnose.mjs",
     "verify:mail-reader": "node scripts/openclaw-mail-reader-smoke.mjs",
     "verify:interactive": "node scripts/interactive-dashboard-smoke.mjs"
