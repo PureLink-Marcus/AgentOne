@@ -8,8 +8,10 @@ const user=env.COOLIFY_HETZNER_SSH_USER||env.COOLIFY_SSH_USER;
 const key=env.COOLIFY_HETZNER_SSH_KEY_PATH||env.COOLIFY_SSH_KEY_PATH;
 const knownHosts=path.resolve('output/demo/known_hosts');
 if(!host||!user||!key)throw new Error('SSH-Ziel fehlt');
+const preflightOnly=process.argv.includes('--preflight-only');
 
 const command=`set -eu
+preflightOnly=${preflightOnly?'1':'0'}
 dir=/data/coolify/services/gohudyegrv06p4jikisfk2x1
 file="$dir/docker-compose.yml"
 envfile="$dir/.env"
@@ -22,15 +24,16 @@ releaseLines=$(grep -c "AGENTONE_RELEASE" "$file" || true)
 healthKeyLines=$(grep -c "AGENTONE_HEALTH_MASTER_KEY:" "$file" || true)
 whoopStateLines=$(grep -c "WHOOP_OAUTH_STATE_SECRET:" "$file" || true)
 whoopStateEnvLines=$(grep -c '^WHOOP_OAUTH_STATE_SECRET=' "$envfile" || true)
-preflightImage=$(sed -n 's/^[[:space:]]*image:[[:space:]]*//p' "$file" | grep '^purelink/agentone:' | head -1 | tr -d '"\r')
+preflightImage=$(sed -n 's/^[[:space:]]*image:[[:space:]]*//p' "$file" | tr -d '\\042\\047\\r' | grep '^purelink/agentone:' | head -1)
 echo "preflight image102=$image102 image103=$image103 releaseLines=$releaseLines healthKeyLines=$healthKeyLines whoopStateLines=$whoopStateLines whoopStateEnvLines=$whoopStateEnvLines"
 test "$((image102 + image103))" -eq 4
 test -n "$preflightImage"
-test "$(grep -F -c "image: $preflightImage" "$file")" -eq 4
+test "$(sed -n 's/^[[:space:]]*image:[[:space:]]*//p' "$file" | tr -d '\\042\\047\\r' | grep -F -x -c "$preflightImage")" -eq 4
 test "$releaseLines" -eq 2
 test "$healthKeyLines" -eq 2
 test "$whoopStateLines" -eq 0 -o "$whoopStateLines" -eq 2
 test "$whoopStateEnvLines" -eq 0 -o "$whoopStateEnvLines" -eq 1
+if [ "$preflightOnly" -eq 1 ]; then echo "release-103 preflight passed for $preflightImage"; exit 0; fi
 cp "$file" "$backup"
 chmod 600 "$backup"
 deploy_ok=0
