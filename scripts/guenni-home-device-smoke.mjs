@@ -43,15 +43,15 @@ try{
   const metricCount=await page.locator('#ha-metrics .ha-metric').count(),groupCount=await page.locator('#ha-groups .ha-group').count();
   if(metricCount!==4||groupCount<1)throw new Error(`Dashboard unvollständig: ${metricCount} Metriken, ${groupCount} Gruppen`);
   const controlCount=await page.locator('#ha-groups .ha-entity-controls button').count(),controlNote=await page.locator('#ha-control-note').innerText();if(controlCount<1||!/(STEUERUNG AKTIV|READ-ONLY|VOLLGAS)/.test(controlNote))throw new Error(`Steuerungs-Cards fehlen: ${controlCount} · ${controlNote}`);
-  const dashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-release-68.png');
+  const dashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-release-94.png');
   await page.screenshot({path:dashboardScreenshot,fullPage:true});
   await page.setViewportSize({width:390,height:844});
-  const mobileDashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-mobile-release-68.png');
+  const mobileDashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-mobile-release-94.png');
   await page.screenshot({path:mobileDashboardScreenshot});
   await page.locator('[data-view="tools"]').click();
 
   await mkdir(path.resolve('output/demo'),{recursive:true});
-  const deviceScreenshot=path.resolve('output/demo/guenni-home-device-release-68.png');
+  const deviceScreenshot=path.resolve('output/demo/guenni-home-device-release-94.png');
   await card.screenshot({path:deviceScreenshot});
 
   await page.locator('#home-device-setup').click();
@@ -62,10 +62,10 @@ try{
   const permissionCount=await dialog.locator('input[type="checkbox"]').count();
   if(permissionCount<4)throw new Error(`Nur ${permissionCount} Gerätefreigaben im Einrichtungsdialog.`);
 
-  const setupScreenshot=path.resolve('output/demo/guenni-home-device-setup-release-68.png');
+  const setupScreenshot=path.resolve('output/demo/guenni-home-device-setup-release-94.png');
   await dialog.screenshot({path:setupScreenshot});
   if(browserErrors.length)throw new Error(`Browserfehler: ${browserErrors.join(' | ')}`);
-  console.log(JSON.stringify({origin,release:'2026.11.06-77',connector:dashboard.controlEnabled?'v3-control':'v3-readonly',status:'LIVE',card:'visible',connection:'authenticated',entities:dashboard.summary.entities,domains:dashboard.summary.domains,metricCount,groupCount,controlCount,controlNote,setupPermissions:permissionCount,dashboardScreenshot,mobileDashboardScreenshot,deviceScreenshot,setupScreenshot},null,2));
+  console.log(JSON.stringify({origin,release:'2026.11.07-94',connector:dashboard.controlEnabled?'v3-control':'v3-readonly',status:'LIVE',card:'visible',connection:'authenticated',entities:dashboard.summary.entities,domains:dashboard.summary.domains,metricCount,groupCount,controlCount,controlNote,setupPermissions:permissionCount,dashboardScreenshot,mobileDashboardScreenshot,deviceScreenshot,setupScreenshot},null,2));
 }finally{
   await browser.close();
 }

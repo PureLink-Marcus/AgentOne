@@ -1,16 +1,16 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-93`
-Deployment: Release 93 ist auf Fressi und Günni live. Der iPhone-Pairing-Lockout hinter Coolify/Traefik ist behoben; der mobile Apple-Assistent, PWA-Cachewechsel und der vollständige Pairing-Lebenszyklus sind remote abgenommen.
+Release: `2026.11.07-94`
+Deployment: Release 94 ist auf Fressi und Günni live. Der persönliche Tagesplan verarbeitet reale ICS-/Google-Kalenderdaten serverseitig, zeigt Konflikte und freie Arbeitsfenster und verbindet diese mit dem echten Mail-Handlungsbedarf. Der Apple-Health-/WHOOP-Vergleich ist als streng benutzerisolierte, nicht-medizinische API verdrahtet.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS | Release 93: 182/182 Node-Tests, Vite-Production-Build, Pairing-Security-Smoke sowie dedizierte Chrome-Abnahmen bestanden. |
+| Lokale Anwendung | PASS | Release 94: 195/195 Node-Tests, Vite-Production-Build, Plattform-, Pairing-, Command-Stream- und Planungs-Smokes sowie dedizierte Chrome-Abnahmen bestanden. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
-| Persönliche Live-Inbox | PASS | Postfächer, 343 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
+| Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS für Web-Companion | Release 93: einheitlicher 4-Schritt-Assistent, sichtbarer Einmalcode, Fragment-Link/Share, Status-Refresh, Erneuern und Widerruf. Das Reverse-Proxy-Limit trennt reale Mobilclients; ein persistentes Benutzerlimit, atomare Code-Einlösung und fail-closed Server-Pepper schützen den Flow. Die iPhone-Seite prüft HTTPS/WebCrypto/IndexedDB sichtbar. Native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
 | Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
@@ -25,6 +25,7 @@ Deployment: Release 93 ist auf Fressi und Günni live. Der iPhone-Pairing-Lockou
 | Produktidentität | PASS | Auth-Realm, Agentenname und mobile Chatoberfläche zeigen `AgentOne` |
 | Command Center | PASS | eigene AgentOne-Hülle mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools und Schnellaktionen; keine sichtbare OpenClaw-Navigation |
 | Command-Stream Center | PASS LIVE | Release 92 persistiert echte Runs für Personal Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import. Günnis echter IMAP-Scan erzeugte live `OBSERVE → TOOL → RESULT`; die öffentliche Timeline enthält ausschließlich freigegebene Run-/Step-Metadaten. Desktop und 390-px-Mobilansicht wurden in Google Chrome geprüft. |
+| Heute & Planung | PASS LIVE | Release 94: serverseitiger Berliner Tagesplan aus minimiertem Google-/ICS-Ledger, Upcoming Events, echte Überschneidungen und freie Arbeitsfenster. Günni wurde in Chrome bei 390 px mit zwei temporären Live-Terminen, einem Konflikt, zwei freien Fenstern und acht echten Mail-Aktionen geprüft; die ICS-Testdaten wurden danach wieder entfernt. |
 | Bedienbarer AI Core | PASS | Luna-Standard, Terra für Dokumente/Bilder und Sol für komplexe Aufgaben synchronisieren sich persistent mit dem HUD; Ollama bleibt bis zum Connector-Healthcheck ehrlich gesperrt. |
 | Lokaler Modellpfad | READY | Connector v4 und App-Pfad sind getestet, allowlist-begrenzt und signiert. Live-Status, `LOCAL`-Datenschutz und Latenz werden sichtbar; ein reales Ollama-Modell auf dem Pi fehlt noch. |
 | Chat-/Voice-Trace | PASS | Release 83: echter Browserchat und Voice-Texteingabe antworten über Luna mit HTTP 200; PWA-Erststart bleibt stabil, keine Konsolenfehler. Jarvis Core wählt Stefan, Gerätestimme `Anna` ist ausgeschlossen. |
@@ -32,7 +33,7 @@ Deployment: Release 93 ist auf Fressi und Günni live. Der iPhone-Pairing-Lockou
 | Proaktive Hinweise | PASS | Release 85: automatisch geladener Personal Pulse mit echten Mail-/Kalender-/Health-Signalen, maximal drei neue Hinweise pro Tag, Ruhezeit, persistente Deduplizierung und wirksames Feedback (`hilfreich`, `nicht hilfreich`, `falsch`, `später`, `nie wieder`). Live in Chrome ohne Secret-Leak geprüft. |
 | Personal Event Ledger | PASS | Immutable, idempotent, user-isoliert, Retention/Export/Löschung; Mail-Bodies und Secret-Felder werden an der Speichergrenze abgewiesen. |
 | Google Live Sync | PREPARED | OAuth-, Gmail-Metadaten- und Kalender-Sync inklusive Paging, Cursor, Retention, Kalenderauswahl und Teilerfolg ist implementiert und getestet. Auf Günni fehlt noch die serverseitige Google-OAuth-Konfiguration; das vorhandene App-Passwort bleibt bewusst nur IMAP. |
-| Health Ledger | READY | Verschlüsselte, benutzerisolierte Apple-Health-XML/ZIP-Imports mit Consent, Deduplizierung, Digest, Export und Löschung sind live bereit; auf Günni sind noch keine persönlichen Health-Daten importiert. WHOOP bleibt bis Client-Credentials und Nutzerfreigabe `PREPARED`. |
+| Health Ledger | READY | Verschlüsselte, benutzerisolierte Apple-Health-XML/ZIP-Imports mit Consent, Deduplizierung, Digest, Export und Löschung sind live bereit. Release 94 ergänzt einen deterministischen Apple-Health-/WHOOP-Vergleich mit getrennten Quellen, Abdeckung, Konfidenz und Methodentrennung; keine Diagnose oder Therapieaussage. Auf Günni fehlen noch persönliche Health-Daten und WHOOP-Credentials. |
 | Persönliches Memory | PASS | persistente, benutzerisolierte Einträge mit Herkunft, Quellenreferenz, Bereich, Schutzklasse, Ablaufdatum, Suche und gezieltem Vergessen; Server- und Browsertests bestanden |
 | Persönliche Routinen | PASS | Read-only-Routinen mit Aktion, Berliner Zeitplan, Wochentagen, Simulation, payloadgebundenem Freigabe-Hash, Aktivieren/Pausieren, täglicher Einmallauf-Garantie und sicherem Löschen |
 | Live-Chat-Theme | PASS | eingebettete Runtime in AgentOne-Farben, dunkle Composer-/Verlaufskanten und aktive WebSocket-Verbindung |
@@ -94,6 +95,16 @@ Deployment: Release 93 ist auf Fressi und Günni live. Der iPhone-Pairing-Lockou
 | Stable Companion-Server-Secret | PASS LIVE | Ein geschützter 256-Bit-Pepper liegt im Coolify-Serviceverzeichnis und wird nur in die beiden App-Container injiziert; beide melden `READY`, Werte erscheinen weder in Logs noch im Browser |
 | Gesamttests und Production-Build | PASS | 182/182 Node-Tests, Pairing-Security-Smoke und Vite-Production-Build grün |
 | Deployment und Live-iPhone-Smoke | PASS | Vier Container healthy auf Image `purelink/agentone:2026.11.07-93`; PWA-Cache 93 aktiv; Günni Chrome 390 px: `Pair → Status → Ingest → Revoke`, HTTPS/WebCrypto/IndexedDB bereit, 0 Konsolenfehler, keine Secrets |
+
+### Release 94 · Tagesplanung und Quellenvergleich
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Kalenderplan, Google-/ICS-Projektion und Feed-Schutz | PASS | DST-/IANA-Tagesgrenzen, Konflikte, freie Fenster, Benutzertrennung, SSRF-Schutz und PII-/Secret-Redaktion in 195/195 Gesamttests enthalten |
+| Health-/WHOOP-Vergleich | PASS READY | Normalisierte Quellen bleiben getrennt; Abdeckung und Konfidenz sind datenbasiert; HRV-SDNN/RMSSD und Körper-/Hauttemperatur werden nicht falsch zusammengeführt |
+| Echter Chrome-Datenflow bei 390 px | PASS LIVE | Zwei temporäre ICS-Termine → zwei sichtbare Termine, ein Serverkonflikt, zwei freie Arbeitsfenster; Touchziele mindestens 44 px, keine Konsolenfehler, anschließende Entfernung bestätigt |
+| Mail, Home, Kommunikation und iPhone-Regression | PASS LIVE | 50 IMAP-Nachrichten, acht aktuelle Mail-Aktionen, Home Connector v3 mit 345 Entitäten, Chat HTTP 200 über Luna sowie `Pair → Status → Ingest → Revoke` auf Günni bestanden |
+| Deployment | PASS | Secret-freies Archiv SHA-256 `a1478420a5356340648c10decb3dbab470550c8cbbd027ca95fb89eb1f46cc86`; Image `sha256:67d7b590b3394231ad1dd82e52e345e529324524bb131296570b71a896bf68c3`; vier private Container healthy auf `purelink/agentone:2026.11.07-94` |
 
 ```powershell
 npm run verify:local

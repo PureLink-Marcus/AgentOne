@@ -305,6 +305,25 @@ Regressionstest eine schlechtere Skill-/Modellversion zuverlässig blockiert.
 Damit wird AgentOne Personal nicht durch mehr Kacheln zu JARVIS, sondern durch
 einen überprüfbaren Kreislauf aus Daten, Kontext, Handlung und Lernen.
 
+### Release 2026.11.07-94 · Heute & Planung
+
+Der erste Punkt ist jetzt als produktiver Kreislauf sichtbar: **Heute &
+Planung** verbindet den minimierten Kalenderbestand mit dem bestehenden
+Mail-Briefing. Konflikte und freie Arbeitsfenster werden ausschließlich auf dem
+Server berechnet; die PWA übernimmt keine eigene Schattenlogik. Jede Karte
+führt zur zuständigen Quelle. `NOT_CONNECTED`, `DEGRADED` und Fehler bleiben
+sichtbar und erzeugen keine erfundenen Termine oder freien Zeiten.
+
+Google-Synchronisation ersetzt ihren eigenen Ledger-Snapshot benutzergebunden.
+ICS kann als Datei oder über einen SSRF-geschützten öffentlichen HTTPS-Feed
+eingelesen werden. Feed-URL und Freigabetoken werden nicht gespeichert oder
+zurückgegeben; nur ein Endpoint-Hash bleibt als Provenienz.
+
+Parallel ist der nicht-medizinische Apple-Health-/WHOOP-Vergleich verdrahtet.
+Er hält Quellen und inkompatible Messmethoden getrennt, nennt Abdeckung und
+Konfidenz und liefert keine Diagnose, Therapie- oder Medikamentenempfehlung.
+Ohne persönliche Daten zeigt die Oberfläche weiterhin nur `READY`.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —

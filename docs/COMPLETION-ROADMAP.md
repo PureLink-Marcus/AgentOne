@@ -8,13 +8,15 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-93` ist auf Fressi und Günni live: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Günnis realer IMAP-Scan ist als payloadfreie Timeline live nachgewiesen. Das iPhone-Web-Pairing trennt gemeinsame Reverse-Proxy-IPs, persistiert Fehlversuchslimits und vereinheitlicht Code, Link, Share, Status, Erneuern und Widerruf in einem mobilen Assistenten. 182/182 Tests, Production-Build, PWA-Cachewechsel und der echte Chrome-Flow `Pair → Status → Ingest → Revoke` sind bestanden. Auf Günni sind aktuell:
+Release `2026.11.07-94` ist auf Fressi und Günni live: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Der neue Bereich **Heute & Planung** liest den serverseitigen Tagesplan, zeigt reale Termine, Konflikte, freie Arbeitsfenster und Mail-Handlungsbedarf. Ein temporärer Live-ICS-Test mit zwei Terminen, einem Konflikt und zwei freien Fenstern wurde auf Günni bei 390 px bestanden und danach vollständig entfernt. 195/195 Tests, Production-Build, PWA-Cachewechsel, iPhone-Pairing und echte Chrome-Smokes sind grün. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
+- acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
 - Feedback pro Signal wirksam und benutzerisoliert;
 - Apple-Health-Import, Verschlüsselung, Consent, Export und Löschung bereit;
-- Kalender noch nicht verbunden und Health noch ohne persönliche Messwerte;
+- der Kalenderplan produktiv nutzbar über ICS-Datei oder sicheren öffentlichen HTTPS-Feed; nach der Abnahme ist Günnis Testkalender wieder `NOT_CONNECTED`;
+- Health noch ohne persönliche Messwerte; der Apple-/WHOOP-Vergleich ist implementiert und wartet auf echte Daten;
 - Google OAuth und WHOOP ohne registrierte Anbieter-Credentials nicht live.
 - das Web-Companion-Pairing und die Shortcut-API implementiert; direkte HealthKit-/EventKit-Hintergrunddaten benötigen weiterhin die signierte native iOS-App.
 
@@ -33,8 +35,9 @@ angezeigt.
    öffentliche Timeline zeigt nur freigegebene Metadaten; Input, Output,
    Rohpayloads, Secrets und Gesundheitswerte bleiben serverseitig. Der
    Health-Write-Pfad verlangt ein serverbestätigtes Exact-Payload-Gate.
-3. ICS/iCal als einfacher Kalenderweg ohne eigene Google-OAuth-App in UI und
-   Intelligence integrieren.
+3. **Release 94 implementiert, deployed und live abgenommen:** ICS/iCal als
+   einfacher Kalenderweg ohne eigene Google-OAuth-App, sicherer HTTPS-Feed,
+   Google-Ledger-Projektion sowie serverseitige Konflikt-/Freizeitplanung.
 4. WHOOP-OAuth-/Sync-Kern einbinden und ohne Credentials ehrlich `SETUP`
    anzeigen.
 5. Learning Lab nur mit serverbestätigter Benutzerrolle und Test-Attestierung

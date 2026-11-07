@@ -87,6 +87,18 @@ Offizielle Quellen:
 
 ## Vergleich und Hinweise
 
+Release `2026.11.07-94` stellt den geprüften Vergleich intern unter
+`GET /api/internal/personal/health/comparison` bereit; der authentifizierte
+Personal-Gateway-Pfad lautet `GET /agentone/health/comparison`. Er akzeptiert
+nur `periodDays` (1–90), `minimumCoverageDays` und `timeZone` (`Europe/Berlin`
+oder `UTC`). Unbekannte oder doppelte Parameter werden ohne Wertreflexion
+abgewiesen. Ohne konfigurierten Health-Master-Key bleibt der Pfad fail-closed.
+
+Die Antwort enthält getrennte Serien je Quelle, Tagesabdeckung,
+vergleichbare Tageswerte, Methodendifferenzen, datenbasierte Konfidenz und
+minimierte Provenienz. Sie enthält weder Rohdatensatz-/Consent-IDs noch Secrets
+oder medizinische Empfehlungen.
+
 Apple und WHOOP messen nicht zwingend denselben Zeitraum oder dieselbe physiologische Definition. Insbesondere WHOOP-Zyklen folgen Schlaf-Wach-Zyklen statt Kalendertagen. AgentOne zeigt deshalb immer beide Quellen, deren Zeitgrenzen und die prozentuale Abweichung an. Es überschreibt niemals einen Wert mit dem anderen.
 
 Erlaubte Hinweise:

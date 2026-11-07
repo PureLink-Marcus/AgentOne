@@ -1,10 +1,18 @@
 # iPhone, Apple Health und Standort für AgentOne Personal
 
-Stand: 30. Oktober 2026
+Stand: 7. November 2026
 
 Die normalisierte Import- und Vergleichspipeline ist inzwischen implementiert. Der aktuelle technische und datenschutzbezogene Stand steht in [HEALTH-DATA-INTEGRATIONS.md](./HEALTH-DATA-INTEGRATIONS.md). Diese Datei beschreibt weiterhin den geplanten iPhone-Companion und die Standortmodi.
 
 Seit Release `2026.11.07-93` ist die Geräteebene praktisch nutzbar: `/iphone` liefert einen installierbaren Web-Companion, der HTTPS, WebCrypto und IndexedDB vor dem Pairing sichtbar prüft. Ein einmaliger sechsstelliger Code wird ausschließlich im URL-Fragment übergeben, atomar eingelöst und danach entfernt. Der Gerätetoken liegt mit einem nicht exportierbaren WebCrypto-Schlüssel AES-GCM-verschlüsselt in IndexedDB. Health und temporärer Standort sind keine Standardrechte, sondern müssen vor der Codeerzeugung ausdrücklich gewählt werden. Verbundene Geräte, letzte Aktivität und Rechte sind in Private Access sichtbar; ein Widerruf löscht Token-Hash und zugehörige Companion-Ereignisse.
+
+Release `2026.11.07-94` ergänzt die serverseitige Auswertung: gespeicherte,
+normalisierte Apple-Health- und WHOOP-Metriken können für 1 bis 90 Tage
+deskriptiv verglichen werden. Quellenserien bleiben getrennt, Rohdatensatz- und
+Consent-IDs verlassen die Health-Grenze nicht. Die API nennt Datenabdeckung und
+eine ausschließlich daraus abgeleitete Konfidenz. HRV-SDNN versus HRV-RMSSD
+sowie Körper- versus Hauttemperatur werden ausdrücklich nicht als identische
+Messung verglichen. Der Pfad erzeugt keine Diagnose oder Therapieempfehlung.
 
 Für die Home-Bildschirm-App wird `/iphone` zuerst in Safari geöffnet und über **Teilen → Zum Home-Bildschirm** installiert. Danach wird der Einmalcode in der installierten Ansicht eingegeben. So bleibt der Geräteschlüssel im Speicher genau dieser Ansicht. Privates Surfen ist für eine dauerhafte Kopplung ungeeignet. Das Rate-Limit unterscheidet echte Mobilclients auch hinter Coolify/Traefik; zusätzlich gilt ein persistentes, benutzergebundenes Fehlversuchslimit.
 

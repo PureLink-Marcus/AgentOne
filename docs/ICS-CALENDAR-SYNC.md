@@ -35,8 +35,11 @@ Im persönlichen Bereich steht die mobile Karte **Privater iCal-Kalender** berei
 
 - `GET /agentone/calendar/ics` liefert `LIVE`, `NOT_CONNECTED` oder `ERROR` sowie Terminanzahl und Importzeit.
 - `POST /agentone/calendar/ics/import` akzeptiert den rohen Dateiinhalt als `text/calendar`, `text/plain` oder `application/octet-stream`.
+- `POST /agentone/calendar/ics/feed` akzeptiert `{ "url": "https://…/calendar.ics" }`; die URL muss die oben genannten öffentlichen HTTPS-/SSRF-Grenzen bestehen und wird nicht gespeichert oder zurückgegeben.
+- `GET /agentone/calendar/plan?timeZone=Europe%2FBerlin` liefert den read-only Tagesplan mit minimierten Terminen, Upcoming Events, Überschneidungen, freien Arbeitsfenstern und Provenienz-Allowlist.
 - `DELETE /agentone/calendar/ics` benötigt `{ "confirm": "REMOVE_ICS_CALENDAR" }`.
 - Der Gateway verlangt eine angemeldete AgentOne-Personal-Sitzung und Same-Origin für Import/Löschung.
 - Termine landen minimiert und benutzergebunden als Quelle `calendar.ics` im Personal Event Ledger und fließen damit in Tagesbild und Kalenderzählung ein.
 - `DESCRIPTION`, `LOCATION` und `ATTENDEE` werden weder im Ledger noch in Antworten gespeichert.
 - Ein fehlerhafter neuer Upload lässt den bisherigen erfolgreichen Snapshot unverändert. Snapshot, Status und Audit werden bei erfolgreichem Ersatz in derselben SQLite-Transaktion geschrieben.
+- Google-Read-only-Sync und ICS ersetzen jeweils nur ihren eigenen, benutzergebundenen Ledger-Snapshot. Die PWA zeigt den Serverplan und berechnet Konflikte oder freie Zeiten nicht erneut im Browser.
