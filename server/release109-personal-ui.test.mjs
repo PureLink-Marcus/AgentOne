@@ -11,7 +11,7 @@ test('Release 109 renders an explainable persistent Pattern Feed with valid brow
   assert.match(personalUiJs,/pattern\.why\?\.sources/);
   assert.match(personalUiJs,/ERSTMALS/);
   assert.match(personalUiJs,/ZULETZT/);
-  assert.match(personalUiJs,/item\.addEventListener\('keydown'/);
+  assert.match(personalUiJs,/open\.textContent='Quelle öffnen'/);
 });
 
 test('Release 109 does not render raw evidence identifiers and uses safe DOM text',()=>{
@@ -21,7 +21,7 @@ test('Release 109 does not render raw evidence identifiers and uses safe DOM tex
   assert.match(personalUiJs,/summary\.textContent=pattern\.summary/);
   assert.match(personalUiJs,/chip\.textContent=/);
   assert.match(personalUiJs,/meta\.textContent='WARUM/);
-  assert.match(personalUiCss,/\.pattern-head-actions button\{min-height:48px/);
+  assert.match(personalUiCss,/\.pattern-head-actions button,.pattern-filter button,.pattern-actions button\{min-height:48px/);
   assert.match(personalUiCss,/@media\(max-width:680px\).*\.pattern-list\{grid-template-columns:1fr\}/s);
   assert.match(personalUiCss,/\.pattern-head-actions button\{width:100%\}/);
 });
