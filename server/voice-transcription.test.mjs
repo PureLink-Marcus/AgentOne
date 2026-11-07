@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { commandCenterCss,commandCenterJs } from './agentone-command-center.mjs';
 import {
   VOICE_AUDIO_MAX_BYTES,
+  VOICE_AUDIO_MIN_DURATION_MS,
   VOICE_TRANSCRIPTION_MODEL,
   VoiceTranscriptionError,
   createVoiceTranscriptionForm,
@@ -37,9 +38,10 @@ test('gpt-transcribe multipart uses plural languages and extension-bearing file'
 test('empty, too-short, too-large and sub-second recordings are rejected locally',()=>{
   assert.throws(()=>validateVoiceAudio(Buffer.alloc(0)),error=>error.code==='VOICE_AUDIO_TOO_SHORT');
   assert.throws(()=>validateVoiceAudio(Buffer.alloc(511)),error=>error.code==='VOICE_AUDIO_TOO_SHORT');
-  assert.throws(()=>validateVoiceAudio(Buffer.alloc(1024),{durationMs:120}),error=>error.code==='VOICE_AUDIO_TOO_SHORT');
+  assert.equal(VOICE_AUDIO_MIN_DURATION_MS,1000);
+  assert.throws(()=>validateVoiceAudio(Buffer.alloc(1024),{durationMs:999}),error=>error.code==='VOICE_AUDIO_TOO_SHORT');
   assert.throws(()=>validateVoiceAudio({byteLength:VOICE_AUDIO_MAX_BYTES+1}),error=>error.code==='VOICE_AUDIO_TOO_LARGE'&&error.status===413);
-  assert.deepEqual(validateVoiceAudio(Buffer.alloc(1024),{durationMs:900}),{bytes:1024,durationMs:900});
+  assert.deepEqual(validateVoiceAudio(Buffer.alloc(1024),{durationMs:1000}),{bytes:1024,durationMs:1000});
 });
 
 test('provider failures are mapped to stable public messages without raw provider content',()=>{
@@ -49,6 +51,17 @@ test('provider failures are mapped to stable public messages without raw provide
   assert.equal(publicError.body.error,'VOICE_AUDIO_REJECTED');
   assert.doesNotMatch(JSON.stringify(publicError),/HTTP 400|provider|secret/i);
   assert.equal(publicVoiceTranscriptionError(createVoiceUpstreamError(429)).body.retryable,true);
+  for(const status of [401,403]){
+    const authFailure=publicVoiceTranscriptionError(createVoiceUpstreamError(status));
+    assert.equal(authFailure.status,503);
+    assert.equal(authFailure.body.error,'VOICE_PROVIDER_AUTH_FAILED');
+    assert.equal(authFailure.body.retryable,false);
+  }
+  const missingProvider=publicVoiceTranscriptionError(createVoiceUpstreamError(404));
+  assert.equal(missingProvider.status,503);
+  assert.equal(missingProvider.body.error,'VOICE_PROVIDER_CONFIGURATION_ERROR');
+  assert.equal(missingProvider.body.retryable,false);
+  assert.equal(publicVoiceTranscriptionError(createVoiceUpstreamError(413)).body.error,'VOICE_AUDIO_TOO_LARGE');
   assert.equal(publicVoiceTranscriptionError(Object.assign(new Error('upstream secret'),{status:413})).body.error,'VOICE_AUDIO_TOO_LARGE');
 });
 
@@ -63,10 +76,22 @@ test('voice status is operational metadata only',()=>{
 });
 
 test('command center exposes recorder negotiation and visible voice diagnostics',()=>{
+  assert.doesNotThrow(()=>new Function(commandCenterJs));
   assert.match(commandCenterJs,/id="voice-diagnostics"/);
   assert.match(commandCenterJs,/voiceMimeCandidates/);
   assert.match(commandCenterJs,/MediaRecorder\.isTypeSupported/);
   assert.match(commandCenterJs,/x-agentone-audio-duration-ms/);
+  assert.match(commandCenterJs,/durationMs<1000/);
+  assert.match(commandCenterJs,/id="voice-auto-send"/);
+  assert.match(commandCenterJs,/agentone\.voice\.preferences\.v2/);
+  assert.match(commandCenterJs,/fetch\('\/agentone\/voice\/chat\/stream'/);
+  assert.match(commandCenterJs,/response\.body\.getReader/);
+  assert.match(commandCenterJs,/Voice-Stream wurde nicht vollständig abgeschlossen/);
+  assert.match(commandCenterJs,/autoSend:true/);
+  assert.match(commandCenterJs,/voiceCaptureBusy&&!fromTranscription/);
+  assert.match(commandCenterJs,/if\(voiceSending\)\{voiceStatus/);
+  assert.match(commandCenterJs,/await sendVoiceText\(true\)/);
+  assert.doesNotMatch(commandCenterJs,/antwortet live/);
   assert.match(commandCenterJs,/data\.message/);
   assert.match(commandCenterCss,/\.voice-diagnostics/);
 });

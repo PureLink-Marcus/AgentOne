@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-97` ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy und der versionsgebundene PWA-Stand 97 ist auf PureLink, Fressi und Günni bestätigt. 210/210 Tests, Production-Build und der vollständige lokale sowie Live-Chrome-Pairing-Flow sind grün. Release 97 schließt den Self-Revoke-Lebenszyklus fail-safe und ergänzt einen secret-freien QR zur iPhone-Basis-Seite. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Auf Günni sind aktuell:
+Release `2026.11.07-97` ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy und der versionsgebundene PWA-Stand 97 ist auf PureLink, Fressi und Günni bestätigt. 210/210 Tests, Production-Build und der vollständige lokale sowie Live-Chrome-Pairing-Flow sind grün. Release 97 schließt den Self-Revoke-Lebenszyklus fail-safe und ergänzt einen secret-freien QR zur iPhone-Basis-Seite. Release 98 befindet sich **PRE-LIVE**: Push-to-talk ab einer Sekunde, echte `gpt-transcribe`-Verarbeitung, genau einmaliges Auto-Send, NDJSON-Antwortstream und fail-safe Abbruch-/Fehlerbehandlung sind lokal implementiert und im mobilen Chrome-Smoke geprüft; Rollout und Live-Abnahme stehen noch aus. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
@@ -74,6 +74,17 @@ angezeigt.
     Planung sind regressionsgeprüft; Runtime und redigierter Audit sind healthy.
     Reale Safari-/WebKit- und native EventKit-/HealthKit-Abnahme bleiben
     separat.
+11. **Release 98 lokal vorbereitet, Live-Abnahme ausstehend:** Push-to-talk
+    verlangt mindestens eine Sekunde Audio und sendet die Transkription auf
+    Wunsch standardmäßig sofort genau einmal. Antworten laufen als NDJSON-Stream
+    in die Oberfläche und werden satzweise über die lokale Gerätestimme
+    ausgegeben. Doppelaufrufe, Clientabbruch, Providerfehler, leere und
+    unvollständige Streams werden ohne rohe Providerdaten oder falschen
+    Abschluss behandelt. Die synthetische WAV-Fixture wurde bereits gegen den
+    live laufenden Release-97-Endpunkt transkribiert; der mobile lokale
+    Chrome-Smoke sowie der vollständige lokale Lauf mit 211/211 Tests sind grün.
+    Erst Release-98-Rollout und echter Günni-Live-Smoke machen daraus `PASS LIVE`. Dies bleibt Push-to-talk und ist
+    noch kein Full-Duplex-Realtime- oder Wake-Word-System.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

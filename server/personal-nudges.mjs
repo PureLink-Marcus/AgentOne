@@ -8,7 +8,7 @@ export function saveNudgeSettings(db,userId,input){const settings=normalizeNudge
 
 export function recordNudgeFeedback(db,{id,userId,nudgeId,value}){if(!/^[a-z0-9][a-z0-9._-]{1,120}$/i.test(String(nudgeId||''))||!['helpful','not_helpful','wrong','later','never','dismissed'].includes(value))throw Object.assign(new Error('invalid_nudge_feedback'),{status:400});const createdAt=new Date().toISOString();db.prepare('INSERT INTO personal_nudge_feedback(id,user_id,nudge_id,value,created_at) VALUES(?,?,?,?,?)').run(id,userId,nudgeId,value,createdAt);return {id,nudgeId,value,createdAt};}
 
-export function dismissedNudgeIds(db,userId){return new Set(db.prepare("SELECT DISTINCT nudge_id FROM personal_nudge_feedback WHERE user_id=? AND value IN ('dismissed','never')").all(userId).map(row=>row.nudge_id));}
+export function dismissedNudgeIds(db,userId){return new Set(db.prepare("SELECT DISTINCT nudge_id FROM personal_nudge_feedback WHERE user_id=? AND value IN ('dismissed','never') ORDER BY nudge_id ASC").all(userId).map(row=>row.nudge_id));}
 
 export function loadNudgeFeedbackProfile(db,userId,{now=new Date(),laterHours=12,wrongHours=24}={}){
   const current=now instanceof Date?now:new Date(now);

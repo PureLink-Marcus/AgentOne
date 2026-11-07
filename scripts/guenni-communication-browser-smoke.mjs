@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { loadEnv } from '../server/state.mjs';
 
-const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-97';
+const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-98';
 const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(String(error.message||error)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
@@ -15,7 +15,7 @@ try{
   await page.waitForTimeout(2500);
   const releaseState=await page.evaluate(()=>fetch('/agentone/release.json?smoke=communication',{cache:'no-store'}).then(response=>response.json()));if(releaseState.release!==release)throw new Error('Live-Release ist '+releaseState.release+' statt '+release);
   const client=await page.evaluate(async activeRelease=>{const text=await fetch('/agentone/app.js?v='+encodeURIComponent(activeRelease),{cache:'no-store'}).then(response=>response.text());return {nonstream:text.includes("fetch('/agentone/voice/chat'"),stream:text.includes("fetch('/agentone/voice/chat/stream'"),annaFilter:text.includes('/anna/i'),firstInstallStable:text.includes('hadServiceWorkerController')};},release);
-  if(!client.nonstream||client.stream||!client.annaFilter||!client.firstInstallStable)throw new Error('Nicht die erwartete Release-95-Clientlogik geladen: '+JSON.stringify(client));
+  if(!client.nonstream||!client.stream||!client.annaFilter||!client.firstInstallStable)throw new Error('Nicht die erwartete Release-98-Clientlogik geladen: '+JSON.stringify(client));
   await page.locator('[data-view="chat"]').click();
   await page.locator('#native-chat-input').fill('Antworte ausschließlich mit: chat-ui-ok');
   const chatResponsePromise=page.waitForResponse(response=>response.url().endsWith('/agentone/voice/chat')&&response.request().method()==='POST',{timeout:70_000});
@@ -27,12 +27,12 @@ try{
   await page.locator('[data-view="voice"]').click();
   await page.locator('#voice-text').fill('Antworte ausschließlich mit: voice-ui-ok');
   await page.locator('#voice-send').click();
-  await page.waitForFunction(()=>/Bereit|HTTP|fehlgeschlagen|Fehler/i.test(document.querySelector('#voice-status')?.textContent||''),null,{timeout:60_000});
+  await page.waitForFunction(()=>/voice-ui-ok/i.test(document.querySelector('.voice-message.agent:last-of-type')?.textContent||'')&&/STREAM/i.test(document.querySelector('#voice-status')?.textContent||''),null,{timeout:60_000});
   const voiceText=await page.locator('.voice-message.agent').last().textContent(),voiceStatus=await page.locator('#voice-status').textContent();
   if(!/voice-ui-ok/i.test(voiceText||''))throw new Error(`Voice-UI fehlgeschlagen: ${voiceText} · ${voiceStatus}`);
   const voiceOptions=await page.locator('#voice-choice option').allTextContents();
   await mkdir(path.resolve('output/playwright'),{recursive:true});
-  const screenshot=path.resolve('output/playwright/guenni-communication-release-97.png');
+  const screenshot=path.resolve('output/playwright/guenni-communication-release-98.png');
   await page.locator('#voice').screenshot({path:screenshot});
   if(errors.length)throw new Error('Browserfehler: '+errors.join(' | '));
   if(voiceOptions.some(value=>/anna/i.test(value)))throw new Error('Anna wurde nicht aus der Jarvis-Core-Stimmenliste entfernt');

@@ -1,7 +1,7 @@
 export const VOICE_TRANSCRIPTION_MODEL='gpt-transcribe';
 export const VOICE_AUDIO_MIN_BYTES=512;
 export const VOICE_AUDIO_MAX_BYTES=8_000_000;
-export const VOICE_AUDIO_MIN_DURATION_MS=300;
+export const VOICE_AUDIO_MIN_DURATION_MS=1000;
 
 const formatEntries=[
   ['audio/webm',{mimeType:'audio/webm',extension:'webm'}],
@@ -66,7 +66,11 @@ export function createVoiceUpstreamError(status){
   const upstreamStatus=Number(status)||502;
   if(upstreamStatus===429)return new VoiceTranscriptionError('VOICE_PROVIDER_BUSY','Die Spracherkennung ist gerade ausgelastet. Bitte in einem Moment erneut versuchen.',{status:503,retryable:true,upstreamStatus});
   if(upstreamStatus===408||upstreamStatus===504)return new VoiceTranscriptionError('VOICE_PROVIDER_TIMEOUT','Die Spracherkennung hat zu lange gebraucht. Bitte erneut versuchen.',{status:504,retryable:true,upstreamStatus});
-  if(upstreamStatus>=400&&upstreamStatus<500)return new VoiceTranscriptionError('VOICE_AUDIO_REJECTED','Die Aufnahme konnte nicht verarbeitet werden. Bitte erneut ein bis sechzig Sekunden deutlich sprechen.',{status:422,retryable:false,upstreamStatus});
+  if(upstreamStatus===401||upstreamStatus===403)return new VoiceTranscriptionError('VOICE_PROVIDER_AUTH_FAILED','Die Spracherkennung ist serverseitig nicht korrekt autorisiert. Bitte die AgentOne-Konfiguration prüfen.',{status:503,retryable:false,upstreamStatus});
+  if(upstreamStatus===404)return new VoiceTranscriptionError('VOICE_PROVIDER_CONFIGURATION_ERROR','Die konfigurierte Spracherkennung ist nicht verfügbar. Bitte Modell und Anbieter-Endpunkt prüfen.',{status:503,retryable:false,upstreamStatus});
+  if(upstreamStatus===413)return new VoiceTranscriptionError('VOICE_AUDIO_TOO_LARGE','Die Aufnahme ist zu groß. Bitte eine kürzere Nachricht aufnehmen.',{status:413,retryable:false,upstreamStatus});
+  if([400,415,422].includes(upstreamStatus))return new VoiceTranscriptionError('VOICE_AUDIO_REJECTED','Die Aufnahme konnte nicht verarbeitet werden. Bitte erneut ein bis sechzig Sekunden deutlich sprechen.',{status:422,retryable:false,upstreamStatus});
+  if(upstreamStatus>=400&&upstreamStatus<500)return new VoiceTranscriptionError('VOICE_PROVIDER_REQUEST_FAILED','Die Spracherkennung konnte die Anfrage nicht ausführen. Bitte die Serverkonfiguration prüfen.',{status:502,retryable:false,upstreamStatus});
   return new VoiceTranscriptionError('VOICE_PROVIDER_UNAVAILABLE','Die Spracherkennung ist vorübergehend nicht erreichbar. Bitte erneut versuchen.',{status:502,retryable:true,upstreamStatus});
 }
 

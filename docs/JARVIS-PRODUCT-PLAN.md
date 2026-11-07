@@ -453,6 +453,29 @@ Jarvis und Planung samt Cleanup sind live geprüft; Runtime und redigierter
 Audit sind healthy. Reales Safari/WebKit sowie EventKit/HealthKit bleiben
 offen.
 
+### Release 2026.11.07-98 · Push-to-talk mit gestreamter Antwort (**PRE-LIVE**)
+
+Jarvis Core erhält einen belastbaren vertikalen Sprachpfad: bewusste
+Mikrofonaufnahme ab einer Sekunde, `gpt-transcribe`, sichtbares und standardmäßig
+aktives Auto-Send sowie eine progressive NDJSON-Modellantwort. Vollständige
+Sätze werden während des Streams über die lokale Gerätestimme ausgegeben;
+Transkription und KI-Nutzung bleiben dagegen abhängig vom gewählten
+Modelltarif. Audio wird nicht in Memory oder Browser-Storage übernommen.
+
+Der Pfad ist gegen Doppel-Senden, erneute Aufnahme während einer laufenden
+Antwort, Clientabbruch, leere beziehungsweise vorzeitig beendete Streams und
+rohe Providerfehler gehärtet. Der Audit speichert nur Betriebsmetadaten. Eine
+synthetische, reproduzierbare WAV-Fixture wurde zweimal erfolgreich gegen den
+noch live laufenden Release-97-Transkriptionsendpunkt verarbeitet, ohne Audio,
+Transkript oder Schlüssel in Bericht und Access-Log zu schreiben. Der lokale
+Chrome-Smoke bei 430 × 932 px bestätigt genau einen Auto-Send und keinen zweiten
+Mikrofonzugriff während der Antwort.
+
+**Abnahmegrenze:** Release 98 ist noch nicht ausgerollt. Der vollständige lokale
+Lauf ist mit 211/211 Tests grün; Release-Archiv, Image, vier private Container, PWA-Wechsel und echter
+Günni-Live-Smoke folgen vor `PASS LIVE`. Der Funktionsumfang ist Push-to-talk
+mit gestreamter Antwort, nicht Full-Duplex-Realtime-Audio oder Wake Word.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —

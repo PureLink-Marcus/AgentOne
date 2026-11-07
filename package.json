@@ -23,6 +23,7 @@
     "diagnose:guenni-iphone": "node scripts/guenni-iphone-runtime-diagnose.mjs",
     "verify:guenni-connectors": "node scripts/guenni-connector-audit.mjs",
     "verify:guenni-communication": "node scripts/guenni-communication-browser-smoke.mjs",
+    "verify:guenni-voice-audio": "node scripts/guenni-voice-audio-live-smoke.mjs",
     "verify:guenni-google": "node scripts/guenni-google-account-browser-smoke.mjs",
     "verify:guenni-mail-draft": "node scripts/guenni-mail-draft-browser-smoke.mjs",
     "verify:guenni-jarvis85": "node scripts/guenni-jarvis-release85-browser-smoke.mjs",
