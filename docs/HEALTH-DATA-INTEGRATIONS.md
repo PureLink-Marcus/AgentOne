@@ -10,11 +10,11 @@ Stand: 7. November 2026
 | Apple-Health-Export | `LIVE (SMALL)` | `export.xml` und das originale Apple-ZIP können bis 32 MiB importiert werden. ZIP-Pfade, Verschlüsselung, Größe, Kompressionsrate und CRC werden geprüft; größere Archive bleiben bis zu einem isolierten Worker `PREPARED`. |
 | Quellenvergleich | `IMPLEMENTED` | Schritte, Schlaf und weitere deckungsgleiche Tageswerte werden Apple gegen WHOOP verglichen; Unterschiede bleiben deskriptiv. |
 | Health-Digest | `IMPLEMENTED` | Datenabdeckung und Quellenabweichungen werden als Hinweise ausgegeben – ausdrücklich ohne Diagnose. |
-| WHOOP V2 | `PREPARED` | OAuth-URL, minimale Scope-Allowlist, V2-Normalisierung und eine Signatur-Prüffunktion sind implementiert. Ein produktiver OAuth-/Webhook-Endpunkt existiert ohne registrierte WHOOP-App und Benutzerzustimmung noch nicht. |
+| WHOOP V2 | `IMPLEMENTED CORE / PREPARED ACTIVATION` | Authorization-Code-Austausch, rotierender Refresh, vollständige V2-Pagination, Retention, idempotente Normalisierung, Teilerfolg und signatur-/zeit-/replaygeprüfte Webhook-Envelopes sind implementiert. Öffentliche OAuth-/Webhook-Routen bleiben bis zur registrierten WHOOP-App, verschlüsselten Tokenpersistenz und Queue bewusst aus. |
 | Native HealthKit-Synchronisation | `PREPARED` | Benötigt die separate iOS-Companion-App, Apple-Entitlement, App-Signierung und Freigabe je Datentyp. Ein Server oder eine PWA kann HealthKit nicht direkt lesen. |
 
-Implementierung: `server/personal-health.mjs`  
-Tests: `server/personal-health.test.mjs`
+Implementierung: `server/personal-health.mjs`, `server/whoop-live-sync.mjs`
+Tests: `server/personal-health.test.mjs`, `server/whoop-live-sync.test.mjs`
 
 ## Gemeinsames Datenmodell
 
@@ -69,7 +69,9 @@ WHOOP V2 verwendet OAuth 2.0. AgentOne fordert nur diese Lesebereiche an:
 
 Profil und E-Mail werden nicht benötigt und daher standardmäßig nicht angefordert. Tokens gehören verschlüsselt in die persönliche Instanz und niemals in Browserlogs, Chat, Screenshots oder Audit-Inhalte. Trennen/Widerrufen muss den WHOOP-Zugriff serverseitig widerrufen und gespeicherte Tokens löschen.
 
-Für eine spätere Webhook-Annahme liegt eine isoliert getestete Signatur- und Zeitfensterprüfung vor. HTTP-Endpunkt, schnelle Bestätigung, Queue, Wiederholschutz und periodischer Abgleich sind noch zu implementieren und dürfen bis dahin nicht als `LIVE` angezeigt werden.
+Der isolierte Live-Sync tauscht Autorisierungscodes aus, rotiert Refresh-Tokens vor jedem Lauf und liest nur die tatsächlich freigegebenen Collections. Sammlungen werden bis zum letzten `next_token` verarbeitet; Seiten- und Datensatzlimits brechen mit einem wiederholbaren Fehler ab, ohne den Cursor vorzustellen. Ein Teilfehler erhält erfolgreiche Quellen, markiert den Lauf aber `PARTIAL`. Zugriffsschlüssel sind nicht serialisierbar und erscheinen weder in Rückgaben noch in Fehlern.
+
+Webhook-Nachrichten werden anhand der offiziellen Header `X-WHOOP-Signature` und `X-WHOOP-Signature-Timestamp` als HMAC-SHA256 über `timestamp + raw_body` geprüft. Das Kernmodul validiert zusätzlich Zeitfenster, V2-Ereignistypen und `trace_id`-Replay. Es erzeugt nur ein minimiertes Queue-Envelope und speichert keinen Rohbody. Eine öffentliche Route darf erst nach einer dauerhaften Queue, benutzergebundener WHOOP-ID-Zuordnung und schneller `2XX`-Bestätigung aktiviert werden.
 
 Offizielle Quellen:
 
@@ -103,6 +105,6 @@ Nicht erlaubt:
 
 1. Große Apple-Archive in einem isolierten Worker streaming-fähig verarbeiten; bis dahin bleibt die 32-MiB-Grenze hart.
 2. Den verschlüsselten benutzergebundenen SQLite-Store mit geplanter Key-Rotation und Re-Verschlüsselung betrieblich abnehmen; eine PostgreSQL-Migration ist separat.
-3. WHOOP-App registrieren, Redirect-URL konfigurieren und OAuth mit einem Testkonto abnehmen.
-4. WHOOP-Webhook-Endpunkt, Queue, Replay-Schutz und periodischen Abgleich implementieren und testen.
+3. WHOOP-App registrieren, Redirect-URL konfigurieren, Client-Credentials verschlüsselt setzen und den vorhandenen OAuth-/Sync-Kern mit einem Testkonto abnehmen.
+4. Webhook-Queue, dauerhaften Replay-Speicher und Benutzerzuordnung anbinden; erst danach die öffentliche WHOOP-Webhook-Route aktivieren.
 5. iOS-Companion-Projekt für kontinuierlichen HealthKit-Sync signieren; jeder Datentyp bleibt einzeln schaltbar.

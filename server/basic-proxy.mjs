@@ -26,7 +26,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-85');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-86');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -228,6 +228,15 @@ async function personalPulse(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_pulse_unavailable'});if(req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
   try{const suffix=String(req.url||'').slice('/agentone/pulse'.length),headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},options={method:req.method,headers,signal:AbortSignal.timeout(20_000)};if(req.method!=='GET')options.body=(await readBody(req,16_384)).toString('utf8')||'{}';const response=await fetch(`${personalApiUrl}/api/internal/personal/pulse${suffix}`,options),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_pulse_failed',detail:String(error.message||error).slice(0,100)});}
 }
+async function personalEvents(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_events_unavailable'});
+  const requestUrl=new URL(String(req.url||'/agentone/events'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/events'.length),allowed=(req.method==='GET'&&suffix==='')||(req.method==='POST'&&suffix==='/export')||(req.method==='DELETE'&&suffix==='');if(!allowed)return jsonResponse(res,404,{error:'not_found'});if(req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
+  try{const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},options={method:req.method,headers,signal:AbortSignal.timeout(30_000)};if(req.method!=='GET')options.body=(await readBody(req,16_384)).toString('utf8')||'{}';const response=await fetch(`${personalApiUrl}/api/internal/personal/events${suffix}${requestUrl.search}`,options),payload=await response.text(),forward={'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)};const disposition=response.headers.get('content-disposition');if(disposition)forward['content-disposition']=disposition;res.writeHead(response.status,securityHeaders(forward));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_events_failed',detail:String(error.message||error).slice(0,100)});}
+}
+async function personalBriefingCommand(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_commands_unavailable'});if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
+  try{const response=await fetch(`${personalApiUrl}/api/internal/personal/commands/briefing`,{method:'POST',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},body:'{}',signal:AbortSignal.timeout(30_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_command_failed',detail:String(error.message||error).slice(0,100)});}
+}
 async function personalHealth(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'health_store_unavailable'});
   const requestUrl=new URL(String(req.url||'/agentone/health'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/health'.length),method=String(req.method||'GET');
@@ -340,6 +349,8 @@ const server=http.createServer((req,res)=>{
   if(req.method==='GET'&&req.url==='/agentone/dashboard')return dashboardSnapshot(res);
   if(req.method==='GET'&&req.url==='/agentone/intelligence')return personalIntelligence(res);
   if(req.url?.startsWith('/agentone/pulse')&&['GET','POST','DELETE'].includes(req.method||''))return personalPulse(req,res);
+  if(req.url?.startsWith('/agentone/events')&&['GET','POST','DELETE'].includes(req.method||''))return personalEvents(req,res);
+  if(req.method==='POST'&&req.url==='/agentone/commands/briefing')return personalBriefingCommand(req,res);
   if(/^\/agentone\/health(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/integrations\/[a-z0-9-]+\/health$/.test(req.url||''))return integrationHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/gates\/[^/]+\/decision$/.test(req.url||''))return decideGate(req,res);

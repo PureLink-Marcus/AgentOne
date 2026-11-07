@@ -1,8 +1,8 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-85`
-Deployment: Release 85 läuft auf Günni und Fressi; alle vier App-/Access-Container sind healthy. Pulse, Intelligence, Feedback, Google-Auswahl und Health-Status wurden live in Google Chrome geprüft.
+Release: `2026.11.07-86`
+Deployment: Release 86 enthält zusätzlich Personal Event Ledger, Jarvis Command Stream sowie geprüfte ICS-/WHOOP-Kerne und wird auf Günni und Fressi ausgerollt.
 
 ## Abgenommen
 
