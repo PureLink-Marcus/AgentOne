@@ -8,9 +8,9 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-99` ist lokal mit 229/229 Tests, Production-Build und API-Smoke grün und wartet auf den Rollout. Der Release ersetzt den flüchtigen IMAP-Snapshot durch einen persistenten, read-only UID-/UIDVALIDITY-Sync mit Deduplizierung, Retention, Scheduler und Backoff. Das neue Mail Review Center zeigt den echten Bestand mit Filter, Suche, Threads, Prüfgründen und Cursorstatus. Release 98 bleibt live, bis der versionsgebundene Rollout und die Günni-Doppelsynchronisation abgeschlossen sind. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Auf Günni sind aktuell:
+Release `2026.11.07-99` ist auf Fressi und Günni live. 229/229 Tests, Production-Build, API-Smoke, zwei echte Günni-Syncs, vollständige Containerrotation und mobile Chrome-Abnahme sind grün. Der Release ersetzt den flüchtigen IMAP-Snapshot durch einen persistenten, read-only UID-/UIDVALIDITY-Sync mit Deduplizierung, Retention, Scheduler und Backoff. Das neue Mail Review Center zeigt 500 reale Datensätze mit Filter, Suche, Threads, Prüfgründen und Cursorstatus. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Auf Günni sind aktuell:
 
-- 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
+- 500 reale Gmail-Metadaten per IMAP read-only, persistent und dedupliziert synchronisiert und gruppiert;
 - acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
 - Feedback pro Signal wirksam und benutzerisoliert;
@@ -90,14 +90,16 @@ angezeigt.
     vier private Container sind healthy. Dies bleibt Push-to-talk und ist kein
     Full-Duplex-Realtime- oder Wake-Word-System; echtes Mikrofon, Safari/WebKit
     und native iOS-Funktionen bleiben separat abzunehmen.
-12. **Release 99 lokal abgeschlossen, Rollout läuft:** IMAP synchronisiert nur
+12. **Release 99 vollständig ausgerollt und live abgenommen:** IMAP synchronisiert nur
     minimierte Metadaten mit persistentem UID-/UIDVALIDITY-Cursor. Ein
     15-Minuten-Scheduler, begrenzter Backoff, atomare Deduplizierung und
     180-Tage-/2.500er-Retention machen den Bestand restartfest. Das Mail Review
     Center ist vollständig klickbar und mobil bedienbar; echter Versand und
-    Provider-Mutationen bleiben technisch ausgeschlossen. Nach dem Rollout
-    folgen zwei direkte Günni-Läufe, Restart-Persistenz und mobile Chrome-
-    Abnahme gegen reale Kontodaten.
+    Provider-Mutationen bleiben technisch ausgeschlossen. Zwei direkte Günni-
+    Läufe endeten im zweiten Lauf mit 0 Fetches und 0 neuen Datensätzen; nach
+    vollständiger Containerrotation waren alle 500 Datensätze sofort wieder
+    verfügbar. Mobile Chrome-Abnahme, redigierter Log-/DB-Audit und breite
+    Regression sind grün.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

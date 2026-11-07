@@ -483,7 +483,7 @@ sind dokumentiert. Der Funktionsumfang bleibt Push-to-talk mit gestreamter
 Antwort, nicht Full-Duplex-Realtime-Audio oder Wake Word. Echtes Mikrofon,
 Safari/WebKit und native iOS-Funktionen bleiben separat abzunehmen.
 
-### Release 2026.11.07-99 · Mail als dauerhafte Jarvis-Quelle (**PASS LOKAL**)
+### Release 2026.11.07-99 · Mail als dauerhafte Jarvis-Quelle (**PASS LIVE**)
 
 Jarvis Core verarbeitet IMAP nicht mehr als vergänglichen 50er-Snapshot. Ein
 UID-/UIDVALIDITY-Cursor, atomare Metadatenablage, Deduplizierung,
@@ -500,9 +500,15 @@ einem Syncfehler bleibt der letzte gültige Bestand sichtbar. SMTP wird nur
 verifiziert; Senden, Verschieben und Löschen bleiben ohne gesonderten
 freigegebenen Ausführungspfad unmöglich.
 
-**Lokale Abnahme:** 229/229 Tests, Production-Build und API-Smoke sind grün.
-Die echte Günni-Doppelsynchronisation, Restart-Persistenz und mobile
-Chrome-Abnahme folgen versionsgebunden direkt nach dem Rollout.
+**Abnahme:** 229/229 Tests, Production-Build und API-Smoke sind grün. Günni
+hält 500 reale Metadatensätze; der direkt folgende inkrementelle Lauf holte
+0 neue Datensätze, und nach vollständiger Containerrotation blieb der Bestand
+unverändert verfügbar. Mobile Chrome-Abnahme, redigierter Hetzner-DB-/Logaudit,
+PWA, iPhone, Home, Command Stream, Planung, ICS, Voice und Jarvis sind grün.
+Source-Commit `c955ae0`, secret-freies Archiv mit SHA-256
+`c591f0551f4eef66c30c168fb549421e526a9605acab2b1728676b7921fd4315` und
+Image-Digest `sha256:5966bd5e7158961f994d8c2e377ee7e8f8fdd9480348bf902ba6f623cc594d15`
+sind dokumentiert.
 
 ## Primärquellen und Lizenzgrenzen
 

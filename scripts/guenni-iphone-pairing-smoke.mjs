@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { loadEnv } from '../server/state.mjs';
 
-const env=loadEnv(path.resolve('.')),origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,''),user=env.AGENTONE_GUENNI_USER,password=env.AGENTONE_GUENNI_PASSWORD;
+const env=loadEnv(path.resolve('.')),origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,''),user=env.AGENTONE_GUENNI_USER,password=env.AGENTONE_GUENNI_PASSWORD,release='2026.11.07-99';
 if(!origin||!user||!password)throw new Error('Günni Live-Smoke-Konfiguration ist unvollständig.');
 const browser=await chromium.launch({channel:'chrome',headless:true}),admin=await browser.newContext({viewport:{width:1280,height:900}}),mobile=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'}),adminPage=await admin.newPage(),mobilePage=await mobile.newPage(),errors=[],local=/^http:\/\/(?:127\.0\.0\.1|localhost)/.test(origin);let expectedUnauthorized=false,expectedUnavailable=false;const recordError=(source,message)=>{const text=String(message);if((local||expectedUnavailable)&&/Failed to load resource: the server responded with a status of 503/.test(text))return;if(expectedUnauthorized&&/Failed to load resource: the server responded with a status of 401/.test(text))return;errors.push(`${source}:${text}`);};
 const httpsOrigin=new URL(origin).protocol==='https:';
@@ -14,6 +14,7 @@ await mobile.addInitScript(()=>Object.defineProperty(navigator,'standalone',{con
 let deviceId='',deviceToken='',pairCode='',revoked=false,rollbackToken='',rollbackRevoked=false,qrMobileScreenshot='';
 try{
   await adminPage.goto(`${origin}/login`,{waitUntil:'networkidle'});await adminPage.locator('#username').fill(user);await adminPage.locator('#password').fill(password);await Promise.all([adminPage.waitForURL(`${origin}/`),adminPage.getByRole('button',{name:'Sicher anmelden'}).click()]);
+  const releaseResponse=await admin.request.get(`${origin}/agentone/release.json?smoke=iphone-99`),releaseState=await releaseResponse.json();if(releaseResponse.status()!==200||releaseState.release!==release)throw new Error(`Live-Release ist ${releaseState.release||releaseResponse.status()} statt ${release}`);
   await adminPage.locator('[data-view="private-access"]').click();
   const apple=adminPage.locator('.card.apple-quickstart');
   await apple.waitFor();
@@ -92,7 +93,7 @@ try{
   const adminText=await adminPage.locator('body').innerText(),mobileText=await mobilePage.locator('body').innerText();
   if(adminText.includes(deviceToken)||mobileText.includes(deviceToken)||adminText.includes(pairCode)||mobileText.includes(pairCode))throw new Error('Secret blieb nach Widerruf in einer sichtbaren Oberfläche.');
   if(errors.length)throw new Error(`Browserfehler: ${errors.join(' | ')}`);
-  console.log(JSON.stringify({origin,release:'98',flow:'QR-BASE→INSTALL-GATE→PAIR→STATUS→INGEST→RELOAD→SELF-REVOKE-RETRY→RECOVER→VAULT-ROLLBACK',codeHandoff:'FRAGMENT_CLEARED_BEFORE_MODE_CHECK',qr:{payload:'PUBLIC_ORIGIN+/iphone',pairingCodeIncluded:false,tokenIncluded:false,mobileLayout:true,screenshot:qrMobileScreenshot},iphoneDiagnostics:{https:httpsOrigin,secureContext:true,secureStorage:true,pwaControlled:true,iosStandaloneRequired:true},mobileViewport:'390x844',horizontalOverflow:false,minTouchHeight:connectedLayout.minTouchHeight,tokenPersisted:'AES_GCM_INDEXEDDB',reloadRestored:true,selfRevokeFailureRetainedToken:true,revokeRecovery:true,vaultFailureRollback:true,sensitiveScopes:'EXPLICIT_OPT_IN',deviceRevoked:true,eventsDeleted:true,consoleErrors:0,screenshot,mobileScreenshot,secretsExposed:false},null,2));
+  console.log(JSON.stringify({origin,release,flow:'QR-BASE→INSTALL-GATE→PAIR→STATUS→INGEST→RELOAD→SELF-REVOKE-RETRY→RECOVER→VAULT-ROLLBACK',codeHandoff:'FRAGMENT_CLEARED_BEFORE_MODE_CHECK',qr:{payload:'PUBLIC_ORIGIN+/iphone',pairingCodeIncluded:false,tokenIncluded:false,mobileLayout:true,screenshot:qrMobileScreenshot},iphoneDiagnostics:{https:httpsOrigin,secureContext:true,secureStorage:true,pwaControlled:true,iosStandaloneRequired:true},mobileViewport:'390x844',horizontalOverflow:false,minTouchHeight:connectedLayout.minTouchHeight,tokenPersisted:'AES_GCM_INDEXEDDB',reloadRestored:true,selfRevokeFailureRetainedToken:true,revokeRecovery:true,vaultFailureRollback:true,sensitiveScopes:'EXPLICIT_OPT_IN',deviceRevoked:true,eventsDeleted:true,consoleErrors:0,screenshot,mobileScreenshot,secretsExposed:false},null,2));
 }finally{
   if(deviceId&&!revoked)await admin.request.delete(`${origin}/agentone/companion/devices/${encodeURIComponent(deviceId)}`,{headers:{origin,accept:'application/json'}}).catch(()=>{});
   if(rollbackToken&&!rollbackRevoked)await mobile.request.delete(`${origin}/agentone/companion/self`,{headers:{'x-agentone-device-token':rollbackToken,accept:'application/json'}}).catch(()=>{});
