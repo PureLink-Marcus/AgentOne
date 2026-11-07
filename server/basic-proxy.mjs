@@ -27,7 +27,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-88');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-89');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -272,6 +272,10 @@ async function personalIcsCalendar(req,res){
     const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics${requestUrl.search}`,options);return await streamHealthResponse(response,res);
   }catch(error){return jsonResponse(res,error.status||502,{error:'ics_calendar_failed',detail:String(error.message||error).slice(0,100)});}
 }
+async function personalWhoopStatus(res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'whoop_status_unavailable'});
+  try{const response=await fetch(`${personalApiUrl}/api/internal/personal/whoop/status`,{headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(15_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch{return jsonResponse(res,502,{error:'whoop_status_failed',message:'WHOOP-Status ist vorübergehend nicht erreichbar.',secretsExposed:false});}
+}
 async function personalHealth(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'health_store_unavailable'});
   const requestUrl=new URL(String(req.url||'/agentone/health'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/health'.length),method=String(req.method||'GET');
@@ -387,6 +391,7 @@ const server=http.createServer((req,res)=>{
   if(req.url?.startsWith('/agentone/events')&&['GET','POST','DELETE'].includes(req.method||''))return personalEvents(req,res);
   if(req.method==='POST'&&req.url==='/agentone/commands/briefing')return personalBriefingCommand(req,res);
   if(/^\/agentone\/calendar\/ics(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalIcsCalendar(req,res);
+  if(req.method==='GET'&&/^\/agentone\/whoop\/status(?:\?|$)/.test(req.url||''))return personalWhoopStatus(res);
   if(/^\/agentone\/health(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/integrations\/[a-z0-9-]+\/health$/.test(req.url||''))return integrationHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/gates\/[^/]+\/decision$/.test(req.url||''))return decideGate(req,res);

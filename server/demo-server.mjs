@@ -32,6 +32,7 @@ import { initPersonalPulseStore, listPersonalPulseDeliveries, planPersonalPulse,
 import { appendPersonalEvents, applyPersonalEventRetention, deletePersonalEvents, exportPersonalEvents, initPersonalEventLedger, personalEventLedgerAuditSummary, queryPersonalEvents, replacePersonalEvents } from './personal-event-ledger.mjs';
 import { appendCommandStep, commandTimeline, completeCommandRun, createCommandRun, initPersonalCommandStream, recordCommandError, recordCommandResult } from './personal-command-stream.mjs';
 import { parseIcsCalendar, publicIcsError } from './ics-calendar-sync.mjs';
+import { whoopOnboardingViewModel } from './whoop-onboarding.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const env=loadEnv(root);
@@ -138,6 +139,11 @@ function saveIcsCalendarState(userId,{status,eventCount=0,importedAt=null,lastEr
 }
 function icsStatusPayload(userId){return {schema:'agentone.ics-calendar-status/v1',...icsCalendarState(userId),policy:{readOnly:true,maxUploadBytes:4*1024*1024,descriptionStored:false,locationStored:false,attendeesStored:false,userIsolated:true,secretsExposed:false}};}
 function icsLedgerEvents(userId,snapshot){return snapshot.events.map(event=>({userId,source:'calendar.ics',sourceAccount:'ics-upload',sourceEventId:event.idempotencyKey,occurredAt:event.start,type:'calendar.event',summary:event.title,structuredPayload:{endAt:event.end,durationMinutes:event.end?Math.max(0,Math.round((new Date(event.end)-new Date(event.start))/60_000)):0,timeZone:event.timeZone,allDay:event.allDay,status:event.status,recurrence:event.recurrence,sequence:event.sequence},provenance:{connectorId:'ics-upload',revisionKey:event.revisionKey},sensitivity:'personal',confidence:1}));}
+async function whoopPublicViewModel(userId){
+  const stored=await getPersonalService(postgres,userId,'whoop'),settings=stored?.settings||{},lastTest=stored?.lastTest||{},configuredScopes=String(env.WHOOP_SCOPES||'').split(/[\s,]+/).filter(Boolean),connection=stored||env.WHOOP_AUTHORIZED_AT?{authorizedAt:settings.authorizedAt||lastTest.authorizedAt||env.WHOOP_AUTHORIZED_AT,lastSync:lastTest.sync||lastTest.lastSync||{status:env.WHOOP_LAST_SYNC_STATUS,syncedAt:env.WHOOP_LAST_SYNC_AT}}:null;
+  const model=whoopOnboardingViewModel({config:{clientId:env.WHOOP_CLIENT_ID,clientSecret:env.WHOOP_CLIENT_SECRET,stateSecret:env.WHOOP_OAUTH_STATE_SECRET,publicOrigin:env.WHOOP_PUBLIC_ORIGIN||env.AGENTONE_PUBLIC_ORIGIN||env.PUBLIC_ORIGIN,redirectUri:env.WHOOP_REDIRECT_URI,scopes:configuredScopes.length?configuredScopes:undefined},connection}),canStart=model.status==='READY'&&!model.connected;
+  return {...model,schema:'agentone.whoop-onboarding-view/v1',cta:canStart?{...model.cta,enabled:false,routeAvailable:false,blockedReason:'OAuth-Start wird erst mit persistentem atomarem Single-Use-State-Speicher aktiviert.'}:null,policy:{readOnly:true,minimalScopes:true,oauthStartEnabled:false,stateStoreRequired:true,medicalDiagnosis:false,secretsExposed:false}};
+}
 function publicIntegration(item){ return {...item,requirements:item.requirements.map(String)}; }
 function loginKey(req){return String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim();}
 function loginBlocked(key){const now=Date.now();const entry=failedLogins.get(key);if(!entry||now-entry.since>15*60_000){failedLogins.delete(key);return false;}return entry.count>=6;}
@@ -411,6 +417,10 @@ async function api(req,res,url){
     const stateMatch=url.pathname.match(/^\/api\/internal\/personal\/routines\/([^/]+)\/state$/);if(req.method==='PUT'&&stateMatch)try{const input=await body(req);return json(res,200,{routine:setRoutineState(state.db,{userId,id:decodeURIComponent(stateMatch[1]),state:String(input.state||''),simulationHash:String(input.simulationHash||'')})});}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}
     const routineMatch=url.pathname.match(/^\/api\/internal\/personal\/routines\/([^/]+)$/);if(req.method==='DELETE'&&routineMatch)try{return json(res,200,deleteRoutine(state.db,{userId,id:decodeURIComponent(routineMatch[1])}));}catch(error){return json(res,error.status||400,{error:String(error.message||error)});}
     return json(res,405,{error:'method_not_allowed'});
+  }
+  if(url.pathname==='/api/internal/personal/whoop/status'&&req.method==='GET'){
+    if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
+    try{return json(res,200,await whoopPublicViewModel(userId));}catch(error){return json(res,500,{error:'WHOOP_STATUS_FAILED',message:'WHOOP-Status konnte nicht sicher erstellt werden.',secretsExposed:false});}
   }
   if(url.pathname==='/api/internal/personal/health'||url.pathname.startsWith('/api/internal/personal/health/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});

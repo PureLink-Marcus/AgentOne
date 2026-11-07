@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-88` erweitert den live geprüften Release 87 um vollständiges iPhone-Pairing mit Confirm-/Status-Prüfung, Einmal-Token und verständlicher mobiler Zustandsanzeige. Auf Günni sind aktuell:
+Release `2026.11.07-89` erweitert den live geprüften Release 88 um eine sichtbare WHOOP-Einrichtungskarte mit sicheren Read-only-Scopes und ehrlichen NOT_CONFIGURED/READY/LIVE-Zuständen. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;

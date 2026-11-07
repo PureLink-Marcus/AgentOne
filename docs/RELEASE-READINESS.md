@@ -1,8 +1,8 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-88`
-Deployment: Release 88 vervollständigt das sichtbare iPhone-Pairing mit Confirm-/Status-API, Einmal-Token, Ablauf-/Fehleranzeige und aktualisiertem Apple-Downloadpaket; Rollout erfolgt auf Günni und Fressi.
+Release: `2026.11.07-89`
+Deployment: Release 89 ergänzt eine sichtbare, ehrliche WHOOP-Einrichtungskarte mit Read-only-Scopes, Redirect- und NOT_CONFIGURED/READY/LIVE-Status; OAuth bleibt bis zum persistenten Single-Use-State-Store bewusst gesperrt.
 
 ## Abgenommen
 
