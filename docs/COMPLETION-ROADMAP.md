@@ -261,5 +261,6 @@ kontrolliert aktualisiert. Eine einzelne Störung degradiert nur die betroffene
 Quelle und erhält den letzten gültigen Datenstand. Command Stream und
 persistierte Inbox zeigen getrennte Refresh-/Build-Schritte; die mobile
 Oberfläche besitzt klickbare Datenstand-Karten. 352/352 Tests, Build,
-Chrome-Smoke und der schreibfreie Vier-Container-Rollout-Preflight sind grün.
-Produktiver Rollout und Live-Smoke bleiben bis zum Image-Build offen.
+Chrome-Smoke, Vier-Container-Rollout, echter Günni-Quellenlauf, PWA,
+Mail-Mobilansicht und WebKit/iPhone sind grün. Release 106 ist als Master auf
+Fressi und Günni live; der Smoke-Lauf wurde vollständig bereinigt.

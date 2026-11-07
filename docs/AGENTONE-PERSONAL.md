@@ -181,3 +181,8 @@ als `STALE_FALLBACK` oder `DEGRADED` mit letztem Erfolgszeitpunkt persistiert.
 Die Inbox zeigt diese Zustände als eigene klickbare Karten und führt direkt zu
 Postfach oder Tagesplanung. Rohinhalte, Zugangsdaten und Providerantworten sind
 weder Teil der Run-Persistenz noch des DOM.
+
+Der Master-Release 106 ist auf Fressi und Günni live. Der produktive
+Günni-Smoke bestätigte einen frischen IMAP-Datenstand, ehrliche nicht
+verbundene Google-/ICS-Zustände, beide Command-Tools, mobile Darstellung und
+vollständigen Cleanup. PWA, Mail-Mobilansicht und WebKit/iPhone bleiben grün.

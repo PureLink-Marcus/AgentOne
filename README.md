@@ -1,13 +1,13 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-106` (**PASS LOCAL · Rollout vorbereitet**) mit freshness-aware Briefing-Sync, sichtbarem Datenstand und klarer Companion-Web-App
+Status: Release `2026.11.07-106` (**MASTER · LIVE auf Fressi und Günni**) mit freshness-aware Briefing-Sync, sichtbarem Datenstand und klarer Companion-Web-App
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
-AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 105 ist dort auf vier Containern gesund ausgerollt; der gestufte Release-106-Rollout mit automatischem Rückfall auf 105 ist vorbereitet. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 106 läuft dort auf vier gesunden Containern; der gestufte Rollout Günni → Fressi besitzt einen automatischen Rückfall auf 105. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
 
 Release 103 härtet den iPhone-Pfad dort, wo ein sichtbarer Browsercheck allein
 nicht ausreicht: Vor dem serverseitigen Confirm führt die gewählte Safari-
@@ -65,7 +65,9 @@ Stream weist `source.refresh` und `briefing.build` getrennt nach. In der Inbox
 zeigt eine neue klickbare **Datenstand**-Leiste `AKTUELL`, `LETZTER STAND`,
 `NICHT VERBUNDEN` oder `EINGESCHRÄNKT` samt letzter erfolgreicher
 Synchronisierung. 352/352 Tests, Produktions-Build und der 390×844-Chrome-
-Smoke sind lokal grün; der produktive Rollout folgt nach Image-Abnahme.
+Smoke sind lokal grün. Der produktive Günni-Lauf bestätigte `mail · FRESH`,
+den getrennten Command Stream, drei Datenstand-Karten, vollständigen Cleanup
+und 0 Browserfehler; alle vier privaten Container laufen healthy.
 
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle

@@ -697,7 +697,7 @@ entfernt. 338/338 Tests und alle vier privaten Release-105-Container sind grün.
 - [Leon](https://github.com/leon-ai/leon) — MIT; Referenz für Voice,
   geschichtetes Memory, kontrollierte Aktionen und begrenzte Proaktivität.
 
-### Release 2026.11.07-106 · belastbarer Quellen-Datenstand (**PASS LOCAL**)
+### Release 2026.11.07-106 · belastbarer Quellen-Datenstand (**MASTER · PASS LIVE**)
 
 Jarvis-artige Proaktivität braucht nicht nur einen Scheduler, sondern einen
 nachvollziehbaren Datenstand. Deshalb prüft AgentOne Personal vor jedem
@@ -711,6 +711,7 @@ VERBUNDEN` und `EINGESCHRÄNKT` erscheinen mit letzter erfolgreicher
 Synchronisierung und direkter Navigation. Der Command Stream trennt
 `source.refresh` von `briefing.build`. Damit wird aus einer bloßen
 Ergebnis-Kachel ein erklärbarer Assistentenlauf. 352/352 Tests, Build, mobiler
-Chrome-Smoke und Rollout-Preflight sind lokal bestanden; Live-Nachweise werden
-nach dem Image-Rollout ergänzt.
+Chrome-Smoke, gestufter Rollout und produktiver Günni-Quellenlauf sind
+bestanden. PWA auf allen drei Domains, private TLS-/Login-Grenzen,
+Mail-Mobilansicht und WebKit/iPhone wurden nach dem Rollout erneut geprüft.
 
