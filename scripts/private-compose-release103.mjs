@@ -67,7 +67,11 @@ if [ "$whoopStateEnvLines" -eq 0 ]; then whoopState=$(openssl rand -hex 32); pri
 whoopStateLength=$(sed -n 's/^WHOOP_OAUTH_STATE_SECRET=//p' "$envfile" | tail -1 | tr -d '\r\n' | wc -c)
 test "$whoopStateLength" -ge 32
 chmod 600 "$envfile"
-if [ "$whoopStateLines" -eq 0 ]; then sed -i '/^[[:space:]]*AGENTONE_HEALTH_MASTER_KEY:/a\      WHOOP_OAUTH_STATE_SECRET: \${WHOOP_OAUTH_STATE_SECRET}' "$file"; fi
+if [ "$whoopStateLines" -eq 0 ]; then
+  tmpfile="$file.release103.$$"
+  awk '{print} /^[[:space:]]*AGENTONE_HEALTH_MASTER_KEY:/ {line=$0; sub(/AGENTONE_HEALTH_MASTER_KEY:.*/, "WHOOP_OAUTH_STATE_SECRET: \${WHOOP_OAUTH_STATE_SECRET}", line); print line}' "$file" > "$tmpfile"
+  mv "$tmpfile" "$file"
+fi
 test "$(grep -c "WHOOP_OAUTH_STATE_SECRET:" "$file")" -eq 2
 sed -i "s/purelink\\/agentone:2026.11.07-102/purelink\\/agentone:2026.11.07-103/g" "$file"
 sed -i -E "s/(AGENTONE_RELEASE:[[:space:]]*).*/\\12026.11.07-103/g" "$file"
