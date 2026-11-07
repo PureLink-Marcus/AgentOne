@@ -201,7 +201,7 @@ angezeigt.
    Kosten- und Fehlergrenzen betreiben.
 2. Restore, Backup, Schlüsselrotation, Connector-Widerruf und Löschung pro
    Benutzer testen.
-3. PWA-Push nur nach Opt-in; Ruhezeiten, Dedupe und Tagesbudget verifizieren. **Release 107 lokal abgeschlossen; Live-Abnahme läuft.**
+3. PWA-Push nur nach Opt-in; Ruhezeiten, Dedupe und Tagesbudget verifizieren. **Release 107 live abgeschlossen.**
 4. Vor einem generischen Command-Retry/-Cancel ein persistentes Effect-Ledger
    mit atomarem Ausführungs-Claim, wiederverwendetem Idempotency-Key und
    vollständig verdrahtetem Abort-Pfad bauen und testen. Bis dahin bleiben
@@ -274,5 +274,6 @@ projiziert. Sperrbildschirmtexte bleiben absichtlich generisch; Details sind
 erst nach Login sichtbar. Die neue mobile Einstellungskarte zeigt Berechtigung
 und Gerätezahl und bietet Aktivieren, Test und Widerruf. Ruhezeit, Tagesbudget,
 Feedback und Deduplizierung gelten weiterhin serverseitig; In-App und PWA sind
-getrennte, nachvollziehbare Zustellkanäle. Der lokale 390×844-Chrome-Smoke ist
-grün. Archiv-, Image-, Rollout- und Live-Abnahme folgen im Masterrelease.
+getrennte, nachvollziehbare Zustellkanäle. Lokale und Live-Chrome-Smokes bei
+390×844, Secret-Grenzaudit, vollständige Regression und der gestufte Rollout
+sind grün. Release 107 ist als Master auf Fressi und Günni live.

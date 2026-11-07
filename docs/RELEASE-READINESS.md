@@ -1,14 +1,14 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-107` (**MASTER-KANDIDAT**)
-Deployment: Release 107 befindet sich in der finalen lokalen Abnahme und wird anschließend gestuft Günni → Fressi ausgerollt. Release 106 bleibt bis zum bestandenen Live-Smoke das automatische Rollback-Ziel. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Release: `2026.11.07-107` (**MASTER · PASS LIVE**)
+Deployment: Release 107 ist gestuft Günni → Fressi ausgerollt; alle vier App-/Access-Container sind healthy. Der Rollout besitzt einen automatischen Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL + LIVE | Release 106: 352/352 Node-Tests, Produktions-Build, mobiler Datenstand-Smoke und echter Günni-Routine-Lauf samt Quellen-Refresh, Command Stream, Inbox und Cleanup grün. |
+| Lokale Anwendung | PASS LOCAL + LIVE | Release 107: 360/360 Node-Tests, Produktions-Build, npm-Audit, lokaler Push-Lifecycle-Smoke und read-only Günni-Live-Smoke grün; Release-106-Datenstandslauf bleibt als unveränderte Regression erhalten. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. HTTPS, WebKit, Vault-Preflight, 54-px-Touchziele und 0 Konsolenfehler sind live geprüft; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
@@ -31,8 +31,8 @@ Deployment: Release 107 befindet sich in der finalen lokalen Abnahme und wird an
 | Lokaler Modellpfad | READY | Connector v4 und App-Pfad sind getestet, allowlist-begrenzt und signiert. Live-Status, `LOCAL`-Datenschutz und Latenz werden sichtbar; ein reales Ollama-Modell auf dem Pi fehlt noch. |
 | Chat-/Voice-Trace | PASS LIVE | Release 98: Eine synthetische 5,297-Sekunden-WAV wurde live über `gpt-transcribe` mit vier semantischen Treffern in 1319 ms verarbeitet; Logprüfung ohne Audio-, Transkript- oder Secret-Leak. Echte Chrome-Abnahme: Chat HTTP 200 über Luna, NDJSON-Voice-Stream, Mikrofontaste danach erneut aktiv, Stefan gewählt, `Anna` ausgeschlossen, 0 Konsolenfehler. |
 | Mikrofonwahl | PASS | persistente Geräteauswahl, automatische `devicechange`-Aktualisierung und sicherer Fallback auf den Systemstandard im Browser geprüft |
-| Proaktive Hinweise | PASS | Release 85: automatisch geladener Personal Pulse mit echten Mail-/Kalender-/Health-Signalen, maximal drei neue Hinweise pro Tag, Ruhezeit, persistente Deduplizierung und wirksames Feedback (`hilfreich`, `nicht hilfreich`, `falsch`, `später`, `nie wieder`). Live in Chrome ohne Secret-Leak geprüft. |
-| PWA-Benachrichtigungen | PASS LOCAL · DEPLOYMENT PENDING | Release 107: explizites Geräte-Opt-in, verschlüsselte benutzergebundene Push-Abos, sichere VAPID-Grenze, Ruhezeit, Tagesbudget, kanalgetrennte Deduplizierung, generischer Sperrbildschirmtext, Testsendung und Widerruf. Die mobile 390×844-Chrome-Abnahme ist grün; Live-Abnahme folgt im gestuften Rollout. |
+| Proaktive Hinweise | PASS LIVE | Automatisch geladener Personal Pulse mit echten Mail-/Kalender-/Health-Signalen, maximal drei neue Hinweise pro Tag, Ruhezeit, persistenter kanalgetrennter Deduplizierung und wirksamem Feedback (`hilfreich`, `nicht hilfreich`, `falsch`, `später`, `nie wieder`). Release 107 ergänzt den explizit aktivierten PWA-Kanal. |
+| PWA-Benachrichtigungen | PASS LIVE | Release 107: explizites Geräte-Opt-in, verschlüsselte benutzergebundene Push-Abos, sichere VAPID-Grenze, Ruhezeit, Tagesbudget, kanalgetrennte Deduplizierung, generischer Sperrbildschirmtext, Testsendung und Widerruf. Lokale und Live-Abnahme bei 390×844 sind grün; ein reales Endgerät muss die Browserberechtigung selbst erteilen. |
 | Personal Event Ledger | PASS | Immutable, idempotent, user-isoliert, Retention/Export/Löschung; Mail-Bodies und Secret-Felder werden an der Speichergrenze abgewiesen. |
 | Google Live Sync | PREPARED | OAuth-, Gmail-Metadaten- und Kalender-Sync inklusive Paging, Cursor, Retention, Kalenderauswahl und Teilerfolg ist implementiert und getestet. Auf Günni fehlt noch die serverseitige Google-OAuth-Konfiguration; das vorhandene App-Passwort bleibt bewusst nur IMAP. |
 | Health Ledger | PASS LIVE | Release 102 verarbeitet Apple-Health-XML/ZIP bis 512 MiB als persistente Jobs: Streaming-Upload, AES-256-GCM-Ciphertext-Staging, begrenzter Child-Worker, User-/Consent-Isolation, Human Gate, Command Stream, Restart-Recovery und atomarer Cancel-/Commit-CAS. Browser und Audit sehen nur Status, Fortschritt und sichere Zähler; medizinische Diagnosen bleiben ausgeschlossen. Der lokale Chrome-Mobile-Smoke importierte 35.652.165 Bytes; der isolierte Günni-Live-Smoke importierte 35.652.207 Bytes und zwei Messwerte und endete nach Cleanup bei null Messwerten und null Freigaben. Der frühere Health-&-Recovery-Vergleich bleibt unverändert verfügbar; persönliche Günni-Daten und WHOOP-Credentials fehlen weiterhin. |
@@ -243,15 +243,16 @@ Deployment: Release 107 befindet sich in der finalen lokalen Abnahme und wird an
 | Regression | PASS LIVE | 352/352 Node-Tests, Produktions-Build, PWA auf PureLink/Fressi/Günni, beide privaten TLS-/Login-Grenzen, Günni-Mail mobil und WebKit/iPhone sind grün. Der Live-Lauf meldete Mail `FRESH`, ICS/Google ehrlich `NOT_CONNECTED` und entfernte alle Smoke-Daten. |
 | Deployment | PASS LIVE | Feature-Commit `8f2dc7e`; secret-freies Archiv SHA-256 `5cee97d175f3ded72256456a828252c2e05f76c332bd3776927a48cda468dc58`; Image `purelink/agentone:2026.11.07-106`, ID `sha256:af6707bb5d1df9f57600f63c488a860bd005bf9762e90cd0f470a074b5b3a93f`; vier Container healthy. |
 
-### Release 107 · Kontrollierte PWA-Benachrichtigungen (**MASTER-KANDIDAT**)
+### Release 107 · Kontrollierte PWA-Benachrichtigungen (**MASTER · PASS LIVE**)
 
 | Prüfung | Status | Nachweis |
 |---|---|---|
-| Push-Grenze und Persistenz | PASS LOCAL | Web-Push mit VAPID; Subscriptions sind benutzergebunden und AES-256-GCM-verschlüsselt. Browser, öffentliche API und Audit erhalten weder Endpoint noch `p256dh`/`auth`; 404/410 entfernen unbrauchbare Abos. |
-| Pulse-Steuerung | PASS LOCAL | PWA ist ein explizit gewählter Kanal. Ruhezeit, Tagesbudget, Feedback und Deduplizierung bleiben wirksam; In-App- und PWA-Zustellung werden getrennt genau einmal protokolliert. Nur geplante Läufe versenden proaktiv. |
-| Sichtbares Frontend | PASS LOCAL | Mobile Einstellungskarte mit Browserstatus, Gerätezahl, Aktivieren, Testnachricht und Widerruf. 390×844, mindestens 48-px-Touchziele, kein horizontaler Overflow, 0 Konsolenfehler. Screenshot: `output/playwright/release107-pwa-push-mobile.png`. |
-| Datenschutz | PASS LOCAL | Push-Inhalt ist schemafest und generisch, `sensitive:false`, URL nur same-origin relativ. Mail-, Kalender-, Health-, Personen- und Secret-Daten werden erst nach authentifiziertem Öffnen der PWA geladen. |
-| Deployment und Live-Abnahme | PENDING | Archiv, Image, gestufter Rollout Günni → Fressi sowie PWA-/Domain-/Mail-/iPhone-Regression folgen nach der vollständigen Testsuite. |
+| Push-Grenze und Persistenz | PASS LIVE | Web-Push mit VAPID; Subscriptions sind benutzergebunden und AES-256-GCM-verschlüsselt. Browser, öffentliche API und Audit erhalten weder Endpoint noch `p256dh`/`auth`; 404/410 entfernen unbrauchbare Abos. Live-Audit: App-Container konfiguriert, Access-Container ohne Push-Secrets. |
+| Pulse-Steuerung | PASS | PWA ist ein explizit gewählter Kanal. Ruhezeit, Tagesbudget, Feedback und Deduplizierung bleiben wirksam; In-App- und PWA-Zustellung werden getrennt genau einmal protokolliert. Nur geplante Läufe versenden proaktiv. |
+| Sichtbares Frontend | PASS LIVE | Mobile Einstellungskarte mit Browserstatus, Gerätezahl, Aktivieren, Testnachricht und Widerruf. 390×844, 48-px-Touchziele, kein horizontaler Overflow, 0 Konsolenfehler. Screenshots: `output/playwright/release107-pwa-push-mobile.png` und `output/playwright/guenni-release107-pwa-push-live-mobile.png`. |
+| Datenschutz | PASS LIVE | Push-Inhalt ist schemafest und generisch, `sensitive:false`, URL nur same-origin relativ. Mail-, Kalender-, Health-, Personen- und Secret-Daten werden erst nach authentifiziertem Öffnen der PWA geladen. |
+| Regression | PASS LIVE | 360/360 Node-Tests, Produktions-Build, npm-Produktionsaudit mit 0 Schwachstellen, zwei lokale Chrome-Läufe, Günni-Live-Chrome, PWA auf PureLink/Fressi/Günni, private TLS-/Login-Grenzen, Mail-Mobile und WebKit/iPhone grün. |
+| Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `9c584b3`, Deployment-Härtung `863bacb`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-107.tgz`, 9.331.882 Bytes, SHA-256 `37a2250bc86fd9e158d6edd806e99bf74ed44eb1ed9803904498341946ca16cb`; Image `purelink/agentone:2026.11.07-107`, ID `sha256:3bd2b00ce9e348d8c2eb5403a8b0976b4e202c79b6e642fa3b4bd26fa34748da`, 494.283.624 Bytes; vier Container healthy. |
 
 ```powershell
 npm run verify:local

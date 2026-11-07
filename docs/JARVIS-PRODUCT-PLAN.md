@@ -715,7 +715,7 @@ Chrome-Smoke, gestufter Rollout und produktiver Günni-Quellenlauf sind
 bestanden. PWA auf allen drei Domains, private TLS-/Login-Grenzen,
 Mail-Mobilansicht und WebKit/iPhone wurden nach dem Rollout erneut geprüft.
 
-### Release 2026.11.07-107 · kontrollierte PWA-Benachrichtigungen (**MASTER-KANDIDAT**)
+### Release 2026.11.07-107 · kontrollierte PWA-Benachrichtigungen (**MASTER · PASS LIVE**)
 
 Ein persönlicher Assistent muss sich melden können, ohne sensible Inhalte auf
 den Sperrbildschirm zu schreiben. AgentOne Personal ergänzt deshalb einen
@@ -730,4 +730,8 @@ Feedback und Deduplizierung bleiben am Server. In-App und PWA werden als eigene
 Kanäle dokumentiert, sodass ein Hinweis in beiden Ansichten genau einmal
 ankommen kann. Dieses Modul übernimmt Jarvis-artige Präsenz, ohne Mail-,
 Kalender- oder Gesundheitsdetails vor der Anmeldung offenzulegen.
+360/360 Tests, Produktions-Build, lokaler und Live-Chrome-Smoke, PWA-/TLS-/
+Mail-/WebKit-Regression, Secret-Grenzaudit und der gestufte Rollout Günni →
+Fressi sind grün. Die abschließende Geräteberechtigung bleibt bewusst eine
+Aktion des jeweiligen Benutzers auf seinem Browser oder iPhone.
 
