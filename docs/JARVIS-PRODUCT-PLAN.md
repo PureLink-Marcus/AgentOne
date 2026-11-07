@@ -253,11 +253,12 @@ README und Download-ZIP einheitlich: Safari öffnen, teilen, zum Home-Bildschirm
 hinzufügen, die installierte App starten und den sechsstelligen Code manuell
 eingeben.
 
-**Abnahmestand vor Deployment:** 210/210 Tests, Production-Build und der
-vollständige lokale Chrome-Pairing-Flow sind grün. Bei 390 px beträgt die
-kleinste Touchhöhe 54 px; es gibt keine relevanten Konsolenfehler und keinen
-Secret-Leak. Dies ist keine reale Safari-/WebKit- oder native
-EventKit-/HealthKit-Abnahme.
+**Abnahmestand:** 210/210 Tests, Production-Build sowie der vollständige lokale
+und Günni-Live-Chrome-Pairing-Flow sind grün. Bei 390 px beträgt die kleinste
+Touchhöhe 54 px; es gibt keine relevanten Konsolenfehler und keinen
+Secret-Leak. Release 97 läuft auf vier healthy privaten Containern und die PWA
+ist auf drei Domains bestätigt. Dies ist keine reale Safari-/WebKit- oder
+native EventKit-/HealthKit-Abnahme.
 
 ## Priorisierte vertikale Lieferpakete
 
@@ -437,12 +438,20 @@ Basis-Seite `/iphone`; CSP, CORP, Authentifizierung und `no-store` schützen den
 SVG-Pfad. Die iOS-Anleitung beschreibt die zwingende Home-Screen-Installation
 vor der manuellen Codeeingabe.
 
-Der Release-Kandidat ist lokal mit 210/210 Tests, Production-Build und echtem
-Chrome bei 390 px abgenommen: vollständiger Pair-/Ingest-/Reload-/
-Self-Revoke-Retry-/Recovery-/Vault-Rollback-Flow, mindestens 54 px Touchhöhe,
-0 relevante Konsolenfehler und keine Secrets in QR, URL, DOM, Storage,
-Screenshot oder Logs. Archiv, Image, Container-Rollout und Günni-Live-Smoke
-stehen noch aus. Reales Safari/WebKit sowie EventKit/HealthKit bleiben offen.
+Release 97 ist lokal und live mit 210/210 Tests, Production-Build und echtem
+Chrome bei 390 px abgenommen: QR-Base, Installationsgrenze, Pairing, Status,
+Ingest, Reload, Self-Revoke-Retry, Recovery und Vault-Rollback; mindestens 54 px
+Touchhöhe, 0 relevante Konsolenfehler und keine Secrets in QR, URL, DOM,
+Storage, Screenshot oder Logs. Source-Commit `754faf5`; secret-freies Archiv
+`output/demo/agentone-release-2026.11.07-97.tgz`, SHA-256
+`972cc4e432eed59ab03170b7a6945969d37e27aad362d97e8ed14670743d0762`;
+Image-Digest
+`sha256:1e1256033cd9d8d2dc7bd09a4f2bd7feed8e2df08e5ad642383cdb6ebd2d75ac`;
+vier private Container healthy. PWA auf drei Domains, OpenClaw-Plugins 68/68,
+Home 345/15/275, Mail, Command Stream, Kommunikation, ICS `NOT_CONNECTED`,
+Jarvis und Planung samt Cleanup sind live geprüft; Runtime und redigierter
+Audit sind healthy. Reales Safari/WebKit sowie EventKit/HealthKit bleiben
+offen.
 
 ## Primärquellen und Lizenzgrenzen
 

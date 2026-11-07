@@ -62,7 +62,7 @@ Domains geprüft. Der Kalenderstatus bleibt mangels persönlichem Feed-Link
 ehrlich `NOT_CONNECTED`. Dies ist weiterhin keine Safari-/WebKit-, EventKit-
 oder HealthKit-Abnahme.
 
-Release-Kandidat `2026.11.07-97` korrigiert den vollständigen
+Release `2026.11.07-97` korrigiert den vollständigen
 Geräte-Lebenszyklus: „Auf diesem iPhone trennen“ widerruft zuerst die
 serverseitige Freigabe und entfernt deren Ereignisse. Der lokale
 AES-GCM-Tresor wird erst nach bestätigtem Erfolg gelöscht. Bei Netzfehler oder
@@ -74,10 +74,13 @@ Pairing-Code oder Token. Die geschützte SVG-Antwort ist authentifiziert,
 `no-store` und durch CSP/CORP begrenzt. UI, README und Download-ZIP nennen die
 reale Reihenfolge Safari → Teilen → „Zum Home-Bildschirm“ → installierte App
 öffnen → sechsstelligen Code manuell eingeben. 210/210 Tests, Production-Build
-und der vollständige lokale Chrome-Flow sind grün; bei 390 px liegen die
-Touchziele bei mindestens 54 px, ohne Konsolen- oder Secret-Leak. Deployment
-und reale Safari-/WebKit-Geräteabnahme stehen noch aus. EventKit und HealthKit
-bleiben native Apple-Arbeitspakete.
+und der vollständige lokale sowie Günni-Live-Chrome-Flow sind grün; bei 390 px
+liegen die Touchziele bei mindestens 54 px, ohne Konsolen- oder Secret-Leak.
+Release 97 läuft auf vier healthy privaten Containern; die PWA ist auf drei
+Domains bestätigt. Connectoren, Home, Mail, Command Stream, Kommunikation,
+ICS, Jarvis und Planung sind live regressionsgeprüft. Die reale
+Safari-/WebKit-Geräteabnahme steht weiter aus; EventKit und HealthKit bleiben
+native Apple-Arbeitspakete.
 
 ## Technische Grenze
 
