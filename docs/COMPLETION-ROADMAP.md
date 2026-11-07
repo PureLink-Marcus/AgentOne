@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-86` erweitert den live geprüften Release 85 um Event Ledger und Command Stream. Auf Günni sind aktuell:
+Release `2026.11.07-87` erweitert den live geprüften Release 86 um den sichtbaren privaten iCal-Import, robuste Voice-Transkription und die geprüfte WHOOP-Onboarding-Basis. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
@@ -37,7 +37,7 @@ angezeigt.
    anbinden; keine autonome Selbstfreigabe.
 6. Alle festen `LIVE`-Texte entfernen und Status ausschließlich aus
    Healthchecks oder gespeicherten Ergebnissen ableiten.
-7. Release 86: Vollsuite, Chrome Desktop/Mobil, PWA-Cachewechsel, Deployment,
+7. Release 87: Vollsuite, Chrome Desktop/Mobil, PWA-Cachewechsel, Deployment,
    Screenshot und Git-Push auf alle vier vereinbarten Branches.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
@@ -100,3 +100,10 @@ Eine Funktion ist erst abgeschlossen, wenn sie:
 6. deployed, versionsgebunden und per PWA-Refresh erreichbar ist;
 7. exportiert, widerrufen oder gelöscht werden kann, sofern persönliche Daten
    betroffen sind.
+
+## Release-Regel
+
+Jeder neue Release muss mindestens ein sichtbar neues oder wesentlich
+verbessertes Frontend-Element enthalten. Das Element muss echte Zustände und
+Ergebnisse anzeigen, mobil bedienbar sein und im Chrome-Smoke angeklickt werden.
+Reine Backend-, Versions- oder Dokumentations-Releases sind ausgeschlossen.

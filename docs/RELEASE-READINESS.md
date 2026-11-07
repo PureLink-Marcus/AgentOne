@@ -1,8 +1,8 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-86`
-Deployment: Release 86 enthält zusätzlich Personal Event Ledger, Jarvis Command Stream sowie geprüfte ICS-/WHOOP-Kerne und wird auf Günni und Fressi ausgerollt.
+Release: `2026.11.07-87`
+Deployment: Release 87 ergänzt einen sichtbaren privaten ICS-Kalenderimport, einen korrigierten Voice-Transkriptionspfad mit Formatdiagnose sowie die geprüfte WHOOP-Onboarding-Basis und wird auf Günni und Fressi ausgerollt.
 
 ## Abgenommen
 

@@ -29,8 +29,9 @@ import { buildHealthDigest, createHealthConsent, healthConnectorCapabilities, im
 import { deleteHealthData, exportHealthData, getHealthConsent, healthStoreAuditSummary, initPersonalHealthStore, listHealthConsents, queryHealthMetrics, revokeHealthConsent, saveHealthConsent, storeHealthImport } from './personal-health-store.mjs';
 import { GoogleSyncError, syncGoogleReadOnly } from './google-live-sync.mjs';
 import { initPersonalPulseStore, listPersonalPulseDeliveries, planPersonalPulse, recordPersonalPulseDelivery, resetPersonalPulseDeliveries } from './personal-pulse.mjs';
-import { appendPersonalEvents, applyPersonalEventRetention, deletePersonalEvents, exportPersonalEvents, initPersonalEventLedger, personalEventLedgerAuditSummary, queryPersonalEvents } from './personal-event-ledger.mjs';
+import { appendPersonalEvents, applyPersonalEventRetention, deletePersonalEvents, exportPersonalEvents, initPersonalEventLedger, personalEventLedgerAuditSummary, queryPersonalEvents, replacePersonalEvents } from './personal-event-ledger.mjs';
 import { appendCommandStep, commandTimeline, completeCommandRun, createCommandRun, initPersonalCommandStream, recordCommandError, recordCommandResult } from './personal-command-stream.mjs';
+import { parseIcsCalendar, publicIcsError } from './ics-calendar-sync.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const env=loadEnv(root);
@@ -54,6 +55,10 @@ initPersonalHealthStore(state.db);
 initPersonalPulseStore(state.db);
 initPersonalEventLedger(state.db);
 initPersonalCommandStream(state.db);
+state.db.exec(`CREATE TABLE IF NOT EXISTS personal_ics_calendar_state(
+  user_id TEXT PRIMARY KEY,status TEXT NOT NULL,event_count INTEGER NOT NULL DEFAULT 0,
+  imported_at TEXT,last_error_code TEXT,updated_at TEXT NOT NULL
+);`);
 const companionPepper=env.AGENTONE_SECRET_KEY||env.AGENTONE_INTERNAL_API_TOKEN||'agentone-local-companion';
 const healthMasterKey=env.AGENTONE_HEALTH_MASTER_KEY||env.AGENTONE_DEMO_MASTER_KEY||'';
 const healthCryptoReady=Boolean(healthMasterKey);
@@ -116,6 +121,23 @@ async function bodyBuffer(req,max=32*1024*1024){
   if(!size)throw Object.assign(new Error('Apple-Health-Datei fehlt'),{code:'HEALTH_UPLOAD_EMPTY',status:400});
   return Buffer.concat(chunks,size);
 }
+async function icsBodyBuffer(req,max=4*1024*1024){
+  const declared=req.headers['content-length'];
+  if(declared!=null&&(!/^\d+$/.test(String(declared))||Number(declared)<=0))throw Object.assign(new Error('Kalenderdatei fehlt'),{code:'ICS_UPLOAD_SIZE_INVALID',status:400});
+  if(declared!=null&&Number(declared)>max)throw Object.assign(new Error('Kalenderdatei ist größer als 4 MiB'),{code:'ICS_TOO_LARGE',status:413});
+  const chunks=[];let size=0;
+  for await(const chunk of req){size+=chunk.length;if(size>max)throw Object.assign(new Error('Kalenderdatei ist größer als 4 MiB'),{code:'ICS_TOO_LARGE',status:413});chunks.push(chunk);}
+  if(!size)throw Object.assign(new Error('Kalenderdatei fehlt'),{code:'ICS_EMPTY',status:400});
+  return Buffer.concat(chunks,size);
+}
+function icsCalendarState(userId){
+  return state.db.prepare('SELECT status,event_count AS eventCount,imported_at AS importedAt,last_error_code AS lastErrorCode,updated_at AS updatedAt FROM personal_ics_calendar_state WHERE user_id=?').get(userId)||{status:'NOT_CONNECTED',eventCount:0,importedAt:null,lastErrorCode:null,updatedAt:null};
+}
+function saveIcsCalendarState(userId,{status,eventCount=0,importedAt=null,lastErrorCode=null}){
+  const updatedAt=new Date().toISOString();state.db.prepare(`INSERT INTO personal_ics_calendar_state(user_id,status,event_count,imported_at,last_error_code,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET status=excluded.status,event_count=excluded.event_count,imported_at=excluded.imported_at,last_error_code=excluded.last_error_code,updated_at=excluded.updated_at`).run(userId,status,eventCount,importedAt,lastErrorCode,updatedAt);return icsCalendarState(userId);
+}
+function icsStatusPayload(userId){return {schema:'agentone.ics-calendar-status/v1',...icsCalendarState(userId),policy:{readOnly:true,maxUploadBytes:4*1024*1024,descriptionStored:false,locationStored:false,attendeesStored:false,userIsolated:true,secretsExposed:false}};}
+function icsLedgerEvents(userId,snapshot){return snapshot.events.map(event=>({userId,source:'calendar.ics',sourceAccount:'ics-upload',sourceEventId:event.idempotencyKey,occurredAt:event.start,type:'calendar.event',summary:event.title,structuredPayload:{endAt:event.end,durationMinutes:event.end?Math.max(0,Math.round((new Date(event.end)-new Date(event.start))/60_000)):0,timeZone:event.timeZone,allDay:event.allDay,status:event.status,recurrence:event.recurrence,sequence:event.sequence},provenance:{connectorId:'ics-upload',revisionKey:event.revisionKey},sensitivity:'personal',confidence:1}));}
 function publicIntegration(item){ return {...item,requirements:item.requirements.map(String)}; }
 function loginKey(req){return String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim();}
 function loginBlocked(key){const now=Date.now();const entry=failedLogins.get(key);if(!entry||now-entry.since>15*60_000){failedLogins.delete(key);return false;}return entry.count>=6;}
@@ -255,10 +277,10 @@ async function personalIntelligenceSnapshot(userId){
   events.push(...storedHealth.map(item=>({userId,source:item.source,kind:'health.metric',externalId:item.id,occurredAt:item.startAt,metrics:{name:item.metric,value:item.value,unit:item.unit},sensitivity:'health',provenance:{connectorId:`health.${item.source}`,importedAt:item.provenance?.receivedAt||item.startAt,rawRecordHash:item.id,consentId:item.consentId}})));
   const ledgerWrite=appendPersonalEvents(state.db,{userId,events:ledgerInputEvents(events)});applyPersonalEventRetention(state.db,{userId,before:new Date(Date.now()-400*86_400_000)});const ledgerEvents=queryPersonalEvents(state.db,{userId,from:new Date(Date.now()-40*86_400_000),limit:5_000}),analysisEvents=intelligenceEventsFromLedger(ledgerEvents);
   const rawBrief=buildPersonalBrief({userId,events:analysisEvents,timeZone:'Europe/Berlin'}),feedbackProfile=loadNudgeFeedbackProfile(state.db,userId),signals=applyNudgeFeedback(rawBrief.signals,feedbackProfile),brief={...rawBrief,signals,summary:{attention:signals.filter(item=>item.severity==='attention').length,informational:signals.filter(item=>item.severity==='info').length}},googleSummary=googleSyncSummary(google?.lastTest||{}),googleMessages=googleSummary.gmail.messages,googleEvents=googleSummary.calendar.events;
-  const mailMessages=mailAccounts.reduce((sum,account)=>sum+Number(account.lastTest?.scan?.total||0),0)+googleMessages,healthSummaries=(companion.events||[]).filter(item=>item.kind==='health').length,calendarSummaries=(companion.events||[]).filter(item=>item.kind==='calendar').length,calendarRecords=calendarSummaries+googleEvents,healthRecords=storedHealth.length+healthSummaries;
+  const icsState=icsCalendarState(userId),icsEvents=icsState.status==='LIVE'?Number(icsState.eventCount||0):0,mailMessages=mailAccounts.reduce((sum,account)=>sum+Number(account.lastTest?.scan?.total||0),0)+googleMessages,healthSummaries=(companion.events||[]).filter(item=>item.kind==='health').length,calendarSummaries=(companion.events||[]).filter(item=>item.kind==='calendar').length,calendarRecords=calendarSummaries+googleEvents+icsEvents,healthRecords=storedHealth.length+healthSummaries;
   const googleMailDegraded=google?.lastTest?.sync?.mail?.status==='DEGRADED',googleCalendarDegraded=google?.lastTest?.sync?.calendar?.status==='DEGRADED';
-  const mailStatus=googleMailDegraded?'DEGRADED':mailMessages?'LIVE':google?.lastTest?.sync||mailAccounts.some(item=>item.status==='CONNECTED')?'CONNECTED':mailAccounts.length||google?'DEGRADED':'NOT_CONNECTED',calendarStatus=googleCalendarDegraded?'DEGRADED':calendarRecords?'LIVE':google?.lastTest?.sync?.calendar?'CONNECTED':google?'AUTHENTICATED':calendarSummaries?'LIVE':'NOT_CONNECTED';
-  return {...brief,schema:'agentone.personal-intelligence/v1',sources:[{id:'mail',status:mailStatus,accounts:mailAccounts.length+(google?1:0),records:mailMessages},{id:'calendar',status:calendarStatus,calendars:googleSummary.calendar.calendars,selectedCalendars:googleSummary.calendar.selected,records:calendarRecords},{id:'health',status:healthRecords?'LIVE':healthCryptoReady?'READY':'PREPARED',records:healthRecords}],ledger:{...personalEventLedgerAuditSummary(state.db,userId),lastWrite:ledgerWrite,analysisWindowDays:40},capabilities:{health:healthConnectorCapabilities},feedback:{enabled:true,values:['helpful','not_helpful','wrong','later','never'],resetSupported:true},policy:{readOnly:true,medicalDiagnosis:false,externalWrites:false,secretsExposed:false},limitations:[google?.lastTest?.sync?'Google Mail und Kalender werden inkrementell und read-only synchronisiert.':'Google ist noch nicht per OAuth verbunden.',healthCryptoReady?'Apple Health XML/ZIP kann verschlüsselt und benutzergebunden importiert werden.':'Für Apple-Health-Import fehlt noch der Server-Master-Key.']};
+  const mailStatus=googleMailDegraded?'DEGRADED':mailMessages?'LIVE':google?.lastTest?.sync||mailAccounts.some(item=>item.status==='CONNECTED')?'CONNECTED':mailAccounts.length||google?'DEGRADED':'NOT_CONNECTED',calendarStatus=googleCalendarDegraded||icsState.status==='ERROR'?'DEGRADED':calendarRecords?'LIVE':google?.lastTest?.sync?.calendar?'CONNECTED':google?'AUTHENTICATED':calendarSummaries?'LIVE':'NOT_CONNECTED';
+  return {...brief,schema:'agentone.personal-intelligence/v1',sources:[{id:'mail',status:mailStatus,accounts:mailAccounts.length+(google?1:0),records:mailMessages},{id:'calendar',status:calendarStatus,calendars:googleSummary.calendar.calendars+(icsState.status==='LIVE'?1:0),selectedCalendars:googleSummary.calendar.selected+(icsState.status==='LIVE'?1:0),records:calendarRecords,ics:icsStatusPayload(userId)},{id:'health',status:healthRecords?'LIVE':healthCryptoReady?'READY':'PREPARED',records:healthRecords}],ledger:{...personalEventLedgerAuditSummary(state.db,userId),lastWrite:ledgerWrite,analysisWindowDays:40},capabilities:{health:healthConnectorCapabilities},feedback:{enabled:true,values:['helpful','not_helpful','wrong','later','never'],resetSupported:true},policy:{readOnly:true,medicalDiagnosis:false,externalWrites:false,secretsExposed:false},limitations:[google?.lastTest?.sync?'Google Mail und Kalender werden inkrementell und read-only synchronisiert.':'Google ist noch nicht per OAuth verbunden.','Private Apple-/Google-iCal-Dateien können read-only importiert werden; Beschreibung, Ort und Teilnehmer werden verworfen.',healthCryptoReady?'Apple Health XML/ZIP kann verschlüsselt und benutzergebunden importiert werden.':'Für Apple-Health-Import fehlt noch der Server-Master-Key.']};
 }
 
 const healthConsentScopes=new Set(['activity','sleep','vitals','body','workouts']);
@@ -342,6 +364,22 @@ async function api(req,res,url){
       if(req.method==='DELETE'&&url.pathname==='/api/internal/personal/pulse'){const input=await body(req);return json(res,200,{reset:resetPersonalPulseDeliveries(state.db,{userId,confirmation:input.confirmation})});}
       return json(res,405,{error:'method_not_allowed'});
     }catch(error){return json(res,error.status||400,{error:error.code||'PERSONAL_PULSE_FAILED',message:String(error.message||error).slice(0,160),secretsExposed:false});}
+  }
+  if(url.pathname==='/api/internal/personal/calendar/ics'||url.pathname==='/api/internal/personal/calendar/ics/import'){
+    if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
+    try{
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/calendar/ics')return json(res,200,icsStatusPayload(userId));
+      if(req.method==='POST'&&url.pathname==='/api/internal/personal/calendar/ics/import'){
+        const contentType=String(req.headers['content-type']||'').split(';')[0].trim().toLowerCase();if(!['text/calendar','text/plain','application/octet-stream'].includes(contentType))return json(res,415,{error:'ICS_UPLOAD_TYPE_UNSUPPORTED',message:'Bitte eine .ics-Kalenderdatei auswählen.',secretsExposed:false});
+        const snapshot=parseIcsCalendar(await icsBodyBuffer(req),{accountId:'ics-upload',calendarId:'personal-ics',defaultTimeZone:'Europe/Berlin',retentionDays:400,retentionLimit:10_000,maxBytes:4*1024*1024}),events=icsLedgerEvents(userId,snapshot);
+        let status;const ledger=replacePersonalEvents(state.db,{userId,source:'calendar.ics',events},{onReplaced:()=>{status=saveIcsCalendarState(userId,{status:'LIVE',eventCount:events.length,importedAt:snapshot.syncedAt});recordAudit(state.db,{userId,connectorId:'calendar-ics',action:'ICS_IMPORT',outcome:'OK',detail:JSON.stringify({events:events.length,deduplicated:snapshot.stats.deduplicated,expired:snapshot.stats.expired})});}});
+        return json(res,201,{...icsStatusPayload(userId),status:status.status,eventCount:status.eventCount,importedAt:status.importedAt,stats:snapshot.stats,ledger});
+      }
+      if(req.method==='DELETE'&&url.pathname==='/api/internal/personal/calendar/ics'){
+        const input=await body(req);if(input.confirm!=='REMOVE_ICS_CALENDAR')return json(res,409,{error:'ICS_REMOVE_CONFIRMATION_REQUIRED'});const deleted=deletePersonalEvents(state.db,{userId,source:'calendar.ics'}),status=saveIcsCalendarState(userId,{status:'NOT_CONNECTED'});recordAudit(state.db,{userId,connectorId:'calendar-ics',action:'ICS_REMOVE',outcome:'OK',detail:JSON.stringify({events:deleted.deleted})});return json(res,200,{...icsStatusPayload(userId),status:status.status,deleted});
+      }
+      return json(res,405,{error:'method_not_allowed'});
+    }catch(error){const previous=icsCalendarState(userId),failure=publicIcsError(error),code=error.code||failure.code||'ICS_SYNC_FAILED';saveIcsCalendarState(userId,{status:'ERROR',eventCount:previous.eventCount,importedAt:previous.importedAt,lastErrorCode:code});recordAudit(state.db,{userId,connectorId:'calendar-ics',action:'ICS_IMPORT',outcome:'ERROR',detail:JSON.stringify({code})});return json(res,error.status||400,{...failure,error:code,status:'ERROR'});}
   }
   if(url.pathname==='/api/internal/personal/events'||url.pathname.startsWith('/api/internal/personal/events/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});

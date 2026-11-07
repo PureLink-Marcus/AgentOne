@@ -27,5 +27,16 @@ wöchentlich, monatlich und jährlich. Ereignisse werden anhand von UID und
 Wiederholungsinstanz dedupliziert. Standardmäßig bleiben maximal 10.000 Termine
 und 400 Tage Historie erhalten.
 
-Das Modul liegt in `server/ics-calendar-sync.mjs`. API- und UI-Anbindung folgen
-in Release 86; Release 85 wird dadurch nicht verändert.
+Das Modul liegt in `server/ics-calendar-sync.mjs`.
+
+## Produktiver Upload in AgentOne Personal
+
+Im persönlichen Bereich steht die mobile Karte **Privater iCal-Kalender** bereit. Nach der Anmeldung kann dort ein Apple-, Google- oder anderer iCal-Export hochgeladen werden. Der Import ist read-only, auf 4 MiB begrenzt und ersetzt ausschließlich den vorherigen iCal-Snapshot desselben Benutzers.
+
+- `GET /agentone/calendar/ics` liefert `LIVE`, `NOT_CONNECTED` oder `ERROR` sowie Terminanzahl und Importzeit.
+- `POST /agentone/calendar/ics/import` akzeptiert den rohen Dateiinhalt als `text/calendar`, `text/plain` oder `application/octet-stream`.
+- `DELETE /agentone/calendar/ics` benötigt `{ "confirm": "REMOVE_ICS_CALENDAR" }`.
+- Der Gateway verlangt eine angemeldete AgentOne-Personal-Sitzung und Same-Origin für Import/Löschung.
+- Termine landen minimiert und benutzergebunden als Quelle `calendar.ics` im Personal Event Ledger und fließen damit in Tagesbild und Kalenderzählung ein.
+- `DESCRIPTION`, `LOCATION` und `ATTENDEE` werden weder im Ledger noch in Antworten gespeichert.
+- Ein fehlerhafter neuer Upload lässt den bisherigen erfolgreichen Snapshot unverändert. Snapshot, Status und Audit werden bei erfolgreichem Ersatz in derselben SQLite-Transaktion geschrieben.

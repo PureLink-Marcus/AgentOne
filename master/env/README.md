@@ -13,7 +13,7 @@ Die Vorlage enthält außerdem die Namen der vorinstallierten PERSONAL-Connector
 - Browser-Code erhält niemals ENV-Werte. Die lokale API meldet nur, ob erforderliche Namen konfiguriert sind.
 - Production-Schreibzugriffe bleiben im Demomodus unabhängig von vorhandenen Zugangsdaten blockiert.
 - Gesundheitsdaten werden nur aktiviert, wenn `AGENTONE_HEALTH_MASTER_KEY` gesetzt ist. Als kontrollierter Entwicklungs-Fallback ist `AGENTONE_DEMO_MASTER_KEY` zulässig; Microsoft-/Graph-Secrets werden dafür niemals verwendet.
-- WHOOP benötigt eine registrierte V2-App. `WHOOP_CLIENT_SECRET` und `WHOOP_WEBHOOK_SECRET` bleiben ausschließlich serverseitig; ohne vollständige Konfiguration und persönliche Freigabe bleibt der Connector `PREPARED`.
+- WHOOP benötigt eine registrierte V2-App. `WHOOP_CLIENT_SECRET`, der mindestens 32 Byte lange `WHOOP_OAUTH_STATE_SECRET` und `WHOOP_WEBHOOK_SECRET` bleiben ausschließlich serverseitig; ohne vollständige Konfiguration und persönliche Freigabe bleibt der Connector `NOT_CONFIGURED` oder `READY` statt fälschlich `LIVE` zu melden.
 - Der Health-Master-Key muss zufällig, instanzspezifisch und außerhalb des Browsers verwaltet werden. Ein späterer Keywechsel benötigt eine geplante Re-Verschlüsselung bestehender Datensätze.
 
 ## Umgebungen

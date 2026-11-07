@@ -134,12 +134,7 @@ export function initPersonalEventLedger(db) {
   `);
 }
 
-export function appendPersonalEvents(db, { userId, events = [], ingestedAt = new Date() } = {}) {
-  const owner = identifier(userId, 'userId');
-  if (!Array.isArray(events) || events.length > 25_000) throw ledgerError('events muss eine Liste mit höchstens 25.000 Einträgen sein');
-  const at = timestamp(ingestedAt, 'ingestedAt');
-  const normalized = events.map((event) => normalizeEvent(owner, event, at));
-  return transaction(db, () => {
+function writeNormalizedEvents(db, owner, normalized) {
     const byDedupe = db.prepare('SELECT event_id AS eventId,content_hash AS contentHash FROM personal_event_ledger WHERE user_id=? AND dedupe_key=?');
     const byId = db.prepare('SELECT dedupe_key AS dedupeKey,content_hash AS contentHash FROM personal_event_ledger WHERE user_id=? AND event_id=?');
     const insert = db.prepare(`INSERT INTO personal_event_ledger(user_id,event_id,source,source_account,source_event_id,occurred_at,ingested_at,type,summary,structured_payload,provenance,sensitivity,consent_id,confidence,dedupe_key,content_hash)
@@ -159,6 +154,26 @@ export function appendPersonalEvents(db, { userId, events = [], ingestedAt = new
       inserted += 1;
     }
     return { inserted, unchanged, conflicts, conflictKeys: conflictKeys.slice(0, 100), accepted: normalized.length };
+}
+
+export function appendPersonalEvents(db, { userId, events = [], ingestedAt = new Date() } = {}) {
+  const owner = identifier(userId, 'userId');
+  if (!Array.isArray(events) || events.length > 25_000) throw ledgerError('events muss eine Liste mit höchstens 25.000 Einträgen sein');
+  const at = timestamp(ingestedAt, 'ingestedAt');
+  const normalized = events.map((event) => normalizeEvent(owner, event, at));
+  return transaction(db, () => writeNormalizedEvents(db, owner, normalized));
+}
+
+export function replacePersonalEvents(db, { userId, source, events = [], ingestedAt = new Date() } = {}, { onReplaced } = {}) {
+  const owner = identifier(userId, 'userId'), normalizedSource = name(source, 'source');
+  if (!Array.isArray(events) || events.length > 25_000) throw ledgerError('events muss eine Liste mit höchstens 25.000 Einträgen sein');
+  const at = timestamp(ingestedAt, 'ingestedAt'), normalized = events.map((event) => normalizeEvent(owner, event, at));
+  if (normalized.some((event) => event.source !== normalizedSource)) throw ledgerError('Alle Ersatzereignisse müssen zur gewählten Quelle gehören');
+  return transaction(db, () => {
+    const deleted = Number(db.prepare('DELETE FROM personal_event_ledger WHERE user_id=? AND source=?').run(owner, normalizedSource).changes);
+    const result = { deleted, ...writeNormalizedEvents(db, owner, normalized) };
+    if (onReplaced) onReplaced(result);
+    return result;
   });
 }
 

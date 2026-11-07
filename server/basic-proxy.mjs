@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { commandCenterCss, commandCenterHtml as commandCenterHtmlBase, commandCenterJs, nativeThemeCss } from './agentone-command-center.mjs';
 import { openClawPluginCatalog,openClawPluginCatalogByInstance } from './openclaw-plugin-catalog.generated.mjs';
+import { VOICE_AUDIO_MAX_BYTES,VOICE_SUPPORTED_MIME_TYPES,VOICE_TRANSCRIPTION_MODEL,createVoiceTranscriptionForm,createVoiceUpstreamError,publicVoiceTranscriptionError,validateVoiceAudio,voiceAudioFormat,voiceTranscriptionStatus } from './voice-transcription.mjs';
 
 const host=process.env.HOST||'0.0.0.0';
 const port=Number(process.env.PORT||8080);
@@ -26,7 +27,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-86');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-87');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -148,9 +149,27 @@ function requestedVoiceModel(value){const requested=String(value||'');return all
 function requestedLocalModel(value){const requested=String(value||'');return /^local:[a-zA-Z0-9._:-]{1,100}$/.test(requested)?requested.slice(6):null;}
 function voiceInstructions(language){return `Du heißt ${displayName}. Du bist der persönliche Assistent dieser AgentOne-Instanz. Antworte in ${languageProfiles[language].name}, natürlich, direkt und kurz für eine Sprachausgabe. Behaupte nie, eine Aktion ausgeführt zu haben, wenn kein Toolergebnis vorliegt.`;}
 async function handleVoiceTranscription(req,res){
-  if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});if(voiceLimited(req))return jsonResponse(res,429,{error:'Zu viele Voice-Anfragen'});if(!openAiKey)return jsonResponse(res,503,{error:'Voice-Transkription ist noch nicht konfiguriert'});
-  const type=String(req.headers['content-type']||'').split(';')[0];if(!/^audio\/(webm|mp4|mpeg|wav|x-m4a|m4a|ogg)$/i.test(type))return jsonResponse(res,415,{error:'Audioformat wird nicht unterstützt'});
-  try{const audio=await readBody(req),language=voiceLanguage(req.headers['x-agentone-language']);const form=new FormData();form.append('model','gpt-transcribe');form.append('language',languageProfiles[language].code);form.append('file',new Blob([audio],{type}),'voice.webm');const response=await fetch(openAiBaseUrl+'/v1/audio/transcriptions',{method:'POST',headers:{authorization:`Bearer ${openAiKey}`},body:form,signal:AbortSignal.timeout(45_000)});const data=await response.json();if(!response.ok)throw new Error(`Transkription HTTP ${response.status}`);return jsonResponse(res,200,{text:String(data.text||'').trim(),language});}catch(error){return jsonResponse(res,error.status||502,{error:String(error.message||error).slice(0,160)});}
+  if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden',message:'Anfrage wurde aus Sicherheitsgründen abgewiesen.'});
+  if(voiceLimited(req))return jsonResponse(res,429,{error:'VOICE_RATE_LIMITED',message:'Zu viele Voice-Anfragen. Bitte kurz warten.',retryable:true});
+  if(!openAiKey)return jsonResponse(res,503,{error:'VOICE_NOT_CONFIGURED',message:'Voice-Transkription ist noch nicht konfiguriert.',retryable:false});
+  const startedAt=Date.now();let format=null,validation=null,language=voiceLanguage(req.headers['x-agentone-language']);
+  try{
+    format=voiceAudioFormat(req.headers['content-type']);
+    const declaredBytes=Number(req.headers['content-length']||0);if(Number.isFinite(declaredBytes)&&declaredBytes>VOICE_AUDIO_MAX_BYTES)throw Object.assign(new Error('voice_audio_too_large'),{status:413});
+    const audio=await readBody(req,VOICE_AUDIO_MAX_BYTES),durationMs=Number(req.headers['x-agentone-audio-duration-ms']||0);
+    validation=validateVoiceAudio(audio,{durationMs});
+    const form=createVoiceTranscriptionForm({audio,format,languageCode:languageProfiles[language].code});
+    const response=await fetch(openAiBaseUrl+'/v1/audio/transcriptions',{method:'POST',headers:{authorization:`Bearer ${openAiKey}`},body:form,signal:AbortSignal.timeout(45_000)});
+    if(!response.ok){await response.body?.cancel();throw createVoiceUpstreamError(response.status);}
+    const data=await response.json(),text=String(data.text||'').trim();
+    if(!text)throw createVoiceUpstreamError(422);
+    auditLog('voice.transcription.completed',{ok:true,provider:'openai',model:VOICE_TRANSCRIPTION_MODEL,mimeType:format.mimeType,fileExtension:format.extension,bytes:validation.bytes,durationMs:validation.durationMs,language,latencyMs:Date.now()-startedAt});
+    return jsonResponse(res,200,{text,language,diagnostics:{model:VOICE_TRANSCRIPTION_MODEL,mimeType:format.mimeType,bytes:validation.bytes,latencyMs:Date.now()-startedAt}});
+  }catch(error){
+    const publicError=publicVoiceTranscriptionError(error);
+    auditLog('voice.transcription.failed',{ok:false,provider:'openai',model:VOICE_TRANSCRIPTION_MODEL,errorCode:publicError.body.error,upstreamStatus:Number(error?.upstreamStatus)||null,mimeType:format?.mimeType||null,fileExtension:format?.extension||null,bytes:validation?.bytes||Number(req.headers['content-length']||0)||null,language,latencyMs:Date.now()-startedAt});
+    return jsonResponse(res,publicError.status,{...publicError.body,supportedMimeTypes:VOICE_SUPPORTED_MIME_TYPES});
+  }
 }
 async function handleVoiceChat(req,res){
   if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});if(voiceLimited(req))return jsonResponse(res,429,{error:'Zu viele Voice-Anfragen'});
@@ -236,6 +255,21 @@ async function personalEvents(req,res){
 async function personalBriefingCommand(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_commands_unavailable'});if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
   try{const response=await fetch(`${personalApiUrl}/api/internal/personal/commands/briefing`,{method:'POST',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},body:'{}',signal:AbortSignal.timeout(30_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_command_failed',detail:String(error.message||error).slice(0,100)});}
+}
+async function personalIcsCalendar(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'ics_calendar_unavailable'});
+  const requestUrl=new URL(String(req.url||'/agentone/calendar/ics'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/calendar/ics'.length),method=String(req.method||'GET'),upload=method==='POST'&&suffix==='/import',allowed=(method==='GET'&&(suffix===''||suffix==='/'))||upload||(method==='DELETE'&&(suffix===''||suffix==='/'));
+  if(!allowed)return jsonResponse(res,404,{error:'not_found'});if(method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
+  const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},options={method,headers,signal:AbortSignal.timeout(upload?45_000:20_000)};
+  try{
+    if(upload){
+      const max=4*1024*1024,declared=req.headers['content-length'];if(declared!=null&&(!/^\d+$/.test(String(declared))||Number(declared)<=0))return jsonResponse(res,400,{error:'ICS_UPLOAD_SIZE_INVALID'});if(declared!=null&&Number(declared)>max)return jsonResponse(res,413,{error:'ICS_TOO_LARGE'});
+      const contentType=String(req.headers['content-type']||'application/octet-stream').split(';')[0].trim().toLowerCase();if(!['text/calendar','text/plain','application/octet-stream'].includes(contentType))return jsonResponse(res,415,{error:'ICS_UPLOAD_TYPE_UNSUPPORTED'});headers['content-type']=contentType;let transferred=0,limitFailure=null;options.duplex='half';options.body=(async function*(){for await(const chunk of req){transferred+=chunk.length;if(transferred>max){limitFailure=Object.assign(new Error('Upload too large'),{status:413});throw limitFailure;}yield chunk;}if(!transferred){limitFailure=Object.assign(new Error('Upload empty'),{status:400});throw limitFailure;}})();
+      try{const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics/import`,options);return await streamHealthResponse(response,res);}catch(error){if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'ICS_TOO_LARGE':'ICS_EMPTY'});throw error;}
+    }
+    if(method==='DELETE'){headers['content-type']='application/json';options.body=(await readBody(req,4096)).toString('utf8')||'{}';}
+    const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics${requestUrl.search}`,options);return await streamHealthResponse(response,res);
+  }catch(error){return jsonResponse(res,error.status||502,{error:'ics_calendar_failed',detail:String(error.message||error).slice(0,100)});}
 }
 async function personalHealth(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'health_store_unavailable'});
@@ -351,6 +385,7 @@ const server=http.createServer((req,res)=>{
   if(req.url?.startsWith('/agentone/pulse')&&['GET','POST','DELETE'].includes(req.method||''))return personalPulse(req,res);
   if(req.url?.startsWith('/agentone/events')&&['GET','POST','DELETE'].includes(req.method||''))return personalEvents(req,res);
   if(req.method==='POST'&&req.url==='/agentone/commands/briefing')return personalBriefingCommand(req,res);
+  if(/^\/agentone\/calendar\/ics(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalIcsCalendar(req,res);
   if(/^\/agentone\/health(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/integrations\/[a-z0-9-]+\/health$/.test(req.url||''))return integrationHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/gates\/[^/]+\/decision$/.test(req.url||''))return decideGate(req,res);
@@ -366,6 +401,7 @@ const server=http.createServer((req,res)=>{
   if(req.method==='POST'&&req.url==='/agentone/home-assistant/action')return homeAssistantAction(req,res);
   if(req.method==='GET'&&/^\/agentone\/home-assistant\/camera\/[a-z0-9_]+\.[a-z0-9_]+\/snapshot(?:\?|$)/.test(req.url||''))return homeAssistantCamera(req,res);
   if(req.method==='GET'&&req.url==='/agentone/openclaw/plugins'){const key=expectedUser==='guenni'?'guenni':expectedUser==='fressi'?'fressi':'agentone-personal',plugins=openClawPluginCatalogByInstance[key]||openClawPluginCatalog;return jsonResponse(res,200,{runtime:'OpenClaw 2026.10.8',source:'live-registry-snapshot',instance:key,plugins,summary:{total:plugins.length,loaded:plugins.filter(item=>item.status==='loaded').length,disabled:plugins.filter(item=>item.status==='disabled').length}});}
+  if(req.method==='GET'&&req.url==='/agentone/voice/status')return jsonResponse(res,200,voiceTranscriptionStatus({configured:Boolean(openAiKey)}));
   if(req.method==='POST'&&req.url==='/agentone/voice/transcribe')return handleVoiceTranscription(req,res);
   if(req.method==='POST'&&req.url==='/agentone/voice/chat')return handleVoiceChat(req,res);
   if(req.method==='POST'&&req.url==='/agentone/voice/chat/stream')return handleVoiceChatStream(req,res);
