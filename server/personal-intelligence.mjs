@@ -235,26 +235,30 @@ function buildHealthSignals(events, now) {
 }
 
 function buildCrossDomainSignals(signals, events, now) {
+  const results = [];
+  const mail = signals.find((signal) => signal.id === 'mail.daily-triage' && signal.severity === 'attention');
   const healthAttention = signals.find((signal) => signal.id === 'health.weekly-pattern' && signal.severity === 'attention');
   const calendar = signals.find((signal) => signal.id === 'calendar.next-24h');
-  if (!healthAttention || !calendar) return [];
   const meetings = events.filter((event) => event.kind === 'calendar.event'
     && new Date(event.occurredAt).getTime() >= now.getTime()
     && new Date(event.occurredAt).getTime() <= now.getTime() + DAY_MS);
   const scheduledMinutes = meetings.reduce((sum, event) => sum + (finite(event.metrics?.durationMinutes) ?? 0), 0);
-  if (scheduledMinutes < 240) return [];
-
-  return [{
-    id: 'cross.recovery-schedule',
-    domain: 'planning',
-    severity: 'attention',
-    title: 'Hohe Terminlast trifft auf verändertes Körpermuster',
-    summary: 'Prüfe freiwillig Pausen, Prioritäten oder verschiebbare Termine. AgentOne ändert nichts ohne deine Freigabe.',
-    disclaimer: 'Planungshinweis aus deinen eigenen Daten, keine medizinische Bewertung.',
-    actions: [{ type: 'draft-plan', target: 'calendar:recovery-buffer', label: 'Entlasteten Tagesplan entwerfen' }],
-    evidence: [...healthAttention.evidence, ...calendar.evidence],
-    confidence: Math.min(healthAttention.confidence, calendar.confidence),
-  }];
+  if (mail && calendar && scheduledMinutes >= 180) {
+    const relevantMail=events.filter((event)=>event.kind==='mail.message'&&new Date(event.occurredAt).getTime()>=now.getTime()-DAY_MS&&event.tags.some((tag)=>['urgent','needs-review','needs-reply'].includes(tag)));
+    results.push({id:'cross.mail-calendar-pressure',domain:'planning',severity:'attention',title:'Wichtige Post trifft auf einen vollen Tag',summary:`${relevantMail.length} Nachricht${relevantMail.length===1?'':'en'} brauchen Prüfung; für die nächsten 24 Stunden sind ${Math.round(scheduledMinutes/60*10)/10} Stunden geplant.`,actions:[{type:'open-calendar',target:'calendar:pressure',label:'Post und Tagesplan gemeinsam prüfen'}],evidence:[...mail.evidence,...calendar.evidence],confidence:Math.min(mail.confidence,calendar.confidence),counterEvidence:scheduledMinutes<240?['Terminlast liegt unter vier Stunden; Hinweis basiert zusätzlich auf dringender Post.']:[]});
+  }
+  if (healthAttention && calendar && scheduledMinutes >= 240) results.push({
+      id: 'cross.recovery-schedule',
+      domain: 'planning',
+      severity: 'attention',
+      title: 'Hohe Terminlast trifft auf verändertes Körpermuster',
+      summary: 'Prüfe freiwillig Pausen, Prioritäten oder verschiebbare Termine. AgentOne ändert nichts ohne deine Freigabe.',
+      disclaimer: 'Planungshinweis aus deinen eigenen Daten, keine medizinische Bewertung.',
+      actions: [{ type: 'draft-plan', target: 'calendar:recovery-buffer', label: 'Entlasteten Tagesplan entwerfen' }],
+      evidence: [...healthAttention.evidence, ...calendar.evidence],
+      confidence: Math.min(healthAttention.confidence, calendar.confidence),
+    });
+  return results;
 }
 
 function fingerprint(signal, userId, dateKey) {

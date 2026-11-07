@@ -29,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-108');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-109');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -312,6 +312,10 @@ async function personalEvents(req,res){
   const requestUrl=new URL(String(req.url||'/agentone/events'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/events'.length),allowed=(req.method==='GET'&&suffix==='')||(req.method==='POST'&&suffix==='/export')||(req.method==='DELETE'&&suffix==='');if(!allowed)return jsonResponse(res,404,{error:'not_found'});if(req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
   try{const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},options={method:req.method,headers,signal:AbortSignal.timeout(30_000)};if(req.method!=='GET')options.body=(await readBody(req,16_384)).toString('utf8')||'{}';const response=await fetch(`${personalApiUrl}/api/internal/personal/events${suffix}${requestUrl.search}`,options),payload=await response.text(),forward={'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)};const disposition=response.headers.get('content-disposition');if(disposition)forward['content-disposition']=disposition;res.writeHead(response.status,securityHeaders(forward));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_events_failed',detail:String(error.message||error).slice(0,100)});}
 }
+async function personalPatterns(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_patterns_unavailable',secretsExposed:false});
+  try{const requestUrl=new URL(String(req.url||'/agentone/patterns'),publicOrigin||'http://127.0.0.1'),keys=[...requestUrl.searchParams.keys()];if(requestUrl.pathname!=='/agentone/patterns'||keys.some(key=>key!=='limit')||requestUrl.searchParams.getAll('limit').length>1)return jsonResponse(res,400,{error:'invalid_pattern_query',secretsExposed:false});const rawLimit=requestUrl.searchParams.get('limit'),limit=rawLimit==null?20:Number(rawLimit);if(rawLimit!=null&&!/^(?:[1-9]|[1-4][0-9]|50)$/.test(rawLimit))return jsonResponse(res,400,{error:'invalid_pattern_limit',secretsExposed:false});const response=await fetch(`${personalApiUrl}/api/internal/personal/patterns?limit=${limit}`,{method:'GET',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(30_000)});if(!response.ok){await response.body?.cancel();return jsonResponse(res,502,{error:'personal_patterns_failed',secretsExposed:false});}const payload=await response.json();return jsonResponse(res,200,payload);}catch{return jsonResponse(res,502,{error:'personal_patterns_unavailable',secretsExposed:false});}
+}
 async function personalBriefingCommand(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_commands_unavailable'});if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
   try{const response=await fetch(`${personalApiUrl}/api/internal/personal/commands/briefing`,{method:'POST',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},body:'{}',signal:AbortSignal.timeout(30_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch{return jsonResponse(res,502,{error:'personal_command_failed',message:'Persönliches Tagesbild ist vorübergehend nicht erreichbar.',secretsExposed:false});}
@@ -556,6 +560,7 @@ const server=http.createServer((req,res)=>{
   if(req.url?.startsWith('/agentone/pulse')&&['GET','POST','DELETE'].includes(req.method||''))return personalPulse(req,res);
   if(req.url?.startsWith('/agentone/push')&&['GET','POST','DELETE'].includes(req.method||''))return personalPush(req,res);
   if(req.url?.startsWith('/agentone/events')&&['GET','POST','DELETE'].includes(req.method||''))return personalEvents(req,res);
+  if(req.method==='GET'&&/^\/agentone\/patterns(?:\?|$)/.test(req.url||''))return personalPatterns(req,res);
   if(req.method==='POST'&&req.url==='/agentone/commands/briefing')return personalBriefingCommand(req,res);
   if(/^\/agentone\/commands(?:\/|\?|$)/.test(req.url||'')){
     if(req.method==='GET')return personalCommandsRead(req,res);

@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import os from 'node:os';
+import path from 'node:path';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import { applyNudgeFeedback, initNudgeStore, loadNudgeFeedbackProfile, recordNudgeFeedback } from './personal-nudges.mjs';
+import { applyPersonalPatternRetention, initPersonalPatternFeed, listPersonalPatterns, projectPersonalSignal, recordPersonalPatterns } from './personal-pattern-feed.mjs';
+
+const raw={id:'cross.mail-calendar-pressure',domain:'planning',severity:'attention',title:'Post und Kalender brauchen Priorität',summary:'Zwei Personennachrichten treffen auf einen vollen Tag.',actions:[{type:'open-calendar',target:'calendar:pressure',label:'Tagesplan prüfen'}],evidence:[{source:'mail.imap',externalId:'provider-message-secret',occurredAt:'2026-11-07T08:00:00.000Z'},{source:'calendar.ics',externalId:'private-calendar-id',occurredAt:'2026-11-07T09:00:00.000Z'}],confidence:.86,notificationKey:'a'.repeat(64)};
+
+test('public pattern projection aggregates evidence and removes provider identifiers',()=>{const projected=projectPersonalSignal(raw),serialized=JSON.stringify(projected);assert.equal(projected.why.evidenceCount,2);assert.deepEqual(projected.why.sources,[{id:'calendar.ics',count:1},{id:'mail.imap',count:1}]);assert.equal(projected.why.confidencePercent,86);assert.doesNotMatch(serialized,/provider-message-secret|private-calendar-id|externalId|occurredAt/);});
+
+test('pattern history is restart-persistent, user-isolated and feedback affects the next evaluation',()=>{const dir=mkdtempSync(path.join(os.tmpdir(),'agentone-pattern-feed-')),file=path.join(dir,'patterns.sqlite');try{let db=new DatabaseSync(file);initPersonalPatternFeed(db);initNudgeStore(db);recordPersonalPatterns(db,{userId:'guenni',signals:[raw],generatedAt:'2026-11-07T10:00:00.000Z'});recordPersonalPatterns(db,{userId:'guenni',signals:[raw],generatedAt:'2026-11-07T10:05:00.000Z'});assert.equal(listPersonalPatterns(db,{userId:'guenni'}).length,1);assert.equal(listPersonalPatterns(db,{userId:'fressi'}).length,0);recordNudgeFeedback(db,{id:'feedback-1',userId:'guenni',nudgeId:raw.id,value:'never'});db.close();db=new DatabaseSync(file);initPersonalPatternFeed(db);initNudgeStore(db);const profile=loadNudgeFeedbackProfile(db,'guenni',{now:new Date('2026-11-07T11:00:00.000Z')}),history=listPersonalPatterns(db,{userId:'guenni',feedbackProfile:profile});assert.equal(history[0].state,'HIDDEN');assert.equal(history[0].feedback.value,'never');assert.deepEqual(applyNudgeFeedback([raw],profile),[]);assert.equal(applyPersonalPatternRetention(db,{userId:'fressi',before:'2027-01-01T00:00:00.000Z'}).deleted,0);assert.equal(applyPersonalPatternRetention(db,{userId:'guenni',before:'2026-11-08T00:00:00.000Z'}).deleted,1);db.close();}finally{rmSync(dir,{recursive:true,force:true,maxRetries:8,retryDelay:100});}});

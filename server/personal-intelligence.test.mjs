@@ -89,6 +89,10 @@ test('cross-domain feedback never changes a calendar without approval', () => {
   assert.match(signal.summary, /ohne deine Freigabe/);
 });
 
+test('connects urgent person mail with a packed calendar without exposing or mutating content',()=>{
+  const brief=buildPersonalBrief({userId:'guenni',now,events:[event({source:'mail.imap',kind:'mail.message',externalId:'mail-pressure',occurredAt:'2026-11-07T09:30:00.000Z',title:'private subject',tags:['person','needs-review','urgent']}),event({source:'calendar.ics',kind:'calendar.event',externalId:'calendar-pressure',occurredAt:'2026-11-07T11:00:00.000Z',title:'private appointment',metrics:{durationMinutes:210,endAt:'2026-11-07T14:30:00.000Z'}})]}),signal=brief.signals.find(item=>item.id==='cross.mail-calendar-pressure');assert.equal(signal.severity,'attention');assert.match(signal.summary,/1 Nachricht/);assert.match(signal.summary,/3.5 Stunden/);assert.equal(signal.actions[0].type,'open-calendar');assert.doesNotMatch(signal.summary,/private subject|private appointment/);
+});
+
 test('notification policy deduplicates and respects quiet hours', () => {
   const signal = { severity: 'attention', notificationKey: 'key' };
   assert.equal(shouldNotify(signal, { now: new Date('2026-11-07T10:00:00') }), true);
