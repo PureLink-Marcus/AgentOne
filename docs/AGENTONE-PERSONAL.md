@@ -186,3 +186,20 @@ Der Master-Release 106 ist auf Fressi und Günni live. Der produktive
 Günni-Smoke bestätigte einen frischen IMAP-Datenstand, ehrliche nicht
 verbundene Google-/ICS-Zustände, beide Command-Tools, mobile Darstellung und
 vollständigen Cleanup. PWA, Mail-Mobilansicht und WebKit/iPhone bleiben grün.
+
+## Release 107 · PWA-Hinweise mit Geräte-Opt-in
+
+Personal Pulse kann geplante Hinweise an einzeln freigegebene PWA-Geräte
+zustellen. Die mobile Einstellung zeigt Browserfreigabe, Zustand des aktuellen
+Geräts und die Anzahl registrierter Geräte; Aktivierung, Test und Widerruf sind
+direkt ausführbar. Push-Abos werden pro Benutzer AES-256-GCM-verschlüsselt und
+niemals als Endpoint oder Schlüssel an den Browser zurückprojiziert.
+
+Die Serverkonfiguration verwendet ausschließlich die Namen
+`AGENTONE_VAPID_PUBLIC_KEY`, `AGENTONE_VAPID_PRIVATE_KEY`,
+`AGENTONE_VAPID_SUBJECT` und `AGENTONE_PUSH_MASTER_KEY`. Werte liegen nur in
+der gitignorierten Master-ENV und werden nicht dokumentiert. Der
+Sperrbildschirm erhält keine Mail-, Termin-, Gesundheits-, Personen- oder
+Secret-Daten, sondern nur einen generischen Hinweis und eine relative URL zur
+authentifizierten PWA. Ruhezeit, Tagesbudget, Feedback, Benutzertrennung und
+Widerruf bleiben serverseitig verbindlich.

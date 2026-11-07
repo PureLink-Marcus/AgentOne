@@ -52,6 +52,15 @@ test('external channels require explicit opt-in at planning and recording bounda
   db.close();
 });
 
+test('delivers each opted-in channel once without suppressing pwa after in-app display',()=>{
+  const db=database(),signal=signals[1],input={userId:'u1',signals:[signal],channels:['in-app','pwa'],externalOptIn:['pwa'],now:'2026-11-07T12:00:00Z'};
+  const first=planPersonalPulse(db,input);assert.deepEqual(first.items[0].channels,['in-app','pwa']);
+  recordPersonalPulseDelivery(db,{id:'channel-in-app',userId:'u1',signalId:signal.id,notificationKey:signal.notificationKey,channel:'in-app',now:first.generatedAt});
+  const second=planPersonalPulse(db,input);assert.deepEqual(second.items[0].channels,['pwa']);assert.equal(second.remainingAfterPlan,2);
+  recordPersonalPulseDelivery(db,{id:'channel-pwa',userId:'u1',signalId:signal.id,notificationKey:signal.notificationKey,channel:'pwa',externalOptIn:['pwa'],now:second.generatedAt});
+  assert.equal(planPersonalPulse(db,input).items.length,0);db.close();
+});
+
 test('reset is explicit and isolated to the current user', () => {
   const db = database();
   for (const userId of ['u1', 'u2']) recordPersonalPulseDelivery(db, { id: `d-${userId}`, userId, signalId: signals[0].id, notificationKey: signals[0].notificationKey });

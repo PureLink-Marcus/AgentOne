@@ -715,3 +715,19 @@ Chrome-Smoke, gestufter Rollout und produktiver Günni-Quellenlauf sind
 bestanden. PWA auf allen drei Domains, private TLS-/Login-Grenzen,
 Mail-Mobilansicht und WebKit/iPhone wurden nach dem Rollout erneut geprüft.
 
+### Release 2026.11.07-107 · kontrollierte PWA-Benachrichtigungen (**MASTER-KANDIDAT**)
+
+Ein persönlicher Assistent muss sich melden können, ohne sensible Inhalte auf
+den Sperrbildschirm zu schreiben. AgentOne Personal ergänzt deshalb einen
+explizit aktivierten PWA-Kanal: Geräte registrieren sich einzeln, Abos werden
+verschlüsselt und benutzergebunden gespeichert und können in derselben Ansicht
+getestet oder widerrufen werden. Der Service Worker akzeptiert ausschließlich
+das minimierte AgentOne-Schema mit `sensitive:false` und relativer Ziel-URL.
+
+Geplante Pulse-Läufe dürfen generische Hinweise senden; manuelle Test- oder
+UI-Aufrufe erzeugen keine unerwartete Proaktivität. Ruhezeit, Tagesbudget,
+Feedback und Deduplizierung bleiben am Server. In-App und PWA werden als eigene
+Kanäle dokumentiert, sodass ein Hinweis in beiden Ansichten genau einmal
+ankommen kann. Dieses Modul übernimmt Jarvis-artige Präsenz, ohne Mail-,
+Kalender- oder Gesundheitsdetails vor der Anmeldung offenzulegen.
+

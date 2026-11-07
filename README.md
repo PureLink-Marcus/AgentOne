@@ -1,7 +1,7 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-106` (**MASTER · LIVE auf Fressi und Günni**) mit freshness-aware Briefing-Sync, sichtbarem Datenstand und klarer Companion-Web-App
+Status: Release `2026.11.07-107` (**MASTER-KANDIDAT**) mit kontrollierten PWA-Benachrichtigungen, explizitem Geräte-Opt-in und verschlüsselten Push-Abos
 
 ## 1. Zweck
 
@@ -68,6 +68,18 @@ Synchronisierung. 352/352 Tests, Produktions-Build und der 390×844-Chrome-
 Smoke sind lokal grün. Der produktive Günni-Lauf bestätigte `mail · FRESH`,
 den getrennten Command Stream, drei Datenstand-Karten, vollständigen Cleanup
 und 0 Browserfehler; alle vier privaten Container laufen healthy.
+
+Release 107 ergänzt kontrollierte PWA-Benachrichtigungen als echten zweiten
+Ausgabekanal des Personal Pulse. Jedes Gerät muss die Funktion ausdrücklich
+aktivieren und die Browserfreigabe erteilen. Push-Abos werden benutzergebunden
+und AES-256-GCM-verschlüsselt gespeichert; Endpoint und Schlüssel erscheinen
+weder in API-Projektionen noch im Audit. Ruhezeit, Tagesbudget, Feedback und
+kanalgetrennte Deduplizierung bleiben serverseitig wirksam. Auf dem
+Sperrbildschirm erscheinen ausschließlich generische Hinweise ohne Mail-,
+Kalender- oder Gesundheitsdetails; Einzelheiten werden erst nach Anmeldung in
+der PWA geladen. Die neue mobile Einstellungskarte erlaubt Aktivieren,
+Testnachricht und Widerruf je Gerät. Die vier VAPID-/Verschlüsselungswerte
+liegen ausschließlich in der gitignorierten Master-ENV.
 
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle

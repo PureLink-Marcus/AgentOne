@@ -106,24 +106,27 @@ export function planPersonalPulse(db, {
   const allowedChannels = requested.filter((channel) => channel === 'in-app' || (!quietNow && optedIn.has(channel)));
   const deliveredToday = Number(db.prepare('SELECT COUNT(DISTINCT notification_key) AS count FROM personal_pulse_delivery WHERE user_id=? AND local_day=?').get(owner, local.localDay)?.count ?? 0);
   const remaining = Math.max(0, dailyLimit - deliveredToday);
-  const alreadyInApp = new Set(db.prepare("SELECT notification_key AS notificationKey FROM personal_pulse_delivery WHERE user_id=? AND channel='in-app'").all(owner).map((row) => row.notificationKey));
+  const deliveries=db.prepare('SELECT notification_key AS notificationKey,channel,local_day AS localDay FROM personal_pulse_delivery WHERE user_id=?').all(owner),deliveredByChannel=new Map(),deliveredTodayKeys=new Set(deliveries.filter(row=>row.localDay===local.localDay).map(row=>row.notificationKey));
+  for(const row of deliveries){const values=deliveredByChannel.get(row.channel)||new Set();values.add(row.notificationKey);deliveredByChannel.set(row.channel,values);}
   const seen = new Set();
-  const normalized = signals.map(normalizeSignal).filter((signal) => {
-    if (seen.has(signal.notificationKey) || alreadyInApp.has(signal.notificationKey)) return false;
+  const normalized = signals.map(normalizeSignal).flatMap((signal) => {
+    if (seen.has(signal.notificationKey)) return [];
     seen.add(signal.notificationKey);
-    return true;
+    const pendingChannels=allowedChannels.filter(channel=>!deliveredByChannel.get(channel)?.has(signal.notificationKey));
+    return pendingChannels.length?[{...signal,channels:pendingChannels,alreadyCountedToday:deliveredTodayKeys.has(signal.notificationKey)}]:[];
   });
+  let newKeys=0;
   const ranked = normalized.map((signal, index) => ({ signal, index }))
     .sort((a, b) => (b.signal.severity === 'attention') - (a.signal.severity === 'attention') || a.index - b.index)
-    .slice(0, remaining)
-    .map(({ signal }) => ({ ...signal, channels: [...allowedChannels] }));
+    .flatMap(({signal})=>{if(signal.alreadyCountedToday)return [signal];if(newKeys>=remaining)return [];newKeys+=1;return [signal];})
+    .map(({alreadyCountedToday:ignored,...signal})=>signal);
   return {
     generatedAt: local.date.toISOString(),
     localDay: local.localDay,
     quietNow,
     dailyLimit,
     deliveredToday,
-    remainingAfterPlan: Math.max(0, remaining - ranked.length),
+    remainingAfterPlan: Math.max(0, remaining - newKeys),
     channels: allowedChannels,
     items: ranked,
   };

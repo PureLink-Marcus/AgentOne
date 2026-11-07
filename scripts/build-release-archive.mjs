@@ -19,6 +19,8 @@ for(const asset of assets){const absolute=path.join(root,...asset.split('/'));if
 mkdirSync(outputDir,{recursive:true});rmSync(tarPath,{force:true});rmSync(archivePath,{force:true});
 function run(bin,args){const result=spawnSync(bin,args,{cwd:root,encoding:'utf8'});if(result.status!==0)throw new Error(`${bin} fehlgeschlagen: ${(result.stderr||result.stdout||'').slice(-1200)}`);return result.stdout;}
 try{
+  const trackedChanges=run('git',['-c',`safe.directory=${root.replaceAll('\\','/')}`,'status','--porcelain','--untracked-files=no']).trim();
+  if(trackedChanges)throw new Error('Release-Archiv abgebrochen: getrackte Änderungen müssen vor dem Commit-gebundenen Build eingecheckt sein.');
   run('git',['-c',`safe.directory=${root.replaceAll('\\','/')}`,'archive','--format=tar','--output',tarPath,'HEAD']);
   run('tar',['-rf',tarPath,...assets]);
   await pipeline(createReadStream(tarPath),createGzip({level:9}),createWriteStream(archivePath,{flags:'wx'}));

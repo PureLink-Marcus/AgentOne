@@ -201,7 +201,7 @@ angezeigt.
    Kosten- und Fehlergrenzen betreiben.
 2. Restore, Backup, Schlüsselrotation, Connector-Widerruf und Löschung pro
    Benutzer testen.
-3. PWA-Push nur nach Opt-in; Ruhezeiten, Dedupe und Tagesbudget verifizieren.
+3. PWA-Push nur nach Opt-in; Ruhezeiten, Dedupe und Tagesbudget verifizieren. **Release 107 lokal abgeschlossen; Live-Abnahme läuft.**
 4. Vor einem generischen Command-Retry/-Cancel ein persistentes Effect-Ledger
    mit atomarem Ausführungs-Claim, wiederverwendetem Idempotency-Key und
    vollständig verdrahtetem Abort-Pfad bauen und testen. Bis dahin bleiben
@@ -264,3 +264,15 @@ Oberfläche besitzt klickbare Datenstand-Karten. 352/352 Tests, Build,
 Chrome-Smoke, Vier-Container-Rollout, echter Günni-Quellenlauf, PWA,
 Mail-Mobilansicht und WebKit/iPhone sind grün. Release 106 ist als Master auf
 Fressi und Günni live; der Smoke-Lauf wurde vollständig bereinigt.
+
+## Release 107 · Kontrollierter PWA-Push
+
+Personal Pulse kann geplante, freigegebene Hinweise zusätzlich an ausdrücklich
+registrierte PWA-Geräte senden. Subscription-Endpunkte und Schlüssel werden
+benutzergebunden AES-256-GCM-verschlüsselt gespeichert und niemals öffentlich
+projiziert. Sperrbildschirmtexte bleiben absichtlich generisch; Details sind
+erst nach Login sichtbar. Die neue mobile Einstellungskarte zeigt Berechtigung
+und Gerätezahl und bietet Aktivieren, Test und Widerruf. Ruhezeit, Tagesbudget,
+Feedback und Deduplizierung gelten weiterhin serverseitig; In-App und PWA sind
+getrennte, nachvollziehbare Zustellkanäle. Der lokale 390×844-Chrome-Smoke ist
+grün. Archiv-, Image-, Rollout- und Live-Abnahme folgen im Masterrelease.

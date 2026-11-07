@@ -35,6 +35,7 @@ import { deleteHealthData, exportHealthData, getHealthConsent, healthStoreAuditS
 import { buildPersonalHealthTrends } from './personal-health-trends.mjs';
 import { GoogleSyncError, syncGoogleReadOnly } from './google-live-sync.mjs';
 import { initPersonalPulseStore, listPersonalPulseDeliveries, planPersonalPulse, recordPersonalPulseDelivery, resetPersonalPulseDeliveries } from './personal-pulse.mjs';
+import { initPersonalPushStore, personalPushConfig, personalPushStatus, removePersonalPushSubscription, savePersonalPushSubscription, sendPersonalPush } from './personal-web-push.mjs';
 import { appendPersonalEvents, applyPersonalEventRetention, deletePersonalEvents, exportPersonalEvents, initPersonalEventLedger, personalEventLedgerAuditSummary, queryPersonalEvents, replacePersonalEvents } from './personal-event-ledger.mjs';
 import { appendCommandStep, approveCommandGate, cancelCommandRun, completeCommandRun, createCommandRun, initPersonalCommandStream, listCommandRuns, publicCommandTimeline, recordCommandError, recordCommandResult } from './personal-command-stream.mjs';
 import { fetchIcsCalendar, parseIcsCalendar, publicIcsError } from './ics-calendar-sync.mjs';
@@ -71,6 +72,7 @@ initPersonalHealthStore(state.db);
 initWhoopConnectionStore(state.db);
 initHealthImportJobStore(state.db,{quarantineDir:healthImportQuarantineDir});
 initPersonalPulseStore(state.db);
+initPersonalPushStore(state.db);
 initPersonalEventLedger(state.db);
 initPersonalCommandStream(state.db);
 initPersonalIcsStore(state.db);
@@ -88,6 +90,7 @@ const healthDecrypt=envelope=>{if(!healthCryptoReady)throw Object.assign(new Err
 const whoopConfig=whoopConfigFromEnv(env);
 const whoopMasterSecret=String(env.WHOOP_TOKEN_MASTER_KEY||env.AGENTONE_HEALTH_MASTER_KEY||'');
 const whoopTokenCryptoReady=Buffer.byteLength(whoopMasterSecret,'utf8')>=32;
+const pushConfig=personalPushConfig(env);
 const activeHealthImportWorkers=new Map();let healthImportQueueBusy=false;
 function healthImportCommandResult(job,result){
   if(!job.commandRunId||!job.commandStepId)return;
@@ -158,6 +161,7 @@ async function executePersonalRoutine({routine,claim,source='schedule'}){
     recordCommandResult(state.db,{userId,runId:commandRun.id,toolStepId:tool.id,summary:'Read-only Routine-Ergebnis sicher erstellt',output:{routineId:routine.id,action:routine.action,events:result.summary.events,signals:result.summary.signals,attention:result.summary.attention,sources:result.sources.map(item=>({id:item.id,status:item.status})),readOnly:true,secretsExposed:false}});
     completeCommandRun(state.db,{userId,runId:commandRun.id});
     const completed=completeRoutineRun(state.db,{userId,runId:claim.run.id,result});
+    if(source==='schedule')await deliverScheduledPersonalPush(userId,intelligence).catch(error=>{try{recordAudit(state.db,{userId,connectorId:'personal-push',action:'push.schedule',outcome:'DEGRADED',detail:JSON.stringify({code:safeRoutineFailureCode(error),secretsExposed:false})});}catch{}});
     recordAudit(state.db,{userId,connectorId:'routines',action:'routine.'+routine.action,outcome:'OK',detail:JSON.stringify({routineId:routine.id,routineRunId:claim.run.id,commandRunId:commandRun.id,source,mode:'READ_ONLY',events:result.summary.events,signals:result.summary.signals,secretsExposed:false})});
     return {run:completed,commandStream:publicCommandTimeline(state.db,{userId,runId:commandRun.id})};
   }catch(error){
@@ -168,6 +172,7 @@ async function executePersonalRoutine({routine,claim,source='schedule'}){
     error.routineRun=failed;throw error;
   }
 }
+async function deliverScheduledPersonalPush(userId,intelligence){const settings=loadNudgeSettings(state.db,userId),externalOptIn=settings.channels.filter(channel=>channel!=='in-app');if(!settings.enabled||!externalOptIn.includes('pwa')||!pushConfig.configured)return {skipped:true};const plan=planPersonalPulse(state.db,{userId,signals:intelligence.signals,channels:settings.channels,externalOptIn,quietHours:settings.quietHours,timeZone:'Europe/Berlin',dailyLimit:3}),deliveries=[];for(const item of plan.items.filter(value=>value.channels.includes('pwa'))){const sent=await sendPersonalPush(state.db,{userId,config:pushConfig,payload:{title:'AgentOne Personal',body:'Ein neuer persönlicher Hinweis ist verfügbar.',tag:item.notificationKey,url:'/'}});if(sent.delivered>0)recordPersonalPulseDelivery(state.db,{userId,signalId:item.id,notificationKey:item.notificationKey,channel:'pwa',externalOptIn,timeZone:'Europe/Berlin'});deliveries.push({signalId:item.id,notificationKey:item.notificationKey,delivered:sent.delivered,expired:sent.expired,failed:sent.failed});}if(deliveries.length)recordAudit(state.db,{userId,connectorId:'personal-push',action:'push.schedule',outcome:deliveries.some(item=>item.delivered)?'OK':'DEGRADED',detail:JSON.stringify({items:deliveries.length,delivered:deliveries.reduce((sum,item)=>sum+item.delivered,0),expired:deliveries.reduce((sum,item)=>sum+item.expired,0),failed:deliveries.reduce((sum,item)=>sum+item.failed,0),content:'generic',secretsExposed:false})});return {skipped:false,quietNow:plan.quietNow,deliveries};}
 let routineRunnerBusy=false;async function runPersonalRoutines(){if(routineRunnerBusy)return;routineRunnerBusy=true;try{for(const routine of dueRoutines(state.db)){try{const claim=claimDueRoutineRun(state.db,{id:crypto.randomUUID(),routine});if(claim.claimed)await executePersonalRoutine({routine,claim,source:'schedule'});}catch{}}}finally{routineRunnerBusy=false;}}
 setInterval(()=>void runPersonalRoutines(),30_000).unref();setTimeout(()=>void runPersonalRoutines(),500).unref();
 
@@ -626,6 +631,16 @@ async function api(req,res,url){
       if(req.method==='DELETE'&&url.pathname==='/api/internal/personal/pulse'){const input=await body(req);return json(res,200,{reset:resetPersonalPulseDeliveries(state.db,{userId,confirmation:input.confirmation})});}
       return json(res,405,{error:'method_not_allowed'});
     }catch(error){return json(res,error.status||400,{error:error.code||'PERSONAL_PULSE_FAILED',message:String(error.message||error).slice(0,160),secretsExposed:false});}
+  }
+  if(url.pathname==='/api/internal/personal/push'||url.pathname.startsWith('/api/internal/personal/push/')){
+    if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
+    try{
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/push')return json(res,200,personalPushStatus(state.db,{userId,config:pushConfig}));
+      if(req.method==='POST'&&url.pathname==='/api/internal/personal/push/subscriptions'){if(!pushConfig.configured)return json(res,503,{error:'PERSONAL_PUSH_NOT_CONFIGURED',message:'PWA-Push ist serverseitig noch nicht konfiguriert.',secretsExposed:false});const input=await body(req),subscription=savePersonalPushSubscription(state.db,{userId,subscription:input.subscription,userAgent:String(input.userAgent||req.headers['user-agent']||''),masterSecret:pushConfig.masterSecret});recordAudit(state.db,{userId,connectorId:'personal-push',action:'push.subscription.created',outcome:'OK',detail:JSON.stringify({subscriptionId:subscription.id,secretsExposed:false})});return json(res,201,{subscription,status:personalPushStatus(state.db,{userId,config:pushConfig})});}
+      const subscriptionMatch=url.pathname.match(/^\/api\/internal\/personal\/push\/subscriptions\/([a-f0-9]{64})$/);if(req.method==='DELETE'&&subscriptionMatch){const result=removePersonalPushSubscription(state.db,{userId,id:subscriptionMatch[1]});recordAudit(state.db,{userId,connectorId:'personal-push',action:'push.subscription.removed',outcome:result.removed?'OK':'NOT_FOUND',detail:JSON.stringify({subscriptionId:result.id,secretsExposed:false})});return json(res,result.removed?200:404,{...result,secretsExposed:false});}
+      if(req.method==='POST'&&url.pathname==='/api/internal/personal/push/test'){if(String(req.headers['x-agentone-human-action']||'')!=='push-test-confirmed'||String(req.headers['x-agentone-human-actor']||'')!==userId)return json(res,403,{error:'PERSONAL_PUSH_HUMAN_GATE_REQUIRED',message:'Menschliche Bestätigung erforderlich.',secretsExposed:false});const delivery=await sendPersonalPush(state.db,{userId,config:pushConfig,payload:{title:'AgentOne Personal',body:'Test erfolgreich: PWA-Hinweise sind auf diesem Gerät aktiviert.',tag:`push-test-${Date.now()}`,url:'/'}});recordAudit(state.db,{userId,connectorId:'personal-push',action:'push.test',outcome:delivery.delivered?'OK':'DEGRADED',detail:JSON.stringify({delivered:delivery.delivered,expired:delivery.expired,failed:delivery.failed,secretsExposed:false})});return json(res,delivery.delivered?200:503,{delivery,status:personalPushStatus(state.db,{userId,config:pushConfig})});}
+      return json(res,405,{error:'method_not_allowed'});
+    }catch(error){return json(res,error.status||400,{error:error.code||'PERSONAL_PUSH_FAILED',message:String(error.message||error).slice(0,180),secretsExposed:false});}
   }
   if(url.pathname==='/api/internal/personal/calendar/ics'||url.pathname==='/api/internal/personal/calendar/ics/import'||url.pathname==='/api/internal/personal/calendar/ics/feed'||url.pathname==='/api/internal/personal/calendar/ics/sync'){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
