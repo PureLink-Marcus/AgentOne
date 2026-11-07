@@ -1,14 +1,14 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-108` (**MASTER-KANDIDAT · PASS LOCAL**)
-Deployment: Release 108 ist lokal vollständig geprüft und für den gestuften Rollout Günni → Fressi vorbereitet. Release 107 bleibt bis zum erfolgreichen Rollout auf allen vier App-/Access-Containern aktiv. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Release: `2026.11.07-108` (**MASTER · PASS LIVE**)
+Deployment: Release 108 ist gestuft Günni → Fressi ausgerollt; alle vier App-/Access-Container sind healthy. Der Rollout besitzt einen automatischen Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL | Release 108: 368/368 Node-Tests, Produktions-Build, npm-Audit und lokaler Effect-Ledger-Chrome-Smoke grün; Release 107 bleibt bis zum gestuften Rollout live und dient als unveränderte Push-Regression. |
+| Lokale Anwendung | PASS LOCAL + LIVE | Release 108: 368/368 Node-Tests, Produktions-Build, npm-Audit, lokaler Effect-Ledger-Chrome-Smoke und read-only Günni-Live-Smoke grün; Release-107-Push bleibt als Regression erhalten. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. HTTPS, WebKit, Vault-Preflight, 54-px-Touchziele und 0 Konsolenfehler sind live geprüft; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
@@ -254,15 +254,16 @@ Deployment: Release 108 ist lokal vollständig geprüft und für den gestuften R
 | Regression | PASS LIVE | 360/360 Node-Tests, Produktions-Build, npm-Produktionsaudit mit 0 Schwachstellen, zwei lokale Chrome-Läufe, Günni-Live-Chrome, PWA auf PureLink/Fressi/Günni, private TLS-/Login-Grenzen, Mail-Mobile und WebKit/iPhone grün. |
 | Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `9c584b3`, Deployment-Härtung `863bacb`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-107.tgz`, 9.331.882 Bytes, SHA-256 `37a2250bc86fd9e158d6edd806e99bf74ed44eb1ed9803904498341946ca16cb`; Image `purelink/agentone:2026.11.07-107`, ID `sha256:3bd2b00ce9e348d8c2eb5403a8b0976b4e202c79b6e642fa3b4bd26fa34748da`, 494.283.624 Bytes; vier Container healthy. |
 
-### Release 108 · Persistentes Effect Ledger (**MASTER-KANDIDAT · PASS LOCAL**)
+### Release 108 · Persistentes Effect Ledger (**MASTER · PASS LIVE**)
 
 | Prüfung | Status | Nachweis |
 |---|---|---|
 | Atomarer Ausführungsschutz | PASS | SQLite-Ledger mit `BEGIN IMMEDIATE`, stabiler benutzergebundener Idempotenz, Claim-Token nur als Hash, Lease-Recovery und genau einem erfolgreichen Abschluss. Ergebnisse werden nur gehasht, nicht als Payload persistiert. |
 | Retry und Cancel | PASS | Retry ist ausschließlich für fehlgeschlagene, retryfähige, idempotente read-only Briefing-Tools erlaubt und behält Effect-ID sowie Idempotenzschlüssel. Cancel benötigt eine bestätigte Benutzersitzung und erreicht die laufende Operation über `AbortSignal`. Schreibtools bleiben ausgeschlossen. |
 | API- und Secret-Grenze | PASS | Listen und Details projizieren nur Zustand, Versuch und Zeitpunkte; Claim-Token, Idempotenz-, Input- und Result-Hash sowie Ergebnisdaten bleiben intern. User-Isolation, Neustartpersistenz, Same-Origin und serverseitig gesetzte Human-Header sind getestet. |
-| Sichtbares Frontend | PASS LOCAL | Neue mobile Run-Control-Karte im Command Center mit Effect-Zustand, Versuch, atomarem Claim, stabiler Idempotenz und zustandsabhängigen Retry-/Cancel-Aktionen. Chrome 390×844: kein Overflow, mindestens 44-px-Touchziele, 0 Konsolenfehler. Screenshot: `output/playwright/release108-effect-ledger-mobile.png`. |
-| Regression | PASS LOCAL | 368/368 Node-Tests, Produktions-Build, npm-Produktionsaudit mit 0 Schwachstellen und lokaler realer Chrome-End-to-End-Lauf grün. Live-Rollout und Live-Regressionssmokes folgen nach dem Commit-gebundenen Archivbau. |
+| Sichtbares Frontend | PASS LIVE | Neue mobile Run-Control-Karte im Command Center mit Effect-Zustand, Versuch, atomarem Claim, stabiler Idempotenz und zustandsabhängigen Retry-/Cancel-Aktionen. Chrome 390×844: kein Overflow, mindestens 44-px-Touchziele, 0 Konsolenfehler. Screenshots: `output/playwright/release108-effect-ledger-mobile.png` und `output/playwright/guenni-release108-effect-ledger-live-mobile.png`. |
+| Regression | PASS LIVE | 368/368 Node-Tests, Produktions-Build, npm-Produktionsaudit mit 0 Schwachstellen, lokaler und Günni-Live-Chrome-Lauf, PWA auf PureLink/Fressi/Günni, private TLS-/Login-Grenzen, Mail-Mobile und WebKit/iPhone grün. |
+| Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `7be9db6`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-108.tgz`, 9.343.306 Bytes, SHA-256 `f9dc0bf354a476bc919ba91b4bf3ba426170c79bc902f301fecfd03241be50ed`; Image `purelink/agentone:2026.11.07-108`, ID `sha256:82c61c409869b04ce30b12945ebfb6ab0b321c23a956df042857ac7fd9632bb5`, 494.406.763 Bytes; vier Container healthy. |
 
 ```powershell
 npm run verify:local

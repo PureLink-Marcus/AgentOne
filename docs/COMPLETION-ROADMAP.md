@@ -290,7 +290,9 @@ bis in die Operation. Öffentliche Projektionen enthalten weder Claim-Token
 noch Idempotenz-, Input- oder Result-Hash und keine Ergebnis-Payloads.
 
 Das Command Center zeigt diese Ausführungskontrolle als echte mobile Karte.
-368/368 Tests, Build, npm-Audit und Chrome 390×844 sind lokal grün. Der Punkt
+368/368 Tests, Build, npm-Audit, lokale und Live-Chrome-Abnahme, PWA,
+Mail-Mobile sowie WebKit/iPhone sind grün; vier Release-108-Container laufen
+healthy. Der Punkt
 „persistentes Effect Ledger vor generischem Retry/Cancel“ ist damit technisch
 abgeschlossen; Schreibaktionen bleiben weiterhin hinter ihren eigenen
 hashgebundenen Human Gates und sind nicht Teil dieses Retry-Endpunkts.

@@ -735,7 +735,7 @@ Mail-/WebKit-Regression, Secret-Grenzaudit und der gestufte Rollout Günni →
 Fressi sind grün. Die abschließende Geräteberechtigung bleibt bewusst eine
 Aktion des jeweiligen Benutzers auf seinem Browser oder iPhone.
 
-### Release 2026.11.07-108 · belastbare Run Control (**MASTER-KANDIDAT · PASS LOCAL**)
+### Release 2026.11.07-108 · belastbare Run Control (**MASTER · PASS LIVE**)
 
 Jarvis-artige Assistenz darf einen Auftrag nach Timeout, Reload oder
 Netzwerkfehler nicht unkontrolliert doppelt ausführen. AgentOne Personal führt
@@ -749,6 +749,7 @@ ausschließlich für fehlgeschlagene idempotente read-only Briefings; Cancel
 benötigt die bestätigte Benutzersitzung und propagiert ein echtes
 Abbruchsignal. Damit wird ein zentrales Hermes-/Jarvis-Prinzip – beobachtbare,
 kontrollierbare Tool-Ausführung – umgesetzt, ohne allgemeine autonome
-Mutationen freizuschalten. 368/368 Tests, Produktions-Build, npm-Audit und
-mobile Chrome-End-to-End-Abnahme sind lokal grün.
+Mutationen freizuschalten. 368/368 Tests, Produktions-Build, npm-Audit,
+lokale und produktive mobile Chrome-End-to-End-Abnahme sowie der gestufte
+Vier-Container-Rollout sind grün.
 
