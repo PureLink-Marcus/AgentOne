@@ -753,3 +753,26 @@ Mutationen freizuschalten. 368/368 Tests, Produktions-Build, npm-Audit,
 lokale und produktive mobile Chrome-End-to-End-Abnahme sowie der gestufte
 Vier-Container-Rollout sind grün.
 
+### Release 2026.11.07-109 · Muster statt Klickportal (**MASTER · PASS LIVE**)
+
+Jarvis-artige Assistenz muss Zusammenhänge selbst erkennen und zugleich
+erklären können. Der neue Pattern Feed führt deshalb Mail, Kalender und Health
+über deterministische, prüfbare Regeln zusammen. Jede Beobachtung nennt
+Zeitraum, Quellenanteile, Beleganzahl, Konfidenz und Auftreten. Provider-IDs,
+Nachrichtentexte und Gesundheitsrohwerte bleiben außerhalb der öffentlichen
+Projektion. Der Verlauf ist persistent und strikt benutzergebunden.
+
+Die Feedbackschleife ist Teil der nächsten Auswertung: hilfreich bestätigt,
+nicht hilfreich priorisiert herunter, falsch setzt eine Abkühlzeit, später
+schiebt zurück und nie wieder blendet dauerhaft aus. Das ist die kontrollierte
+Entsprechung eines lernenden Jarvis, ohne ein Modell seine eigenen Regeln oder
+Berechtigungen verändern zu lassen. Als erste neue Kombination erkennt Günni
+wichtige Personenpost an einem vollen Kalendertag und führt direkt in die
+read-only Post-/Planungsansicht.
+
+375/375 Tests, Build, npm-Audit, lokale und Live-Chrome-Abnahme, PWA,
+Mail-Mobile, WebKit/iPhone, Container- und Secret-Grenzaudit sind grün. Der
+produktive Feed zeigt auf Günni ein echtes Muster aus den vorhandenen
+Gmail-Metadaten. Nächste Ausbaustufe sind belastbare Health-Muster aus echten
+Apple-Health-/WHOOP-Daten, sobald die externen Quellen freigegeben sind.
+

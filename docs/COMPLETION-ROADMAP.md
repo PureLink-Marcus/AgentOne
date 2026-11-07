@@ -296,3 +296,21 @@ healthy. Der Punkt
 „persistentes Effect Ledger vor generischem Retry/Cancel“ ist damit technisch
 abgeschlossen; Schreibaktionen bleiben weiterhin hinter ihren eigenen
 hashgebundenen Human Gates und sind nicht Teil dieses Retry-Endpunkts.
+
+## Release 109 · Erklärbarer Pattern Feed
+
+Persönliche Signale werden nun als usergebundener Verlauf gespeichert und in
+einer sicheren öffentlichen Projektion erklärt. Die Oberfläche nennt Regel,
+Zeitraum, aggregierte Quellenanteile, Beleganzahl, Konfidenz und Auftreten,
+ohne Provider-IDs, einzelne Event-IDs oder Rohinhalte zu übertragen. Der
+Verlauf übersteht Neustarts; Feedback verändert die nächste Auswertung und
+bleibt als Zustand sichtbar. Eine neue read-only Regel erkennt das
+Zusammentreffen wichtiger Personenpost mit einem vollen Kalendertag.
+
+375/375 Tests, Produktions-Build, npm-Audit, lokaler und produktiver
+390×844-Chrome-Smoke, PWA, Mail-Mobile und WebKit/iPhone sind grün. Vier
+Release-109-Container laufen healthy; Günni zeigt live ein Muster aus realen
+Gmail-Metadaten. Damit ist der Roadmap-Punkt „Quellen kombinieren, Muster
+erklären und Feedback rückkoppeln“ technisch abgeschlossen. Für tiefere
+Gesundheitsmuster bleiben echte Apple-Health-Daten und registrierte
+WHOOP-Provider-Credentials die externen Voraussetzungen.

@@ -219,3 +219,27 @@ nur während eines aktiven Claims und benötigt die authentifizierte
 Benutzersitzung. Claim-Token, Idempotenz-, Input- und Result-Hash sowie das
 eigentliche Ergebnis bleiben außerhalb der Browserprojektion. Schreibaktionen
 werden über diesen Pfad grundsätzlich nicht wiederholt.
+
+## Release 109 · Persönlicher Pattern Feed
+
+AgentOne Personal besitzt jetzt einen persistenten, erklärbaren Musterverlauf.
+Die Analyse kann Mail, Kalender und Health regelbasiert verbinden, projiziert
+aber ausschließlich minimierte Kennzahlen. Jede Karte zeigt:
+
+- das erkannte Muster und eine sichere Zusammenfassung;
+- Regel und betrachteten Zeitraum;
+- aggregierte Quellen samt Beleganzahl;
+- Konfidenz sowie erstes und letztes Auftreten;
+- den aktuellen Zustand aus dem persönlichen Feedback.
+
+Provider-IDs, einzelne Event-Zeitstempel, Nachrichteninhalte,
+Gesundheitsrohwerte und Secrets werden weder in der Pattern-Tabelle noch in
+der öffentlichen API gespeichert. `not_helpful` senkt die Priorität;
+`wrong`, `later` und `never` blenden ein Muster nach serverseitiger Regel aus,
+ohne den historischen Nachweis zu verlieren. Der Feed ist strikt
+benutzergebunden, `no-store`, read-only und auf 50 Einträge begrenzt.
+
+Die erste neue Quellenkombination erkennt, wenn wichtige Personenpost auf
+mindestens drei geplante Stunden der nächsten 24 Stunden trifft. Sie öffnet
+nur die betroffenen read-only Ansichten. Termine, E-Mails oder Health-Daten
+werden dadurch niemals automatisch verändert.

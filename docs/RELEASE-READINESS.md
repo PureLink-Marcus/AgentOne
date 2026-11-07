@@ -1,14 +1,14 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-108` (**MASTER · PASS LIVE**)
-Deployment: Release 108 ist gestuft Günni → Fressi ausgerollt; alle vier App-/Access-Container sind healthy. Der Rollout besitzt einen automatischen Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Release: `2026.11.07-109` (**MASTER · PASS LIVE**)
+Deployment: Release 109 ist gestuft Günni → Fressi ausgerollt; alle vier App-/Access-Container sind healthy. Der Rollout besitzt einen automatischen Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL + LIVE | Release 108: 368/368 Node-Tests, Produktions-Build, npm-Audit, lokaler Effect-Ledger-Chrome-Smoke und read-only Günni-Live-Smoke grün; Release-107-Push bleibt als Regression erhalten. |
+| Lokale Anwendung | PASS LOCAL + LIVE | Release 109: 375/375 Node-Tests, Produktions-Build, npm-Audit, lokaler Pattern-Feed-Chrome-Smoke und read-only Günni-Live-Smoke grün; Effect Ledger und PWA-Push bleiben als Regression erhalten. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. HTTPS, WebKit, Vault-Preflight, 54-px-Touchziele und 0 Konsolenfehler sind live geprüft; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
@@ -264,6 +264,17 @@ Deployment: Release 108 ist gestuft Günni → Fressi ausgerollt; alle vier App-
 | Sichtbares Frontend | PASS LIVE | Neue mobile Run-Control-Karte im Command Center mit Effect-Zustand, Versuch, atomarem Claim, stabiler Idempotenz und zustandsabhängigen Retry-/Cancel-Aktionen. Chrome 390×844: kein Overflow, mindestens 44-px-Touchziele, 0 Konsolenfehler. Screenshots: `output/playwright/release108-effect-ledger-mobile.png` und `output/playwright/guenni-release108-effect-ledger-live-mobile.png`. |
 | Regression | PASS LIVE | 368/368 Node-Tests, Produktions-Build, npm-Produktionsaudit mit 0 Schwachstellen, lokaler und Günni-Live-Chrome-Lauf, PWA auf PureLink/Fressi/Günni, private TLS-/Login-Grenzen, Mail-Mobile und WebKit/iPhone grün. |
 | Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `7be9db6`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-108.tgz`, 9.343.306 Bytes, SHA-256 `f9dc0bf354a476bc919ba91b4bf3ba426170c79bc902f301fecfd03241be50ed`; Image `purelink/agentone:2026.11.07-108`, ID `sha256:82c61c409869b04ce30b12945ebfb6ab0b321c23a956df042857ac7fd9632bb5`, 494.406.763 Bytes; vier Container healthy. |
+
+### Release 109 · Erklärbarer Pattern Feed (**MASTER · PASS LIVE**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Persistenz und Feedback | PASS | Benutzergebundene SQLite-Historie mit 400-Tage-Retention, stabiler Notification-Key-Deduplizierung und Neustartpersistenz. `helpful`, `not_helpful`, `wrong`, `later` und `never` verändern die nächste Auswertung; versteckte und zurückgestellte Muster bleiben im Verlauf transparent sichtbar. |
+| Erklärbarkeit und Datenschutz | PASS | Öffentliche Projektion enthält nur Regel, Zeitraum, aggregierte Quellenanzahl, Beleganzahl und Konfidenz. Provider-/Event-IDs, Rohzeitstempel, Mailtexte, Health-Rohwerte und Secrets bleiben intern. API und Proxy sind usergebunden, query-allowlisted und `no-store`. |
+| Quellenübergreifende Analyse | PASS LIVE | Neue Regel verbindet dringende Personenpost mit mindestens drei geplanten Stunden in den nächsten 24 Stunden. Das Ergebnis bleibt read-only und öffnet nur Post/Tagesplan. Günni liefert live das persistierte Muster `Posteingang ausgewertet` aus realen Gmail-Metadaten. |
+| Sichtbares Frontend | PASS LIVE | Mobile Karte **Was Günni für dich erkannt hat** mit Status, Zusammenfassung, Warum-Zeile, Quellenchips, erstem/letztem Auftreten und Feedback. 390×844, 48-px-Touchziel, kein horizontaler Overflow, 0 Konsolenfehler. Screenshots: `output/playwright/release109-pattern-feed-mobile.png` und `output/playwright/guenni-release109-pattern-feed-live-mobile.png`. |
+| Regression | PASS LIVE | 375/375 Node-Tests, Produktions-Build, npm-Produktionsaudit mit 0 Schwachstellen, lokaler und Günni-Live-Chrome-Lauf, PWA auf PureLink/Fressi/Günni, Mail-Mobile und WebKit/iPhone grün. |
+| Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `7daa993`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-109.tgz`, 9.352.783 Bytes, SHA-256 `479ea6fef01defa2a5048383af7f0fdf5d78db046539b2a931d6003dc48e515d`; Image `purelink/agentone:2026.11.07-109`, ID `sha256:5699b37efd5bf4ffc76daf0b541119b19af66dbd3d1007a5b430521fd4676869`, 494.486.654 Bytes; vier Container healthy. Push-Secrets liegen ausschließlich in den beiden App-Containern. |
 
 ```powershell
 npm run verify:local
