@@ -1,13 +1,13 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-104` (**LIVE auf Fressi und Günni**) mit kontrollierter Mail-Einmalanalyse, quellengetrennten 7/28-Tage-Health-Trends, menschlich freigegebenem Memory Review und klarer Companion-Web-App
+Status: Release `2026.11.07-105` (**LIVE auf Fressi und Günni**) mit serverseitig ausgeführten persönlichen Routinen, persistenter Briefing-Inbox, Command-Stream-Nachweis und klarer Companion-Web-App
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
-AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 103 ist dort auf vier Containern gesund ausgerollt. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 105 ist dort auf vier Containern gesund ausgerollt. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
 
 Release 103 härtet den iPhone-Pfad dort, wo ein sichtbarer Browsercheck allein
 nicht ausreicht: Vor dem serverseitigen Confirm führt die gewählte Safari-
@@ -42,6 +42,19 @@ mobile Chrome-/WebKit-/Security-Abnahme und der gestufte Rollout Günni →
 Fressi sind grün. Vier private Container laufen healthy mit Release 104; die
 öffentlichen Read-Endpunkte für Mail-Metadaten, Health-Trends und Memory Review
 antworten live ohne Secret-Leak.
+
+Release 105 macht persönliche Routinen zu echter serverseitiger Arbeit. Ein
+Scheduler beansprucht fällige Läufe genau einmal, holt verpasste Läufe am
+gleichen Berliner Kalendertag nach und übernimmt hängende Claims nach einem
+Neustart sicher. Manuelle und geplante Läufe benutzen denselben read-only
+Personal-Intelligence- und Command-Stream-Pfad. Die mobile Inbox **Seit deinem
+letzten Besuch** speichert minimierte Ergebnisse mit `NEW`, `READ`, `SNOOZED`
+und `DISMISSED`; Mailtexte, Roh-Health-Werte, PII und Secrets werden nicht
+persistiert. Release 105 korrigiert außerdem ungelesene Personenpost zu
+„prüfen“ statt „Antwort nötig“, hält HRV SDNN/RMSSD strikt getrennt und nimmt
+Apple-/Companion-Kalender in den Tagesplan auf. 338/338 Tests, Build, lokaler
+390-px-Chrome-Smoke und ein produktiver Günni-Lauf mit anschließendem Cleanup
+sind grün. Alle vier privaten Container laufen healthy.
 
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle

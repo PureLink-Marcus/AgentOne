@@ -133,6 +133,26 @@ WebKit-Smoke, Pairing-Security, drei neue Read-Endpunkte und vier healthy
 Container sind verifiziert. Ein realer Health-Trend erscheint erst bei
 ausreichender 7/28-Tage-Datenbasis.
 
+Release 105 ergänzt eine persistente Briefing-Inbox und einen echten
+serverseitigen Scheduler. Fällige Routinen werden atomar genau einmal
+beansprucht, am selben Berliner Kalendertag nachgeholt und nach einem Neustart
+aus einem hängenden Zustand wiederaufgenommen. Ein manueller Lauf nutzt exakt
+denselben read-only Personal-Intelligence-Pfad und schreibt seine sichtbare
+Ausführung zusätzlich in den Command Stream. Ergebnisse enthalten nur
+freigegebene Zähler, Quellenstatus und statische Hinweise; Mailtexte,
+Roh-Gesundheitswerte, PII und Secrets werden verworfen. `NEW`, `READ`,
+`SNOOZED` und `DISMISSED` bleiben benutzergebunden und über Neustarts erhalten.
+338/338 Tests und die produktive Günni-Abnahme einschließlich Lauf, Inbox,
+Command Stream und Cleanup sind grün; vier Release-105-Container sind healthy.
+
+Die zum Pairing sichtbare **Companion-App** ist aktuell die installierbare
+AgentOne-Companion-Web-App, keine App-Store-App. Sie wird auf dem iPhone direkt
+unter `https://<instanz>/iphone` in Safari geöffnet und kann über „Zum
+Home-Bildschirm“ installiert werden. Für Günni ist das
+`https://guenni.mwart.solutions/iphone`. Das angebotene ZIP enthält nur
+Anleitung und Shortcuts; eine signierte native HealthKit-/EventKit-App ist noch
+nicht als Download vorhanden.
+
 ## Administration
 
 Autorisierte Administratoren können Instanzen und Sessions vollständig analysieren, neu starten, sperren, neu aufbauen, in Quarantäne verschieben und wiederherstellen. Jeder Zugriff auf Sessioninhalte und jede administrative Aktion wird unveränderbar auditiert. Secret-Werte bleiben maskiert.

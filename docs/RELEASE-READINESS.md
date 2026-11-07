@@ -1,14 +1,14 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-104` (**PASS LIVE**)
-Deployment: Release 104 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Der gestufte Rollout Günni → Fressi besitzt einen automatischen Rollback auf Release 103. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Release: `2026.11.07-105` (**PASS LIVE**)
+Deployment: Release 105 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Der gestufte Rollout Günni → Fressi besitzt einen automatischen Rollback auf Release 104. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL + LIVE | Release 104: 321/321 Node-Tests, Produktions-Build, mobiler Produktivitäts-Smoke sowie Health-, Chrome-, WebKit- und Pairing-Security-Abnahme grün; öffentliche Release- und Read-Endpunkte live verifiziert. |
+| Lokale Anwendung | PASS LOCAL + LIVE | Release 105: 338/338 Node-Tests, Produktions-Build, mobiler Briefing-Inbox-Smoke sowie PWA-, Mail-, Chrome- und WebKit-Abnahme grün; echter Günni-Routine-Lauf samt Command Stream, Inbox und Cleanup live verifiziert. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. HTTPS, WebKit, Vault-Preflight, 54-px-Touchziele und 0 Konsolenfehler sind live geprüft; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
@@ -221,6 +221,16 @@ Deployment: Release 104 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Hermes Memory Review | PASS LIVE | ADD-/PATCH-/REMOVE-Kandidaten mit Provenienz und exaktem Content-Hash; Freigabe und Ablehnung bleiben menschliche Aktionen. Live-Endpunkt und Oberfläche sind erreichbar, der vollständige Stage-/Approve-/Persistenzpfad ist im isolierten Browsertest grün. |
 | Companion-Klarheit | PASS LIVE | Produktname **Günni Companion · Web-App**; direktes Safari-Pairing und optionale Home-Bildschirm-Installation. Das ZIP ist als optionale Anleitung gekennzeichnet; eine native iOS-App wird nicht als Download behauptet. |
 | Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `91baf6b`; secret-freies Archiv SHA-256 `5346d85c50673e0081dc0428563b84f19f5187d3b8eeabb7aa815c6249c75a4a`; Image `purelink/agentone:2026.11.07-104`, ID `sha256:7a1b0085144829c7e0ccc825375baed1fbb812f83ac81f187008f11b8002b689`; vier Container healthy. Domain-, PWA-, WebKit-, Mail-/Companion- und Release-104-Chrome-Smokes sind live grün. |
+
+### Release 105 · Scheduled Briefing Inbox (**PASS LIVE**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Scheduler und Persistenz | PASS DEPLOYED | Atomarer Exactly-once-Claim pro Benutzer/Routine/Berliner Fälligkeit, Same-day-Catch-up, Stale-Run-Recovery, 30-Tage-Inbox und usergebundene `NEW`/`READ`/`SNOOZED`/`DISMISSED`-Zustände. |
+| Echte Briefing-Ausführung | PASS LIVE | Manuell und geplant teilen Personal Intelligence, read-only Command Stream, Audit und sichere Ergebnisprojektion. Der Live-Smoke erzeugte auf Günni einen echten `COMPLETED`-Lauf, wechselte die Inbox `NEW → READ` und entfernte Routine und Verlauf anschließend vollständig. |
+| Ergebnis- und Datenqualität | PASS | Keine Mailtexte, Roh-Health-Werte, PII oder Secrets in Run, API, Audit oder DOM. Ungelesene Personenpost bedeutet Review statt Antwortpflicht; HRV SDNN/RMSSD bleiben getrennt; Apple-/Companion-Termine fließen in den Tagesplan. |
+| Mobile Oberfläche | PASS LIVE | 390×844, kein horizontaler Overflow, mindestens 44-px-Touchziele, Reload-Persistenz und sichere `textContent`-Darstellung. Screenshots: `output/playwright/release105-briefing-inbox-mobile.png` und `output/playwright/guenni-release105-briefing-inbox-live-mobile.png`. |
+| Deployment und Live-Abnahme | PASS LIVE | Feature-Commit `4703575`; secret-freies Archiv SHA-256 `e2201d9133324f4643ca010cdb55e67ab112bfb9e6e62b7aba46ce6ede3d3769`; Image `purelink/agentone:2026.11.07-105`, ID `sha256:ce582ce92c254bb3ed290d442ff127a6b23df5136ddfe0a3787e32f3f0d9e087`; vier Container healthy. PWA auf PureLink/Fressi/Günni, Mail-Mobilansicht, Release-105-Chrome und WebKit/iPhone mit 0 Konsolenfehlern sind live grün. |
 
 ```powershell
 npm run verify:local

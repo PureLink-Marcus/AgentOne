@@ -170,6 +170,15 @@ angezeigt.
     ehrlich als Web-App; Anleitung und spätere native iOS-App sind getrennt.
     321/321 Tests, mobile Chrome-/WebKit-/Security-Abnahme und vier healthy
     Release-104-Container sind nach dem gestuften Rollout bestätigt.
+18. **Release 105 live abgeschlossen:** Persönliche Routinen laufen
+    serverseitig, atomar genau einmal und mit Catch-up am selben Berliner Tag.
+    Manuelle und geplante Ausführung teilen Personal Intelligence, sichere
+    Ergebnisprojektion, Command Stream und Audit. Die persistente mobile Inbox
+    unterstützt Lesen, 12-Stunden-Snooze und Ausblenden. Ungelesene
+    Personenpost wird nicht mehr als Antwortpflicht behauptet; Apple-Kalender
+    fließt in den Tagesplan, HRV-Methoden bleiben getrennt. 338/338 Tests,
+    Produktions-Build, lokaler und produktiver Chrome-Smoke, PWA-, Mail- und
+    WebKit-Abnahme sowie vier healthy Release-105-Container sind bestätigt.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

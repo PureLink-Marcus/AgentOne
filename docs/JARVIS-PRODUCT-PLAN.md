@@ -663,6 +663,23 @@ grün. Alle vier privaten Container laufen healthy; die neuen Read-Endpunkte
 antworten live. Günni zeigt bis zu ausreichenden Gesundheitsdaten ehrlich
 `0 TRENDS` statt Beispielwerte zu erfinden.
 
+### Release 2026.11.07-105 · proaktive Briefing-Inbox (**PASS LIVE**)
+
+AgentOne Personal führt persönliche Briefing-Routinen jetzt auch ohne offenen
+Browser aus. Der Scheduler besitzt Exactly-once-Claims, Same-day-Catch-up,
+Restart-Recovery und einen gemeinsamen read-only Ausführungspfad für geplante
+und manuelle Läufe. Jeder Lauf erscheint im Command Stream sowie in der
+persistenten Inbox **Seit deinem letzten Besuch** und kann gelesen, zwölf
+Stunden zurückgestellt oder ausgeblendet werden.
+
+Die gespeicherte Projektion ist absichtlich kleiner als das Quellmaterial:
+Zähler, Quellenstatus und statische freigegebene Hinweise statt Mailbody,
+Termindetails, Roh-Health-Werten, PII oder Secrets. Genau das bildet die
+Jarvis-Idee „proaktiv und erklärbar“ ab, ohne ein autonomes Klickportal oder
+ungeprüfte Mutationen zu erzeugen. Der produktive Günni-Smoke hat einen echten
+Lauf samt Command Stream und Inbox-Zustand erzeugt und anschließend vollständig
+entfernt. 338/338 Tests und alle vier privaten Release-105-Container sind grün.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —
