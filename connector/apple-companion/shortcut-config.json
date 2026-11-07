@@ -1,7 +1,9 @@
 {
-  "schema": "agentone.apple-companion/v1",
+  "schema": "agentone.apple-companion/v2",
   "instance": "Günni",
   "baseUrl": "https://guenni.mwart.solutions",
+  "clientType": "web-companion-and-shortcuts",
+  "setupUrl": "https://guenni.mwart.solutions/iphone",
   "pairEndpoint": "/agentone/companion/confirm",
   "legacyPairEndpoint": "/agentone/companion/redeem",
   "statusEndpoint": "/agentone/companion/status",
@@ -17,6 +19,8 @@
   "privacy": {
     "rawHealthStored": false,
     "locationTtlMaxMinutes": 60,
-    "backgroundTracking": false
+    "backgroundTracking": false,
+    "nativeHealthKitAvailable": false,
+    "sensitiveScopesOptIn": true
   }
 }

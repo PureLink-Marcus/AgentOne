@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { loadEnv } from '../server/state.mjs';
 
-const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-90';
+const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-91';
 if(!origin||!env.AGENTONE_GUENNI_USER||!env.AGENTONE_GUENNI_PASSWORD)throw new Error('Günni Browser-Abnahme ist nicht konfiguriert');
 const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(String(error.message||error)));
@@ -12,7 +12,7 @@ try{
   await page.goto(origin+'/login',{waitUntil:'networkidle'});
   await page.locator('#username').fill(env.AGENTONE_GUENNI_USER);await page.locator('#password').fill(env.AGENTONE_GUENNI_PASSWORD);
   await Promise.all([page.waitForURL(origin+'/'),page.getByRole('button',{name:'Sicher anmelden'}).click()]);
-  const snapshot=await page.evaluate(async()=>{const [releaseResponse,intelligenceResponse,pulseResponse,healthResponse,servicesResponse]=await Promise.all([fetch('/agentone/release.json?release90=1',{cache:'no-store'}),fetch('/agentone/intelligence',{cache:'no-store'}),fetch('/agentone/pulse',{cache:'no-store'}),fetch('/agentone/health',{cache:'no-store'}),fetch('/agentone/services',{cache:'no-store'})]);return {release:await releaseResponse.json(),intelligence:{status:intelligenceResponse.status,data:await intelligenceResponse.json()},pulse:{status:pulseResponse.status,data:await pulseResponse.json()},health:{status:healthResponse.status,data:await healthResponse.json()},services:{status:servicesResponse.status,data:await servicesResponse.json()}};});
+  const snapshot=await page.evaluate(async()=>{const [releaseResponse,intelligenceResponse,pulseResponse,healthResponse,servicesResponse]=await Promise.all([fetch('/agentone/release.json?release91=1',{cache:'no-store'}),fetch('/agentone/intelligence',{cache:'no-store'}),fetch('/agentone/pulse',{cache:'no-store'}),fetch('/agentone/health',{cache:'no-store'}),fetch('/agentone/services',{cache:'no-store'})]);return {release:await releaseResponse.json(),intelligence:{status:intelligenceResponse.status,data:await intelligenceResponse.json()},pulse:{status:pulseResponse.status,data:await pulseResponse.json()},health:{status:healthResponse.status,data:await healthResponse.json()},services:{status:servicesResponse.status,data:await servicesResponse.json()}};});
   if(snapshot.release.release!==release)throw new Error('Live-Release ist '+snapshot.release.release+' statt '+release);
   if(snapshot.intelligence.status!==200||snapshot.intelligence.data.schema!=='agentone.personal-intelligence/v1')throw new Error('Intelligence API ist nicht produktiv erreichbar');
   if(snapshot.pulse.status!==200||!Array.isArray(snapshot.pulse.data.items))throw new Error('Pulse API ist nicht produktiv erreichbar');

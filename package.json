@@ -17,6 +17,7 @@
     "verify:pwa": "node scripts/pwa-online-smoke.mjs",
     "verify:guenni-home": "node scripts/guenni-home-device-smoke.mjs",
     "verify:guenni-mail-mobile": "node scripts/guenni-mail-mobile-smoke.mjs",
+    "verify:guenni-iphone": "node scripts/guenni-iphone-pairing-smoke.mjs",
     "verify:guenni-connectors": "node scripts/guenni-connector-audit.mjs",
     "verify:guenni-communication": "node scripts/guenni-communication-browser-smoke.mjs",
     "verify:guenni-google": "node scripts/guenni-google-account-browser-smoke.mjs",

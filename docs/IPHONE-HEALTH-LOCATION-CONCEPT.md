@@ -4,6 +4,10 @@ Stand: 30. Oktober 2026
 
 Die normalisierte Import- und Vergleichspipeline ist inzwischen implementiert. Der aktuelle technische und datenschutzbezogene Stand steht in [HEALTH-DATA-INTEGRATIONS.md](./HEALTH-DATA-INTEGRATIONS.md). Diese Datei beschreibt weiterhin den geplanten iPhone-Companion und die Standortmodi.
 
+Seit Release `2026.11.07-91` ist die Geräteebene praktisch nutzbar: `/iphone` liefert einen installierbaren Web-Companion, der einen einmaligen sechsstelligen Code einlöst, den Gerätetoken mit einem nicht exportierbaren WebCrypto-Schlüssel AES-GCM-verschlüsselt in IndexedDB ablegt und den Token-Status prüft. Health und temporärer Standort sind keine Standardrechte, sondern müssen vor der Codeerzeugung ausdrücklich gewählt werden. Verbundene Geräte, letzte Aktivität und Rechte sind in Private Access sichtbar; ein Widerruf löscht Token-Hash und zugehörige Companion-Ereignisse.
+
+Der Web-Companion ersetzt keine native App: Safari/PWA kann HealthKit, EventKit und CoreLocation im Hintergrund nicht direkt lesen. Diese Funktionen bleiben bis zu Apple-Signing und Geräteabnahme ehrlich `PREPARED`.
+
 ## Technische Grenze
 
 Eine PWA oder ein Server kann nicht direkt auf HealthKit, Apple Erinnerungen oder dauerhaft auf den iPhone-Standort zugreifen. Dafür wird eine kleine native **AgentOne Companion** App benötigt. Sie hält Apples Berechtigungsdialoge auf dem iPhone und überträgt ausschließlich ausdrücklich freigegebene Daten an die persönliche Instanz.

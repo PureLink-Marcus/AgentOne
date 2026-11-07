@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { commandCenterCss, commandCenterHtml as commandCenterHtmlBase, commandCenterJs, nativeThemeCss } from './agentone-command-center.mjs';
 import { openClawPluginCatalog,openClawPluginCatalogByInstance } from './openclaw-plugin-catalog.generated.mjs';
 import { VOICE_AUDIO_MAX_BYTES,VOICE_SUPPORTED_MIME_TYPES,VOICE_TRANSCRIPTION_MODEL,createVoiceTranscriptionForm,createVoiceUpstreamError,publicVoiceTranscriptionError,validateVoiceAudio,voiceAudioFormat,voiceTranscriptionStatus } from './voice-transcription.mjs';
+import { companionPairHtml,companionPairJs,companionPairManifest } from './companion-pair-page.mjs';
 
 const host=process.env.HOST||'0.0.0.0';
 const port=Number(process.env.PORT||8080);
@@ -27,7 +28,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-90');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-91');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -119,8 +120,9 @@ function asset(res,type,body){res.writeHead(200,{'content-type':type,'content-le
 function publicFile(res,file,type,name){if(!fs.existsSync(file)){res.writeHead(404);return res.end();}const stat=fs.statSync(file),headers={'content-type':type,'content-length':stat.size,'cache-control':'no-cache, max-age=0, must-revalidate','x-content-type-options':'nosniff'};if(name)headers['content-disposition']=`attachment; filename="${name}"`;res.writeHead(200,headers);fs.createReadStream(file).pipe(res);}
 function pwaManifest(){return JSON.stringify({id:'/',name:instanceType==='business'?`${brandName} · AgentOne`:displayName,short_name:instanceType==='business'?brandName:displayName,description:`${instanceType==='business'?'Unternehmens':'Persönlicher'}-AgentOne für ${instanceType==='business'?brandName:displayName}`,lang:'de-DE',start_url:'/',scope:'/',display:'standalone',display_override:['window-controls-overlay','standalone'],orientation:'any',background_color:brandBackground,theme_color:brandPrimary,categories:['productivity','utilities'],icons:[{src:'/agentone/icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]});}
 const pwaIcon=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="${brandPrimary}"/><path fill="#fff" d="M256 100c18 82 74 138 156 156-82 18-138 74-156 156-18-82-74-138-156-156 82-18 138-74 156-156Z"/></svg>`;
-const serviceWorker=`const CACHE='agentone-shell-${release}';const STATIC=['/agentone/app.css?v=${encodeURIComponent(release)}','/agentone/app.js?v=${encodeURIComponent(release)}','/agentone/icon.svg','/agentone/fonts/barlow-400.ttf','/agentone/fonts/barlow-600.ttf','/agentone/fonts/barlow-700.ttf','/agentone/fonts/ibm-plex-mono-400.ttf'];const PATHS=STATIC.map(value=>new URL(value,location.origin).pathname);self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(STATIC)).then(()=>self.skipWaiting())));self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==location.origin||!PATHS.includes(url.pathname))return;event.respondWith(caches.match(event.request).then(hit=>hit||fetch(event.request).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(event.request,response.clone()));return response;})));});`;
+const serviceWorker=`const CACHE='agentone-shell-${release}';const STATIC=['/agentone/app.css?v=${encodeURIComponent(release)}','/agentone/app.js?v=${encodeURIComponent(release)}','/agentone/companion-app.js?v=${encodeURIComponent(release)}','/agentone/icon.svg','/agentone/fonts/barlow-400.ttf','/agentone/fonts/barlow-600.ttf','/agentone/fonts/barlow-700.ttf','/agentone/fonts/ibm-plex-mono-400.ttf'];const PATHS=STATIC.map(value=>new URL(value,location.origin).pathname);self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>Promise.all(STATIC.map(async value=>{try{const response=await fetch(value,{cache:'no-store'});if(response.ok)await cache.put(value,response);}catch{}}))).then(()=>self.skipWaiting())));self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==location.origin||!PATHS.includes(url.pathname))return;event.respondWith(caches.match(event.request).then(hit=>hit||fetch(event.request).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(event.request,response.clone()));return response;})));});`;
 function showCommandCenter(res){const body=commandCenterHtml();res.writeHead(200,{'content-type':'text/html; charset=utf-8','content-length':Buffer.byteLength(body),'cache-control':'no-store','content-security-policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; connect-src 'self' wss:; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'x-content-type-options':'nosniff','x-frame-options':'DENY','referrer-policy':'no-referrer'});res.end(body);}
+function showCompanionPairing(res){const body=companionPairHtml({displayName,brandPrimary,brandAccent,release});res.writeHead(200,{'content-type':'text/html; charset=utf-8','content-length':Buffer.byteLength(body),'cache-control':'no-store','content-security-policy':"default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; img-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'strict-transport-security':'max-age=31536000','x-content-type-options':'nosniff','x-frame-options':'DENY','referrer-policy':'no-referrer'});res.end(body);}
 function originAllowed(req){
   if(!publicOrigin)return false;const expected=new URL(publicOrigin);
   if(String(req.headers.origin||'')===publicOrigin)return true;
@@ -355,6 +357,8 @@ const server=http.createServer((req,res)=>{
   if(req.url==='/proxy-health'){res.writeHead(200,{'content-type':'application/json'});return res.end('{"status":"ok"}');}
   if(req.method==='GET'&&req.url==='/manifest.webmanifest')return asset(res,'application/manifest+json; charset=utf-8',pwaManifest());
   if(req.method==='GET'&&req.url==='/agentone/icon.svg')return asset(res,'image/svg+xml; charset=utf-8',pwaIcon);
+  if(req.method==='GET'&&req.url==='/agentone/companion.webmanifest')return asset(res,'application/manifest+json; charset=utf-8',companionPairManifest({displayName,brandPrimary,brandBackground}));
+  if(req.method==='GET'&&/^\/agentone\/companion-app\.js(?:\?|$)/.test(req.url||''))return asset(res,'text/javascript; charset=utf-8',companionPairJs);
   if(req.method==='GET'&&req.url==='/service-worker.js'){res.writeHead(200,{'content-type':'text/javascript; charset=utf-8','content-length':Buffer.byteLength(serviceWorker),'cache-control':'no-cache','service-worker-allowed':'/','x-content-type-options':'nosniff'});return res.end(serviceWorker);}
   if(req.method==='GET'&&req.url==='/agentone/downloads/home-connector-raspberry.zip')return publicFile(res,connectorDownload,'application/zip','agentone-home-connector-raspberry.zip');
   if(req.method==='GET'&&req.url==='/agentone/downloads/home-connector-raspberry.zip.sig')return publicFile(res,connectorSignature,'application/octet-stream','agentone-home-connector-raspberry.zip.sig');
@@ -366,6 +370,7 @@ const server=http.createServer((req,res)=>{
     if(!fs.existsSync(file)){res.writeHead(404);return res.end();}
     const body=fs.readFileSync(file);return asset(res,'font/ttf',body);
   }
+  if(req.method==='GET'&&/^\/iphone\/?(?:\?|$)/.test(req.url||''))return showCompanionPairing(res);
   if((req.method==='POST'&&['/agentone/companion/confirm','/agentone/companion/redeem','/agentone/companion/ingest'].includes(req.url||''))||(req.method==='GET'&&req.url==='/agentone/companion/status'))return personalCompanion(req,res,{native:true});
   if(req.method==='POST'&&req.url==='/agentone/siri/v1/execute')return siriExecute(req,res);
   const user=authenticatedUser(req);

@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 
 const allowedScopes=['calendar.read','reminders.read','health.summary','location.temporary','shortcuts.invoke'];
+const defaultScopes=['calendar.read','reminders.read','shortcuts.invoke'];
 const pairingTtlMs=10*60_000;
 
 function hash(value,pepper){return crypto.createHmac('sha256',pepper).update(String(value)).digest('hex');}
@@ -22,7 +23,7 @@ export function initCompanionStore(db){
   `);
 }
 
-export function createCompanionPairing(db,{userId,pepper,scopes=allowedScopes,now=new Date()}){
+export function createCompanionPairing(db,{userId,pepper,scopes=defaultScopes,now=new Date()}){
   const owner=String(userId||'').trim().slice(0,80);if(!owner)throw companionError('COMPANION_USER_REQUIRED','Benutzer fehlt.');
   const created=validDate(now),code=String(crypto.randomInt(100000,1000000)),id=crypto.randomUUID(),expires=new Date(created.getTime()+pairingTtlMs),safeScopes=[...new Set(Array.isArray(scopes)?scopes:[])].filter(scope=>allowedScopes.includes(scope));if(!safeScopes.length)throw companionError('COMPANION_SCOPE_REQUIRED','Mindestens eine Companion-Freigabe ist erforderlich.');
   db.prepare("UPDATE personal_companion_pairings SET status='SUPERSEDED' WHERE user_id=? AND status='PENDING'").run(owner);
@@ -52,7 +53,7 @@ export function storeCompanionEvent(db,{userId,deviceId,kind,input}){const paylo
 
 export function companionStatus(db,userId){const now=new Date().toISOString();db.prepare("DELETE FROM personal_companion_events WHERE expires_at IS NOT NULL AND expires_at<=?").run(now);db.prepare("UPDATE personal_companion_pairings SET status='EXPIRED' WHERE user_id=? AND status='PENDING' AND expires_at<=?").run(userId,now);const devices=db.prepare("SELECT id,device_name AS deviceName,scopes,status,paired_at AS pairedAt,last_seen_at AS lastSeenAt FROM personal_companion_pairings WHERE user_id=? AND status='PAIRED' ORDER BY paired_at DESC").all(userId).map(row=>({...row,scopes:JSON.parse(row.scopes)})),pending=db.prepare("SELECT scopes,expires_at AS expiresAt,created_at AS createdAt FROM personal_companion_pairings WHERE user_id=? AND status='PENDING' AND expires_at>? ORDER BY created_at DESC LIMIT 1").get(userId,now),events=db.prepare('SELECT kind,payload,expires_at AS expiresAt,created_at AS createdAt FROM personal_companion_events WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId).map(row=>({...row,payload:JSON.parse(row.payload)}));return {schema:'agentone.companion.status/v1',status:devices.length?'CONNECTED':pending?'PAIRING':'NOT_CONNECTED',pending:pending?{expiresAt:pending.expiresAt,createdAt:pending.createdAt,scopes:JSON.parse(pending.scopes)}:null,devices,events,privacy:{rawHealthStored:false,locationTtlMaxMinutes:60,backgroundTracking:false},secretsExposed:false};}
 
-export function companionDeviceStatus(db,{userId,deviceToken,pepper}){const row=authorizeCompanion(db,{userId,deviceToken,pepper});return {schema:'agentone.companion.device-status/v1',status:'CONNECTED',device:{id:row.id,name:row.device_name,scopes:row.scopes,pairedAt:row.paired_at,lastSeenAt:row.last_seen_at},capabilities:{ingest:['health','location','calendar','reminders']},privacy:{rawHealthStored:false,locationTtlMaxMinutes:60,backgroundTracking:false},secretsExposed:false};}
+export function companionDeviceStatus(db,{userId,deviceToken,pepper}){const row=authorizeCompanion(db,{userId,deviceToken,pepper}),scopeKinds={'health.summary':'health','location.temporary':'location','calendar.read':'calendar','reminders.read':'reminders'},ingest=row.scopes.map(scope=>scopeKinds[scope]).filter(Boolean);return {schema:'agentone.companion.device-status/v1',status:'CONNECTED',device:{id:row.id,name:row.device_name,scopes:row.scopes,pairedAt:row.paired_at,lastSeenAt:row.last_seen_at},capabilities:{ingest},privacy:{rawHealthStored:false,locationTtlMaxMinutes:60,backgroundTracking:false},secretsExposed:false};}
 
-export function revokeCompanion(db,{userId,deviceId}){const result=db.prepare("UPDATE personal_companion_pairings SET status='REVOKED',device_token_hash=NULL WHERE id=? AND user_id=?").run(deviceId,userId);return {revoked:result.changes===1,deviceId};}
+export function revokeCompanion(db,{userId,deviceId}){db.exec('BEGIN IMMEDIATE');try{const result=db.prepare("UPDATE personal_companion_pairings SET status='REVOKED',device_token_hash=NULL WHERE id=? AND user_id=?").run(deviceId,userId),events=result.changes===1?db.prepare('DELETE FROM personal_companion_events WHERE device_id=? AND user_id=?').run(deviceId,userId):{changes:0},response={revoked:result.changes===1,deviceId,eventsDeleted:events.changes};db.exec('COMMIT');return response;}catch(error){db.exec('ROLLBACK');throw error;}}
 

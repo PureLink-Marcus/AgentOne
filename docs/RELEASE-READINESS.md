@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-90`
-Deployment: Release 90 ergänzt eine sichtbare, mobile Event-Ledger-Zeitachse mit Quellenfilter, minimierten Ereignissen sowie explizit geschütztem Klartext-Export und Löschung.
+Release: `2026.11.07-91`
+Deployment: Release 91 schließt das bisher nur serverseitige iPhone-Pairing mit einer mobilen Web-Companion-PWA, expliziten Rechten, verschlüsselter lokaler Tokenablage, Geräteverwaltung und echtem Lifecycle-Smoke.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS | 128/128 Node-Tests, Vite-Production-Build und Chrome-Smoke |
+| Lokale Anwendung | PASS | 174/174 Node-Tests, Vite-Production-Build und Chrome-Smoke |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, 343 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS | Vier mobile Schritte für Pairing, Companion-Paket, getrennte Health-/Standortrechte und Siri-Vorlage; Serverstatus und Downloads auf Günni Release 71 öffentlich geprüft |
+| Apple-Schnellstart | PASS für Web-Companion | Release 91: öffentlicher mobiler Pairing-Wizard, Code-Übergabe im URL-Fragment, AES-GCM/IndexedDB-Tokenablage, Token-Status, explizites Health-/Standort-Opt-in, Geräteliste, Widerruf und Ereignislöschung. Der Browser-Smoke prüft `Pair → Confirm → Status → Ingest → Revoke`; native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
 | Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -61,7 +61,8 @@ Deployment: Release 90 ergänzt eine sichtbare, mobile Event-Ledger-Zeitachse mi
 | Private Module | Konzept für Alltag, Inbox, Kalender, Dokumente, Zuhause, Haushalt, Fotos, Finanzen und Reisen in `docs/PERSONAL-INSTANCE-CONCEPT.md`. |
 | Benannte Assistenten | PASS: PWA, Login, Command Center, Voice und OpenClaw-Runtime verwenden `Fressi` beziehungsweise `Günni`; AgentOne bleibt Plattformabdruck. |
 | Voice Chat | PASS: authentifizierte Audio-Transkription mit `gpt-transcribe`, persönlicher Modellantwort und Browser-Sprachausgabe online geprüft. |
-| Private Access | PASS für IMAP/Gmail und Home Connector; Google Kalender ist als getrennter OAuth-Connector mit Kalenderauswahl vorbereitet, aber auf Günni noch nicht autorisiert. Spotify, Twitch, iPhone und weitere Dienste bleiben einzeln freigabepflichtig. |
+| Private Access | PASS für IMAP/Gmail, Home Connector und iPhone-Web-Pairing; Google Kalender ist als getrennter OAuth-Connector mit Kalenderauswahl vorbereitet, aber auf Günni noch nicht autorisiert. Spotify, Twitch und weitere Dienste bleiben einzeln freigabepflichtig. |
+| Native iOS Companion | Web-Pairing und Kurzbefehle sind nutzbar. Direkter HealthKit-, EventKit- und Hintergrundstandort-Zugriff erfordert weiterhin eine signierte iOS-App, Apple-Entitlements und einen echten Gerätetest. Die Oberfläche kennzeichnet das ausdrücklich und meldet dafür kein Fake-`LIVE`. |
 | Raspberry Connector | PASS: signiertes ARM64-/AMD64-Dockerpaket, Tailscale-Sidecar, 176 echte Home-Assistant-Entitäten und Installation unter `output/connector/`. Der Server ist LIVE/read-only; `./update.sh && ./enable-home-control.sh` aktiviert Lichtfarben, Medien und weitere erlaubte Komfortfunktionen. |
 | Ein Gateway je Benutzer | Die Demo nutzt ein isoliertes Personal-Gateway. Multiuser-Produktion benötigt automatisierte, idempotente Gateway-/Volume-Provisionierung je Entra-`oid`. |
 | Interner Connector | Architektur und Sicherheitsgrenzen sind festgelegt; Deployment erfordert den vorgesehenen internen Coolify-Host, Ziel-Allowlist und mTLS-Identität. |

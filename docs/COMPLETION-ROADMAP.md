@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-90` erweitert den live geprüften Release 89 um die sichtbare Event-Ledger-Zeitachse mit Quellenfilter und explizit geschütztem Export/Löschen. Auf Günni sind aktuell:
+Release `2026.11.07-91` erweitert den live geprüften Release 90 um ein tatsächlich nutzbares iPhone-Web-Pairing. Ein mobiler Wizard löst den einmaligen Code ein, speichert den Gerätetoken AES-GCM-verschlüsselt in IndexedDB, prüft ihn, zeigt die explizit gewährten Rechte und erlaubt serverseitigen Widerruf samt Ereignislöschung. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
@@ -16,6 +16,7 @@ Release `2026.11.07-90` erweitert den live geprüften Release 89 um die sichtbar
 - Apple-Health-Import, Verschlüsselung, Consent, Export und Löschung bereit;
 - Kalender noch nicht verbunden und Health noch ohne persönliche Messwerte;
 - Google OAuth und WHOOP ohne registrierte Anbieter-Credentials nicht live.
+- das Web-Companion-Pairing und die Shortcut-API implementiert; direkte HealthKit-/EventKit-Hintergrunddaten benötigen weiterhin die signierte native iOS-App.
 
 `BEREIT` bedeutet implementiert und lokal/live gegen die eigene Grenze geprüft.
 `LIVE` wird ausschließlich bei erfolgreichem Zugriff auf reale Nutzerdaten
