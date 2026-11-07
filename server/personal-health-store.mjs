@@ -69,6 +69,7 @@ function unseal(value, decrypt) {
 }
 
 function transaction(db, operation) {
+  if (db.isTransaction) return operation();
   db.exec('BEGIN IMMEDIATE');
   try {
     const result = operation();
@@ -242,7 +243,7 @@ export function storeHealthImport(db, {
   if (normalized.some((metric) => metric.source !== normalizedSource)) throw storeError('Importquelle und Metrikquelle stimmen nicht überein');
   const securedMetadata = seal({ ...metadata, schema: 'agentone.health-import/v1' }, encrypt);
 
-  return transaction(db, () => {
+  const operation = () => {
     let inserted = 0, updated = 0, unchanged = 0;
     const existingStatement = db.prepare('SELECT payload_hash AS payloadHash FROM personal_health_metrics WHERE user_id=? AND id=?');
     const insertStatement = db.prepare(`INSERT INTO personal_health_metrics(
@@ -265,7 +266,8 @@ export function storeHealthImport(db, {
     ) VALUES(?,?,?,?,?,?,?,?,?)`).run(owner, targetImportId, normalizedSource, normalizedConsentId,
       String(sourceHash).toLowerCase(), normalized.length, Number.isFinite(Number(duplicateCount)) ? Math.max(0, Math.trunc(Number(duplicateCount))) : 0, securedMetadata.encrypted, now);
     return { id: targetImportId, source: normalizedSource, alreadyImported: false, inserted, updated, unchanged };
-  });
+  };
+  return transaction(db, operation);
 }
 
 export function queryHealthMetrics(db, {

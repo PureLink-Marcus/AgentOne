@@ -31,17 +31,20 @@ import { deleteHealthData, exportHealthData, getHealthConsent, healthStoreAuditS
 import { GoogleSyncError, syncGoogleReadOnly } from './google-live-sync.mjs';
 import { initPersonalPulseStore, listPersonalPulseDeliveries, planPersonalPulse, recordPersonalPulseDelivery, resetPersonalPulseDeliveries } from './personal-pulse.mjs';
 import { appendPersonalEvents, applyPersonalEventRetention, deletePersonalEvents, exportPersonalEvents, initPersonalEventLedger, personalEventLedgerAuditSummary, queryPersonalEvents, replacePersonalEvents } from './personal-event-ledger.mjs';
-import { appendCommandStep, approveCommandGate, completeCommandRun, createCommandRun, initPersonalCommandStream, listCommandRuns, publicCommandTimeline, recordCommandError, recordCommandResult } from './personal-command-stream.mjs';
+import { appendCommandStep, approveCommandGate, cancelCommandRun, completeCommandRun, createCommandRun, initPersonalCommandStream, listCommandRuns, publicCommandTimeline, recordCommandError, recordCommandResult } from './personal-command-stream.mjs';
 import { fetchIcsCalendar, parseIcsCalendar, publicIcsError } from './ics-calendar-sync.mjs';
 import { getPersonalIcsFeedCredential, getPersonalIcsStatus, initPersonalIcsStore, listDuePersonalIcsFeedUsers, recordPersonalIcsFailure, removePersonalIcsState, savePersonalIcsFeedSuccess, savePersonalIcsUploadState } from './personal-ics-store.mjs';
 import { buildPersonalCalendarPlan, calendarPlanWindow } from './personal-calendar-plan.mjs';
 import { googleSnapshotLedgerEvents, icsSnapshotLedgerEvents } from './personal-calendar-sources.mjs';
 import { whoopOnboardingViewModel } from './whoop-onboarding.mjs';
 import { activatePersonalBriefingSkill, approvePersonalBriefingDraft, createPersonalBriefingDraft, evaluatePersonalBriefingDraft, executePersonalBriefingSkill, initPersonalLearningLabStore, listPersonalBriefingExecutions, listPersonalBriefingSkills, rollbackPersonalBriefingSkill } from './personal-learning-lab-store.mjs';
+import { attachHealthImportCommand, cancelHealthImportJob, claimNextHealthImportJob, completeHealthImportJob, failHealthImportJob, getHealthImportJob, getHealthImportJobInternal, initHealthImportJobStore, listHealthImportJobs, receiveHealthImportJob, safeHealthImportFailure, updateHealthImportJobProgress } from './personal-health-import-jobs.mjs';
+import { runHealthImportWorker } from './personal-health-import-runner.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const env=loadEnv(root);
 const state=createState(root,env);
+const healthImportQuarantineDir=path.join(path.dirname(state.databasePath),'health-import-quarantine');
 const dist=path.join(root,'dist','demo');
 const host=env.HOST||'127.0.0.1';
 const port=Number(env.PORT||4173);
@@ -58,6 +61,7 @@ initNudgeStore(state.db);
 initPersonalMemoryStore(state.db);
 initRoutineStore(state.db);
 initPersonalHealthStore(state.db);
+initHealthImportJobStore(state.db,{quarantineDir:healthImportQuarantineDir});
 initPersonalPulseStore(state.db);
 initPersonalEventLedger(state.db);
 initPersonalCommandStream(state.db);
@@ -66,10 +70,47 @@ initPersonalLearningLabStore(state.db);
 const companionPepper=String(env.AGENTONE_COMPANION_PEPPER||env.AGENTONE_SECRET_KEY||'');
 const companionPepperReady=Buffer.byteLength(companionPepper,'utf8')>=32;
 const healthMasterKey=env.AGENTONE_HEALTH_MASTER_KEY||env.AGENTONE_DEMO_MASTER_KEY||'';
+const healthImportMasterKey=String(env.AGENTONE_HEALTH_MASTER_KEY||'');
+const healthImportCryptoReady=Buffer.byteLength(healthImportMasterKey,'utf8')>=32;
 const healthCryptoReady=Boolean(healthMasterKey);
 const healthCryptoEnv=healthCryptoReady?Object.freeze({AGENTONE_DEMO_MASTER_KEY:healthMasterKey}):Object.freeze({});
 const healthEncrypt=value=>{if(!healthCryptoReady)throw Object.assign(new Error('Health-Verschlüsselung ist noch nicht konfiguriert'),{code:'HEALTH_ENCRYPTION_NOT_CONFIGURED',status:503});return encryptDemoSecret(value,healthCryptoEnv);};
 const healthDecrypt=envelope=>{if(!healthCryptoReady)throw Object.assign(new Error('Health-Verschlüsselung ist noch nicht konfiguriert'),{code:'HEALTH_ENCRYPTION_NOT_CONFIGURED',status:503});return decryptDemoSecret(envelope,healthCryptoEnv);};
+const activeHealthImportWorkers=new Map();let healthImportQueueBusy=false;
+function healthImportCommandResult(job,result){
+  if(!job.commandRunId||!job.commandStepId)return;
+  recordCommandResult(state.db,{userId:job.userId,runId:job.commandRunId,toolStepId:job.commandStepId,summary:result.alreadyImported?'Identisches Health-Archiv war bereits importiert':'Health-Daten verschlüsselt importiert',output:{alreadyImported:Boolean(result.alreadyImported),recordsSeen:Number(result.recordsSeen)||0,normalizedMetrics:Number(result.metrics)||0,inserted:Number(result.inserted)||0,updated:Number(result.updated)||0,unchanged:Number(result.unchanged)||0,duplicatesRemoved:Number(result.duplicatesRemoved)||0,excludedByConsent:Number(result.excludedByConsent)||0}});
+  completeCommandRun(state.db,{userId:job.userId,runId:job.commandRunId});
+}
+async function runHealthImportQueue(){
+  if(healthImportQueueBusy||!healthImportCryptoReady)return;healthImportQueueBusy=true;let job=null,processed=false;
+  try{
+    job=claimNextHealthImportJob(state.db);if(!job)return;processed=true;
+    const consent=getHealthConsent(state.db,{userId:job.userId,consentId:job.consentId,decrypt:healthDecrypt});
+    if(consent.status!=='ACTIVE')throw Object.assign(new Error('Aktive Gesundheitsfreigabe fehlt'),{code:'HEALTH_CONSENT_REQUIRED',status:403});
+    const controller=new AbortController(),active={controller,child:null};activeHealthImportWorkers.set(job.id,active);
+    const result=await runHealthImportWorker(job,{consent,masterSecret:healthImportMasterKey,databasePath:state.databasePath,signal:controller.signal,onPhase:(phase,percent,child)=>{active.child=child;try{updateHealthImportJobProgress(state.db,{jobId:job.id,phase,percent});}catch{}}});
+    const latest=getHealthImportJobInternal(state.db,{jobId:job.id});
+    if(latest.state==='CANCELLED')return;
+    try{healthImportCommandResult(latest,result);}catch{}
+    await completeHealthImportJob(state.db,{jobId:job.id,result,quarantineDir:healthImportQuarantineDir});
+    state.audit(job.userId,'HEALTH_IMPORT_JOB_COMPLETED',job.id,`sourceHash=${job.sourceHash}; bytes=${job.bytesReceived}`);
+  }catch(error){
+    if(job){
+      let latest;try{latest=getHealthImportJobInternal(state.db,{jobId:job.id});}catch{}
+      if(latest?.state==='COMPLETED'){
+        const result=latest.resultJson?JSON.parse(latest.resultJson):{};try{healthImportCommandResult(latest,result);}catch{}
+        await completeHealthImportJob(state.db,{jobId:job.id,result,quarantineDir:healthImportQuarantineDir}).catch(()=>{});
+      }else if(latest?.state!=='CANCELLED'){
+        const failure=safeHealthImportFailure(error);
+        if(job.commandRunId&&job.commandStepId)try{recordCommandError(state.db,{userId:job.userId,runId:job.commandRunId,toolStepId:job.commandStepId,code:failure.code,message:failure.message,retryable:false});}catch{}
+        await failHealthImportJob(state.db,{jobId:job.id,error:failure,quarantineDir:healthImportQuarantineDir}).catch(()=>{});
+        state.audit(job.userId,'HEALTH_IMPORT_JOB_FAILED',job.id,`sourceHash=${job.sourceHash}; bytes=${job.bytesReceived}; code=${failure.code}`);
+      }
+    }
+  }finally{if(job)activeHealthImportWorkers.delete(job.id);healthImportQueueBusy=false;if(processed)setTimeout(()=>void runHealthImportQueue(),0).unref();}
+}
+setInterval(()=>void runHealthImportQueue(),1_000).unref();setTimeout(()=>void runHealthImportQueue(),250).unref();
 const icsMasterSecret=String(env.AGENTONE_ICS_MASTER_KEY||env.AGENTONE_DEMO_MASTER_KEY||'');
 const icsCryptoReady=Buffer.byteLength(icsMasterSecret,'utf8')>=16;
 const icsDerivedKey=icsCryptoReady?crypto.createHmac('sha256',Buffer.from(icsMasterSecret,'utf8')).update('agentone:ics-feed:v1').digest():null;
@@ -602,7 +643,7 @@ async function api(req,res,url){
   if(url.pathname==='/api/internal/personal/health'||url.pathname.startsWith('/api/internal/personal/health/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
     try{
-      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health'){assertHealthQuery(url.searchParams,healthEmptyQueryKeys);return json(res,200,{schema:'agentone.health-status/v1',encryptionReady:healthCryptoReady,consents:healthCryptoReady?listHealthConsents(state.db,{userId,decrypt:healthDecrypt}):[],store:healthStoreAuditSummary(state.db,userId),capabilities:healthConnectorCapabilities,policy:{userIsolated:true,encryptedAtRest:true,medicalDiagnosis:false,secretsExposed:false}});}
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health'){assertHealthQuery(url.searchParams,healthEmptyQueryKeys);return json(res,200,{schema:'agentone.health-status/v1',encryptionReady:healthCryptoReady,importJobsReady:healthImportCryptoReady,consents:healthCryptoReady?listHealthConsents(state.db,{userId,decrypt:healthDecrypt}):[],store:healthStoreAuditSummary(state.db,userId),capabilities:healthConnectorCapabilities,policy:{userIsolated:true,encryptedAtRest:true,persistentImportJobs:healthImportCryptoReady,medicalDiagnosis:false,secretsExposed:false}});}
       if(!healthCryptoReady)return json(res,503,{error:'HEALTH_ENCRYPTION_NOT_CONFIGURED',message:'Health-Verschlüsselung ist noch nicht konfiguriert',secretsExposed:false,medicalDiagnosis:false});
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/consents'){assertHealthQuery(url.searchParams,healthEmptyQueryKeys);return json(res,200,{consents:listHealthConsents(state.db,{userId,decrypt:healthDecrypt}),secretsExposed:false});}
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/health/consents'){
@@ -613,6 +654,42 @@ async function api(req,res,url){
       }
       const consentMatch=url.pathname.match(/^\/api\/internal\/personal\/health\/consents\/([^/]+)$/);
       if(req.method==='DELETE'&&consentMatch)return json(res,200,{consent:revokeHealthConsent(state.db,{userId,consentId:decodeURIComponent(consentMatch[1])}),dataRetainedUntilExplicitDeletion:true});
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/import-jobs'){
+        assertHealthQuery(url.searchParams,healthEmptyQueryKeys);return json(res,200,{jobs:listHealthImportJobs(state.db,{userId}),secretsExposed:false});
+      }
+      if(req.method==='POST'&&url.pathname==='/api/internal/personal/health/import-jobs'){
+        assertHealthQuery(url.searchParams,healthEmptyQueryKeys);
+        const humanActor=String(req.headers['x-agentone-human-actor']||''),humanAction=String(req.headers['x-agentone-human-action']||'');
+        if(humanActor!==userId||humanAction!=='health-import-confirmed')return json(res,403,{error:'COMMAND_HUMAN_GATE_REQUIRED',message:'Menschliche Bestätigung erforderlich.',secretsExposed:false});
+        const consentId=String(req.headers['x-agentone-health-consent-id']||'').trim();if(!consentId)return json(res,400,{error:'HEALTH_CONSENT_REQUIRED',message:'Gesundheitsfreigabe fehlt.',secretsExposed:false});
+        const consent=getHealthConsent(state.db,{userId,consentId,decrypt:healthDecrypt});
+        if(consent.status!=='ACTIVE'||(consent.expiresAt&&Date.parse(consent.expiresAt)<=Date.now()))return json(res,403,{error:'HEALTH_CONSENT_REQUIRED',message:'Aktive Gesundheitsfreigabe fehlt.',secretsExposed:false});
+        const received=await receiveHealthImportJob(req,{db:state.db,userId,consentId,fileName:req.headers['x-agentone-health-file-name'],contentType:req.headers['content-type'],contentLength:req.headers['content-length'],quarantineDir:healthImportQuarantineDir,masterSecret:healthImportMasterKey});
+        if(received.created){
+          const internal=getHealthImportJobInternal(state.db,{jobId:received.job.id});
+          try{
+            const run=createCommandRun(state.db,{userId,label:'Apple Health sicher importieren',mode:'controlled',source:'api'});
+            appendCommandStep(state.db,{userId,runId:run.id,type:'OBSERVE',summary:'Dateityp, aktive Freigabe und Quellhash prüfen'});
+            const tool=appendCommandStep(state.db,{userId,runId:run.id,type:'TOOL',summary:'Freigegebene Health-Bereiche verschlüsselt importieren',toolId:'personal.health',operation:'health.apple-import-job',access:'write',scopes:consent.scopes.map(scope=>`health.${scope}.write`),idempotent:true,input:{provider:'apple_health',sourceHash:internal.sourceHash,bytes:internal.bytesReceived,contentType:internal.mediaType}});
+            approveCommandGate(state.db,{userId,runId:run.id,toolStepId:tool.id,payloadHash:tool.payloadHash,actor:{kind:'human',id:humanActor},verifyHuman:actor=>actor.id===userId&&humanAction==='health-import-confirmed'});
+            attachHealthImportCommand(state.db,{userId,jobId:internal.id,runId:run.id,stepId:tool.id});
+          }catch(error){await failHealthImportJob(state.db,{jobId:internal.id,error,quarantineDir:healthImportQuarantineDir});throw error;}
+          setTimeout(()=>void runHealthImportQueue(),0).unref();
+        }
+        return json(res,202,{job:received.created?getHealthImportJob(state.db,{userId,jobId:received.job.id}):received.job,secretsExposed:false});
+      }
+      const importJobMatch=url.pathname.match(/^\/api\/internal\/personal\/health\/import-jobs\/([^/]+)$/);
+      if(req.method==='GET'&&importJobMatch){assertHealthQuery(url.searchParams,healthEmptyQueryKeys);return json(res,200,{job:getHealthImportJob(state.db,{userId,jobId:decodeURIComponent(importJobMatch[1])}),secretsExposed:false});}
+      if(req.method==='DELETE'&&importJobMatch){
+        assertHealthQuery(url.searchParams,healthEmptyQueryKeys);const jobId=decodeURIComponent(importJobMatch[1]);getHealthImportJob(state.db,{userId,jobId});const internal=getHealthImportJobInternal(state.db,{jobId});
+        activeHealthImportWorkers.get(jobId)?.controller.abort();
+        const job=await cancelHealthImportJob(state.db,{userId,jobId,quarantineDir:healthImportQuarantineDir});
+        if(job.state==='CANCELLED'){
+          if(internal.commandRunId)try{cancelCommandRun(state.db,{userId,runId:internal.commandRunId,actor:{kind:'human',id:userId},reason:'Health-Import vom Benutzer abgebrochen'});}catch{}
+          state.audit(userId,'HEALTH_IMPORT_JOB_CANCELLED',jobId,`sourceHash=${internal.sourceHash}; bytes=${internal.bytesReceived}`);
+        }
+        return json(res,200,{job,secretsExposed:false});
+      }
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/health/apple-import'){
         const contentType=String(req.headers['content-type']||'').split(';')[0].trim().toLowerCase();
         if(!['application/xml','text/xml','application/zip','application/x-zip-compressed','application/octet-stream'].includes(contentType))return json(res,415,{error:'HEALTH_UPLOAD_TYPE_UNSUPPORTED'});

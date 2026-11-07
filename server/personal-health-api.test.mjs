@@ -54,7 +54,7 @@ test('personal health API persists user-isolated scoped imports and requires con
     for(const path of ['/api/internal/personal/health/digest','/api/internal/personal/health/comparison'])assert.equal((await fetch(origin+path,{headers:internalHeaders('wrong-token','alice')})).status,403,path);
 
     const statusResponse = await fetch(`${origin}/api/internal/personal/health`, { headers: internalHeaders(token, 'alice') }); assert.match(statusResponse.headers.get('cache-control'), /no-store/); const status = await statusResponse.json();
-    assert.equal(status.encryptionReady, true); assert.equal(status.policy.medicalDiagnosis, false); assert.equal(status.policy.secretsExposed, false);
+    assert.equal(status.encryptionReady, true); assert.equal(status.importJobsReady, true); assert.equal(status.policy.persistentImportJobs, true); assert.equal(status.policy.medicalDiagnosis, false); assert.equal(status.policy.secretsExposed, false);
     const invalidStatusQuery=await fetch(`${origin}/api/internal/personal/health?extra=private-value`,{headers:internalHeaders(token,'alice')});assert.equal(invalidStatusQuery.status,400);assert.match(invalidStatusQuery.headers.get('cache-control'),/no-store/);const invalidStatusPayload=await invalidStatusQuery.json();assert.equal(invalidStatusPayload.error,'HEALTH_QUERY_INVALID');assert.equal(JSON.stringify(invalidStatusPayload).includes('private-value'),false);
 
     const created = await fetch(`${origin}/api/internal/personal/health/consents`, {
@@ -139,7 +139,7 @@ test('Graph client secret never enables health encryption', async () => {
   try {
     await waitFor(`${origin}/api/health`);
     const status = await fetch(`${origin}/api/internal/personal/health`, { headers: internalHeaders(token, 'alice') }).then((response) => response.json());
-    assert.equal(status.encryptionReady, false); assert.deepEqual(status.consents, []);
+    assert.equal(status.encryptionReady, false); assert.equal(status.importJobsReady, false); assert.equal(status.policy.persistentImportJobs, false); assert.deepEqual(status.consents, []);
     const comparison = await fetch(`${origin}/api/internal/personal/health/comparison`, { headers: internalHeaders(token, 'alice') });
     assert.equal(comparison.status, 503); assert.match(comparison.headers.get('cache-control'), /no-store/); assert.equal((await comparison.json()).error, 'HEALTH_ENCRYPTION_NOT_CONFIGURED');
     const create = await fetch(`${origin}/api/internal/personal/health/consents`, { method: 'POST', headers: internalHeaders(token, 'alice', { 'content-type': 'application/json' }), body: JSON.stringify({ scopes: ['activity'] }) });

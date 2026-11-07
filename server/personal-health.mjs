@@ -347,6 +347,6 @@ export function buildHealthDigest(metrics = [], { now = new Date() } = {}) {
 }
 
 export const healthConnectorCapabilities = Object.freeze({
-  appleHealth: { mode: 'import-live-small_companion-prepared', maxImportBytes: MAX_APPLE_IMPORT_BYTES, largeArchiveMode: 'worker-required', inputs: ['Apple Health export.xml', 'Apple Health export.zip'], nativeSyncRequires: ['iOS Companion App', 'HealthKit capability', 'per-type user consent'] },
+  appleHealth: { mode: 'import-live-persistent_companion-prepared', directImportMaxBytes: MAX_APPLE_IMPORT_BYTES, maxImportBytes: 512 * 1024 * 1024, largeArchiveMode: 'persistent-encrypted-worker', inputs: ['Apple Health export.xml', 'Apple Health export.zip'], nativeSyncRequires: ['iOS Companion App', 'HealthKit capability', 'per-type user consent'] },
   whoop: { mode: 'oauth-prepared', apiVersion: 'v2', scopes: WHOOP_SCOPES, webhooks: ['recovery.updated', 'recovery.deleted', 'sleep.updated', 'sleep.deleted', 'workout.updated', 'workout.deleted'] },
 });

@@ -29,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-101');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-102');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -360,29 +360,47 @@ async function personalWhoopStatus(res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'whoop_status_unavailable'});
   try{const response=await fetch(`${personalApiUrl}/api/internal/personal/whoop/status`,{headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(15_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch{return jsonResponse(res,502,{error:'whoop_status_failed',message:'WHOOP-Status ist vorübergehend nicht erreichbar.',secretsExposed:false});}
 }
+function safeHealthUploadName(value,contentType){const fallback=String(contentType).includes('zip')?'export.zip':'export.xml',leaf=String(value||'').split(/[\\/]/).pop().normalize('NFKC').replace(/[^A-Za-z0-9._ -]/g,'_').replace(/\.{2,}/g,'.').trim().slice(0,120);if(!leaf||leaf==='.'||leaf==='..')return fallback;return (fallback.endsWith('.zip')?/\.zip$/i:/\.xml$/i).test(leaf)?leaf:fallback;}
+const healthImportJobStates=new Set(['QUEUED','RUNNING','COMPLETED','FAILED','CANCELLED']);
+function safeHealthJobCount(value){const number=Number(value);return Number.isFinite(number)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.trunc(number))):0;}
+function safeHealthJobDate(value){const text=typeof value==='string'?value.trim():'';return text&&text.length<=40&&Number.isFinite(Date.parse(text))?text:null;}
+function safeHealthJob(job){
+  if(!job||typeof job!=='object'||Array.isArray(job))return null;
+  const id=String(job.id||''),state=String(job.state||'');if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(id)||!healthImportJobStates.has(state))return null;
+  const mediaType=job.mediaType==='application/zip'?'application/zip':'application/xml',phase=/^[A-Z][A-Z0-9_]{0,63}$/.test(String(job.progress?.phase||''))?String(job.progress.phase):state,errorCode=/^[A-Z][A-Z0-9_]{2,63}$/.test(String(job.error?.code||''))?String(job.error.code):null,errorMessage=typeof job.error?.message==='string'?job.error.message.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,240):'';
+  const projected={id,state,mediaType,fileName:safeHealthUploadName(job.fileName,mediaType),createdAt:safeHealthJobDate(job.createdAt),updatedAt:safeHealthJobDate(job.updatedAt),startedAt:safeHealthJobDate(job.startedAt),completedAt:safeHealthJobDate(job.completedAt),progress:{phase,percent:Math.max(0,Math.min(100,safeHealthJobCount(job.progress?.percent))),bytesReceived:safeHealthJobCount(job.progress?.bytesReceived),bytesTotal:job.progress?.bytesTotal==null?null:safeHealthJobCount(job.progress.bytesTotal)},result:null,error:errorCode?{code:errorCode,message:errorMessage||'Import fehlgeschlagen.'}:null,canCancel:Boolean(job.canCancel)&&['QUEUED','RUNNING'].includes(state)};
+  if(state==='COMPLETED'&&job.result&&typeof job.result==='object'&&!Array.isArray(job.result))projected.result={importId:/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(String(job.result.importId||''))?String(job.result.importId):null,recordsSeen:safeHealthJobCount(job.result.recordsSeen),metrics:safeHealthJobCount(job.result.metrics),inserted:safeHealthJobCount(job.result.inserted),updated:safeHealthJobCount(job.result.updated),unchanged:safeHealthJobCount(job.result.unchanged),duplicatesRemoved:safeHealthJobCount(job.result.duplicatesRemoved),excludedByConsent:safeHealthJobCount(job.result.excludedByConsent),alreadyImported:Boolean(job.result.alreadyImported)};
+  return projected;
+}
+async function streamPersonalHealthJobResponse(response,res,{collection=false}={}){
+  if(!response.ok)return streamPersonalHealthResponse(response,res);let bytes=0,chunks=[];
+  try{for await(const chunk of response.body||[]){bytes+=chunk.length;if(bytes>512*1024){try{await response.body?.cancel();}catch{}return jsonResponse(res,502,{error:'HEALTH_RESPONSE_INVALID',secretsExposed:false},{'cache-control':'no-store'});}chunks.push(chunk);}const payload=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(collection){if(!Array.isArray(payload?.jobs))throw new Error('Invalid jobs');const jobs=payload.jobs.map(safeHealthJob);if(jobs.some(job=>!job))throw new Error('Invalid job');return jsonResponse(res,response.status,{jobs,secretsExposed:false},{'cache-control':'no-store'});}const job=safeHealthJob(payload?.job);if(!job)throw new Error('Invalid job');return jsonResponse(res,response.status,{job,secretsExposed:false},{'cache-control':'no-store'});}catch{return jsonResponse(res,502,{error:'HEALTH_RESPONSE_INVALID',secretsExposed:false},{'cache-control':'no-store'});}
+}
 async function personalHealth(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'health_store_unavailable'});
   const requestUrl=new URL(String(req.url||'/agentone/health'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/health'.length),method=String(req.method||'GET');
-  const allowed=(method==='GET'&&['','/','/consents','/digest','/comparison'].includes(suffix))||(method==='POST'&&['/consents','/apple-import','/export'].includes(suffix))||(method==='DELETE'&&(suffix==='/data'||/^\/consents\/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(suffix)));
+  const jobCollection=suffix==='/import-jobs',jobDetail=/^\/import-jobs\/[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(suffix),allowed=(method==='GET'&&(['','/','/consents','/digest','/comparison'].includes(suffix)||jobCollection||jobDetail))||(method==='POST'&&(['/consents','/apple-import','/export'].includes(suffix)||jobCollection))||(method==='DELETE'&&(suffix==='/data'||/^\/consents\/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(suffix)||jobDetail));
   if(!allowed)return jsonResponse(res,404,{error:'not_found'});
   if(method==='GET'){
     const queryKeys=suffix==='/digest'?new Set(['source','from','to']):suffix==='/comparison'?new Set(['periodDays','minimumCoverageDays','timeZone']):new Set();
     if([...requestUrl.searchParams.keys()].some(key=>!queryKeys.has(key)||requestUrl.searchParams.getAll(key).length!==1))return jsonResponse(res,400,{error:'HEALTH_QUERY_INVALID',secretsExposed:false});
   }
-  const isUpload=method==='POST'&&suffix==='/apple-import',mutating=method!=='GET';if(mutating&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
+  const directUpload=method==='POST'&&suffix==='/apple-import',jobUpload=method==='POST'&&jobCollection,isUpload=directUpload||jobUpload,jobCancel=method==='DELETE'&&jobDetail,mutating=method!=='GET';if(mutating&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
   const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'};
   try{
-    const options={method:req.method,headers,signal:AbortSignal.timeout(isUpload?180_000:30_000)};
+    const options={method:req.method,headers,signal:AbortSignal.timeout(jobUpload?15*60_000:isUpload?180_000:30_000)};
     if(isUpload){
-      const max=32*1024*1024,declared=req.headers['content-length'];if(declared!=null&&(!/^\d+$/.test(String(declared))||Number(declared)<=0))return jsonResponse(res,400,{error:'HEALTH_UPLOAD_SIZE_INVALID'});if(declared!=null&&Number(declared)>max)return jsonResponse(res,413,{error:'HEALTH_UPLOAD_TOO_LARGE'});
-      const contentType=String(req.headers['content-type']||'application/octet-stream').split(';')[0].trim().toLowerCase();if(!['application/xml','text/xml','application/zip','application/x-zip-compressed','application/octet-stream'].includes(contentType))return jsonResponse(res,415,{error:'HEALTH_UPLOAD_TYPE_UNSUPPORTED'});
+      const max=(jobUpload?512:32)*1024*1024,declared=req.headers['content-length'];if(declared!=null&&(!/^\d+$/.test(String(declared))||Number(declared)<=0))return jsonResponse(res,400,{error:'HEALTH_UPLOAD_SIZE_INVALID'});if(declared!=null&&Number(declared)>max)return jsonResponse(res,413,{error:'HEALTH_UPLOAD_TOO_LARGE'});
+      const contentType=String(req.headers['content-type']||'application/octet-stream').split(';')[0].trim().toLowerCase(),allowedUploadTypes=jobUpload?['application/xml','text/xml','application/zip','application/x-zip-compressed']:['application/xml','text/xml','application/zip','application/x-zip-compressed','application/octet-stream'];if(!allowedUploadTypes.includes(contentType))return jsonResponse(res,415,{error:'HEALTH_UPLOAD_TYPE_UNSUPPORTED'});
       const consentId=String(req.headers['x-agentone-health-consent-id']||'').trim();if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(consentId))return jsonResponse(res,400,{error:'HEALTH_CONSENT_REQUIRED'});
-      headers['content-type']=contentType;headers['x-agentone-health-consent-id']=consentId;headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='health-import-confirmed';let transferred=0,limitFailure=null;
-      options.duplex='half';options.body=(async function*(){for await(const chunk of req){transferred+=chunk.length;if(transferred>max){limitFailure=Object.assign(new Error('Upload too large'),{status:413});throw limitFailure;}yield chunk;}if(!transferred){limitFailure=Object.assign(new Error('Upload empty'),{status:400});throw limitFailure;}})();
-      try{const response=await fetch(`${personalApiUrl}/api/internal/personal/health/apple-import`,options);return await streamPersonalHealthResponse(response,res);}catch(error){if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'HEALTH_UPLOAD_TOO_LARGE':'HEALTH_UPLOAD_EMPTY'});throw error;}
+      headers['content-type']=contentType;headers['x-agentone-health-consent-id']=consentId;headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='health-import-confirmed';if(jobUpload)headers['x-agentone-health-file-name']=safeHealthUploadName(req.headers['x-agentone-health-file-name'],contentType);let transferred=0,limitFailure=null,clientFailure=null;
+      const clientAbort=new AbortController(),abortUpload=()=>{if(!clientAbort.signal.aborted)clientAbort.abort();};req.once('aborted',abortUpload);req.once('close',()=>{if(!req.complete)abortUpload();});res.once('close',()=>{if(!res.writableEnded)abortUpload();});options.signal=AbortSignal.any([options.signal,clientAbort.signal]);
+      options.duplex='half';options.body=(async function*(){for await(const chunk of req){transferred+=chunk.length;if(transferred>max){limitFailure=Object.assign(new Error('Upload too large'),{status:413});throw limitFailure;}yield chunk;}if(req.aborted||!req.complete){clientFailure=Object.assign(new Error('Client upload aborted'),{status:499});abortUpload();throw clientFailure;}if(!transferred){limitFailure=Object.assign(new Error('Upload empty'),{status:400});throw limitFailure;}})();
+      try{const response=await fetch(`${personalApiUrl}/api/internal/personal/health${jobUpload?'/import-jobs':'/apple-import'}`,options);return jobUpload?await streamPersonalHealthJobResponse(response,res):await streamPersonalHealthResponse(response,res);}catch(error){if(clientFailure){if(!res.destroyed&&!res.writableEnded)return jsonResponse(res,499,{error:'HEALTH_UPLOAD_ABORTED',secretsExposed:false});return;}if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'HEALTH_UPLOAD_TOO_LARGE':'HEALTH_UPLOAD_EMPTY'});throw error;}
     }
-    if(mutating){headers['content-type']='application/json';options.body=(await readBody(req,32_768)).toString('utf8');}
-    const response=await fetch(`${personalApiUrl}/api/internal/personal/health${suffix}${requestUrl.search}`,options);return await streamPersonalHealthResponse(response,res);
+    if(jobCancel){headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='health-import-job-cancelled';}
+    if(mutating&&!jobCancel){headers['content-type']='application/json';options.body=(await readBody(req,32_768)).toString('utf8');}
+    const response=await fetch(`${personalApiUrl}/api/internal/personal/health${suffix}${requestUrl.search}`,options);return jobCollection||jobDetail?await streamPersonalHealthJobResponse(response,res,{collection:jobCollection}):await streamPersonalHealthResponse(response,res);
   }catch(error){return jsonResponse(res,error.status||502,{error:'health_service_failed',secretsExposed:false});}
 }
 async function streamPersonalHealthResponse(response,res){
