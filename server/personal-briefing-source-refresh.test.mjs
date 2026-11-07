@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { refreshPersonalBriefingSources } from './personal-briefing-source-refresh.mjs';
+import { inspectPersonalBriefingSources, refreshPersonalBriefingSources } from './personal-briefing-source-refresh.mjs';
 
 const now=new Date('2026-11-07T12:00:00.000Z');
 const connected=(lastSuccessAt,extra={})=>({connected:true,lastSuccessAt,...extra});
@@ -56,4 +56,18 @@ test('provider partial success is never labelled fresh',async()=>{
 test('static calendar snapshot is fresh inside the window and stale without a technical error afterwards',async()=>{
   let calls=0;const fresh=await refreshPersonalBriefingSources({userId:'guenni',now,sources:{ics:{connected:true,static:true,lastSuccessAt:'2026-11-07T11:59:00.000Z'}},operations:{ics:async()=>{calls+=1;}}}),stale=await refreshPersonalBriefingSources({userId:'guenni',now,sources:{ics:{connected:true,static:true,lastSuccessAt:'2026-11-07T10:00:00.000Z'}},operations:{ics:async()=>{calls+=1;}}});
   assert.equal(calls,0);assert.equal(fresh[1].freshness,'FRESH');assert.deepEqual(stale[1],{source:'ics',status:'STALE_FALLBACK',freshness:'STALE_FALLBACK',lastSuccessAt:'2026-11-07T10:00:00.000Z',attemptedAt:null,outcome:'STATIC_SNAPSHOT',errorCode:null});
+});
+
+test('status inspection is side-effect free, user-bound and distinguishes current, stale and backoff',()=>{
+  const result=inspectPersonalBriefingSources({userId:'guenni',now,maxAgeMs:5*60_000,sources:{
+    mail:connected('2026-11-07T11:59:00.000Z',{accounts:2}),
+    ics:connected('2026-11-07T10:00:00.000Z',{static:true,accounts:1}),
+    google:connected('2026-11-07T10:00:00.000Z',{degraded:true,blockedUntil:'2026-11-07T12:30:00.000Z',errorCode:'GOOGLE_RATE_LIMIT',accounts:1}),
+  }});
+  assert.deepEqual(result.map(item=>[item.source,item.status,item.outcome,item.errorCode]),[
+    ['mail','FRESH','CURRENT',null],
+    ['ics','STALE_FALLBACK','STATIC_SNAPSHOT',null],
+    ['google','STALE_FALLBACK','BACKOFF','GOOGLE_RATE_LIMIT'],
+  ]);
+  assert.throws(()=>inspectPersonalBriefingSources({userId:'guenni',sources:{mail:{connected:true,userId:'fressi'}}}),error=>error.code==='BRIEFING_REFRESH_USER_MISMATCH');
 });

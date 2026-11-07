@@ -1,0 +1,20 @@
+import path from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import { chromium } from 'playwright';
+import { loadEnv } from '../server/state.mjs';
+
+const release='2026.11.07-112',env=loadEnv(path.resolve('.')),origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,''),user=env.AGENTONE_GUENNI_USER,password=env.AGENTONE_GUENNI_PASSWORD;
+if(!origin||!user||!password)throw new Error('Günni-Live-Konfiguration fehlt.');
+const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,locale:'de-DE'}),errors=[];
+page.setDefaultTimeout(20_000);page.on('pageerror',error=>errors.push(`page:${error.message}`));page.on('console',message=>{if(message.type()==='error'&&!/Failed to load resource/.test(message.text()))errors.push(`console:${message.text()}`);});
+async function api(pathName){return page.evaluate(async value=>{const response=await fetch(value,{cache:'no-store',headers:{accept:'application/json'}});return {status:response.status,ok:response.ok,text:await response.text()};},pathName).then(result=>({...result,data:JSON.parse(result.text||'{}')}));}
+try{
+  await page.goto(`${origin}/login`,{waitUntil:'networkidle'});await page.locator('#username').fill(user);await page.locator('#password').fill(password);await Promise.all([page.waitForURL(`${origin}/`),page.getByRole('button',{name:'Sicher anmelden'}).click()]);
+  const releaseState=await api('/agentone/release.json?smoke=release112-live');if(releaseState.data.release!==release)throw new Error(`Live-Release ist ${releaseState.data.release} statt ${release}`);
+  const status=await api('/agentone/sources');if(!status.ok||status.data.schema!=='agentone.personal-source-status/v1'||!Array.isArray(status.data.sources))throw new Error('Quellenstatus nicht verfügbar.');if(status.data.policy?.sideEffectFree!==true||status.data.policy?.secretsExposed!==false)throw new Error('Quellenstatus-Policy ungültig.');
+  await page.locator('[data-view="tasks"]').click();const center=page.locator('#personal-source-sync');await center.waitFor();await center.locator('#source-sync-overall').filter({hasNotText:'WIRD GELADEN'}).waitFor();for(const source of ['mail','google','ics'])if(await center.locator(`[data-source-sync="${source}"]`).count()!==1)throw new Error(`Quellenkarte fehlt: ${source}`);if(await center.getByRole('button',{name:'Jetzt synchronisieren'}).count()!==1)throw new Error('Manuelle Synchronisierung fehlt.');
+  const uiStates=await center.locator('[data-source-sync]').evaluateAll(cards=>cards.map(card=>({source:card.dataset.sourceSync,state:card.dataset.state,label:card.querySelector('.source-sync-state')?.textContent||''})));
+  const layout=await center.evaluate(root=>{const buttons=[...root.querySelectorAll('button')].filter(item=>getComputedStyle(item).display!=='none');return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minTouchHeight:Math.min(...buttons.map(item=>Math.round(item.getBoundingClientRect().height))),visibleButtons:buttons.length};});if(layout.scrollWidth>layout.width||layout.minTouchHeight<48)throw new Error(`Mobiles Quellen-Layout ungültig: ${JSON.stringify(layout)}`);
+  await mkdir(path.resolve('output/playwright'),{recursive:true});const screenshot=path.resolve('output/playwright/guenni-release112-source-sync-live-mobile.png');await center.screenshot({path:screenshot});if(errors.length)throw new Error(`Browserfehler: ${errors.join(' | ')}`);
+  process.stdout.write(JSON.stringify({ok:true,origin,release,schema:status.data.schema,sideEffectFree:true,refreshMutation:false,sources:status.data.sources.map(item=>({source:item.source,freshness:item.freshness,outcome:item.outcome,connected:item.connected})),uiStates,layout,screenshot,consoleErrors:0,secretsExposed:false})+'\n');
+}finally{await browser.close();}

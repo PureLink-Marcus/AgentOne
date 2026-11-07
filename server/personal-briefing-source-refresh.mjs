@@ -50,12 +50,31 @@ async function refreshOne({source,state,operation,userId,now,maxAgeMs,timeoutMs}
   }
 }
 
-export async function refreshPersonalBriefingSources({userId,sources={},operations={},now=new Date(),maxAgeMs=5*60_000,timeoutMs=10_000,maxConcurrent=2}={}){
+function preparedInput({userId,sources,now,maxAgeMs}){
   const owner=String(userId||'').trim();if(!USER_ID.test(owner))throw refreshError('userId ist ungültig','BRIEFING_REFRESH_USER_INVALID');
   const at=instant(now,'now');if(!Number.isInteger(maxAgeMs)||maxAgeMs<1_000||maxAgeMs>7*86_400_000)throw refreshError('maxAgeMs ist ungültig');
+  const states=Object.fromEntries(SOURCE_IDS.map(source=>[source,normalizeState(source,sources?.[source],owner)]));
+  return {owner,at,states};
+}
+
+export function inspectPersonalBriefingSources({userId,sources={},now=new Date(),maxAgeMs=5*60_000}={}){
+  const {at,states}=preparedInput({userId,sources,now,maxAgeMs});
+  return Object.freeze(SOURCE_IDS.map(source=>{
+    const state=states[source],previous=state.lastSuccessAt,accounts=state.accounts,isFresh=previous&&at.getTime()-Date.parse(previous)<=maxAgeMs;
+    if(!state.connected)return projection({source,status:'NOT_CONNECTED',lastSuccessAt:null,attemptedAt:null,outcome:'NOT_ATTEMPTED',errorCode:null,accounts});
+    if(state.blockedUntil&&Date.parse(state.blockedUntil)>at.getTime())return projection({source,status:previous?'STALE_FALLBACK':'DEGRADED',lastSuccessAt:previous,attemptedAt:null,outcome:'BACKOFF',errorCode:state.errorCode||'SOURCE_REFRESH_BACKOFF',accounts});
+    if(isFresh&&!state.degraded)return projection({source,status:'FRESH',lastSuccessAt:previous,attemptedAt:null,outcome:'CURRENT',errorCode:null,accounts});
+    if(state.degraded)return projection({source,status:previous?'STALE_FALLBACK':'DEGRADED',lastSuccessAt:previous,attemptedAt:null,outcome:'DEGRADED_STATE',errorCode:state.errorCode||'SOURCE_DEGRADED',accounts});
+    if(state.static)return projection({source,status:previous?'STALE_FALLBACK':'DEGRADED',lastSuccessAt:previous,attemptedAt:null,outcome:'STATIC_SNAPSHOT',errorCode:null,accounts});
+    return projection({source,status:previous?'STALE_FALLBACK':'DEGRADED',lastSuccessAt:previous,attemptedAt:null,outcome:previous?'STALE':'NO_SNAPSHOT',errorCode:null,accounts});
+  }));
+}
+
+export async function refreshPersonalBriefingSources({userId,sources={},operations={},now=new Date(),maxAgeMs=5*60_000,timeoutMs=10_000,maxConcurrent=2}={}){
+  const {owner,at,states}=preparedInput({userId,sources,now,maxAgeMs});
   if(!Number.isInteger(timeoutMs)||timeoutMs<10||timeoutMs>60_000)throw refreshError('timeoutMs ist ungültig');
   if(!Number.isInteger(maxConcurrent)||maxConcurrent<1||maxConcurrent>SOURCE_IDS.length)throw refreshError('maxConcurrent ist ungültig');
-  const states=Object.fromEntries(SOURCE_IDS.map(source=>[source,normalizeState(source,sources?.[source],owner)])),results=new Array(SOURCE_IDS.length);let cursor=0;
+  const results=new Array(SOURCE_IDS.length);let cursor=0;
   const worker=async()=>{while(true){const index=cursor++;if(index>=SOURCE_IDS.length)return;const source=SOURCE_IDS[index];results[index]=await refreshOne({source,state:states[source],operation:operations?.[source],userId:owner,now:at,maxAgeMs,timeoutMs});}};
   await Promise.all(Array.from({length:maxConcurrent},()=>worker()));
   return Object.freeze(results);
