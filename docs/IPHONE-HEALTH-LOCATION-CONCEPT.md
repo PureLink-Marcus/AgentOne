@@ -89,7 +89,7 @@ Browsercontainer mit getrennten IndexedDB-Tresoren. Wer den Companion später
 vom Home-Bildschirm aus nutzen will, installiert beziehungsweise öffnet deshalb
 zuerst genau diesen Kontext und koppelt dort mit einem frischen Einmalcode.
 
-Release-Kandidat `2026.11.07-103` prüft den Tresor nicht mehr nur über das
+Release `2026.11.07-103` prüft den Tresor nicht mehr nur über das
 Vorhandensein von APIs. Vor dem serverseitigen Confirm erzeugt der Companion
 einen nicht exportierbaren AES-GCM-Schlüssel, schreibt eine verschlüsselte
 Probe nach IndexedDB, liest und entschlüsselt sie wieder und blockiert bei
@@ -104,9 +104,10 @@ dieser Direktlink verborgen; dort werden nur der secret-freie Basis-QR und der
 sechsstellige Code getrennt angezeigt. Automatisierte WebKit- und Chrome-
 Regressionen prüfen sicheren Kontext, Vault-Roundtrip, Reload und Self-Revoke.
 Die Live-Prüfung ist standardmäßig read-only und erzeugt keinen Code, sodass
-sie keinen offenen Benutzer-Code mehr ersetzen kann. Ein echter iPhone-
-Safari-/PWA-Hardwaretest bleibt trotzdem erforderlich; der Release-Kandidat
-ist bis zum produktiven Rollout nicht als `LIVE` gekennzeichnet.
+sie keinen offenen Benutzer-Code mehr ersetzen kann. Dieser WebKit-Smoke ist
+auf Günni über HTTPS live bestanden. Ein echter iPhone-Safari-/PWA-
+Hardwaretest bleibt trotzdem erforderlich und wird nicht durch die
+automatisierte Browserabnahme ersetzt.
 
 ## Technische Grenze
 

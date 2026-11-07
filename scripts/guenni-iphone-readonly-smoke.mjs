@@ -46,8 +46,10 @@ try{
   if(new URL(iphonePage.url()).hash||new URL(iphonePage.url()).search)throw new Error('Öffentliche Pairing-Basis enthält unerwartete URL-Daten.');
   const metrics=await iphonePage.evaluate(()=>({secure:isSecureContext,innerWidth,scrollWidth:document.documentElement.scrollWidth,minTouch:Math.min(...[...document.querySelectorAll('button,a.button')].filter(node=>{const box=node.getBoundingClientRect(),style=getComputedStyle(node);return box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden';}).map(node=>Math.round(node.getBoundingClientRect().height)))}));
   if(!metrics.secure||metrics.scrollWidth>metrics.innerWidth||metrics.minTouch<44)throw new Error(`Safari-Mobile-Layout ist nicht bereit: ${JSON.stringify(metrics)}`);
-  const body=await iphonePage.locator('body').innerText();
-  if(!/Safari und Home-Bildschirm-App besitzen getrennte Speicher/.test(body)||!/Pairing klappt nicht\?/.test(body))throw new Error('Safari/PWA-Hilfe fehlt.');
+  const troubleshooting=iphonePage.locator('.troubleshoot');
+  await troubleshooting.locator('summary').click();
+  const troubleshootingText=await troubleshooting.innerText();
+  if(!/Safari und Home-Bildschirm-App besitzen getrennte Speicher/.test(troubleshootingText)||!/Pairing klappt nicht\?/.test(troubleshootingText))throw new Error('Safari/PWA-Hilfe fehlt.');
   await mkdir(path.resolve('output/playwright'),{recursive:true});
   const screenshot=path.resolve('output/playwright/guenni-iphone-readonly-webkit.png');
   await iphonePage.screenshot({path:screenshot,fullPage:true});

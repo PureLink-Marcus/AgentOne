@@ -1,13 +1,13 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-103` (**RELEASE CANDIDATE**) mit sicherem WHOOP-OAuth/Sync, tatsächlicher AES-GCM-/IndexedDB-Probe vor dem iPhone-Pairing und read-only Live-Smoke-Strategie ohne Pairing-Code-Nebenwirkungen; Release 102 bleibt bis zum Rollout der produktive Stand
+Status: Release `2026.11.07-103` (**LIVE auf Fressi und Günni**) mit sicherem WHOOP-OAuth/Sync, tatsächlicher AES-GCM-/IndexedDB-Probe vor dem iPhone-Pairing und read-only Live-Smoke ohne Pairing-Code-Nebenwirkungen
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
-Release 102 läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 103 ist dort auf vier Containern gesund ausgerollt. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
 
 Release 103 härtet den iPhone-Pfad dort, wo ein sichtbarer Browsercheck allein
 nicht ausreicht: Vor dem serverseitigen Confirm führt die gewählte Safari-
@@ -25,8 +25,10 @@ begrenztem inkrementellem Sync, sauberer Trennung und ehrlichen Zuständen. Ohne
 registrierte WHOOP-App bleibt die Oberfläche `NOT_CONFIGURED`; Webhooks bleiben
 bis zu dauerhafter Queue und Reconciliation deaktiviert. Details stehen in
 [`docs/WHOOP-INTEGRATION.md`](docs/WHOOP-INTEGRATION.md). Der letzte vollständige
-lokale Lauf des Release-Kandidaten umfasst 296/296 grüne Node-Tests; Deployment
-und externe Provider-Abnahme sind noch nicht als `LIVE` dokumentiert.
+Lauf umfasst 296/296 grüne Node-Tests, Build, Local-Smoke sowie Chrome-, WebKit-
+und Pairing-Security-Abnahme. Der private Rollout und der read-only Günni-
+WebKit-Smoke sind live bestanden; mangels registrierter WHOOP-App bleibt nur die
+externe Provider-Abnahme ehrlich offen.
 
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle
@@ -43,6 +45,14 @@ Health-Ausgaben bleiben nicht medizinisch.
 Der Funktions- und UX-Abgleich mit Jarvis ist in [`docs/JARVIS-FEATURE-ALIGNMENT.md`](docs/JARVIS-FEATURE-ALIGNMENT.md) festgehalten. Der konkrete Gap-, Architektur- und Lieferplan steht in [`docs/JARVIS-PRODUCT-PLAN.md`](docs/JARVIS-PRODUCT-PLAN.md), der belastbare Restaufwand mit Fertig-Definition in [`docs/COMPLETION-ROADMAP.md`](docs/COMPLETION-ROADMAP.md). AgentOne Personal übernimmt daraus die Prinzipien sichtbare Tool-Ausführung, ein gemeinsames Command Center, Feedback, Memory, kontrolliertes Lernen, Modell-Routing, Voice und persönliche Datenfusion, bleibt aber ein eigenes Produkt auf Basis der AgentOne-/OpenClaw-Architektur.
 
 Alle AgentOne-Zugänge werden als installierbare PWA ausgeliefert. Die gemeinsame Instanzverwaltung kann HTTPS-Instanzen hinzufügen, zwischen ihnen wechseln und sie lokal aktivieren oder deaktivieren. Die Instanzliste wird beim Domainwechsel mitgeführt; Zugangsdaten, Sessions, Chats und API-Antworten werden weder übertragen noch offline gecacht.
+
+Die **iPhone Companion App** ist aktuell ebenfalls eine PWA und deshalb kein
+App-Store-Download oder ZIP: Auf dem iPhone
+[https://guenni.mwart.solutions/iphone](https://guenni.mwart.solutions/iphone)
+in Safari öffnen, **Teilen → Zum Home-Bildschirm** wählen und anschließend in
+genau dieser Home-Bildschirm-App koppeln. Alternativ ist direktes Pairing in
+Safari möglich; Safari und installierte PWA besitzen getrennte verschlüsselte
+Speicher und benötigen daher jeweils einen eigenen frischen Einmalcode.
 
 Jede Instanz besitzt verpflichtend das Profil `PERSONAL` oder `BUSINESS`. Personal zeigt ausschließlich persönliche Werkzeuge; Business aktiviert Organisationsworkflows und validiertes Unternehmensbranding. Das verbindliche Modell steht in [`docs/INSTANCE-PROFILES-AND-BRANDING.md`](docs/INSTANCE-PROFILES-AND-BRANDING.md).
 

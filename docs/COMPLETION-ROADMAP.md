@@ -8,15 +8,15 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-102` ist auf Fressi und Günni live. Release
-`2026.11.07-103` ist als lokal geprüfter Release-Kandidat vorbereitet:
-296/296 Node-Tests sind im letzten vollständigen Lauf grün; der WHOOP-
-OAuth-/Sync-/Disconnect-Kern und das iPhone-Pairing mit realer AES-GCM-
-IndexedDB-Probe sind implementiert. Deployment, echter WHOOP-Providerlauf und
-ein realer iPhone-Safari-/PWA-Hardwaretest werden weiterhin getrennt vom
-lokalen Status ausgewiesen. Vier private Release-102-Container, PWA,
-iPhone-Pairing und ein isolierter 35.652.207-Byte-Health-Live-Import
-einschließlich vollständigem Cleanup bleiben produktiv verifiziert.
+Release `2026.11.07-103` ist auf Fressi und Günni live: vier private Container
+sind healthy, die PWA-Abnahme auf PureLink/Fressi/Günni sowie der read-only
+WebKit-Smoke auf Günni sind grün. 296/296 Node-Tests, Production-Build,
+Local-Smoke, Chrome-, WebKit- und Pairing-Security-Prüfung sind bestanden. Der
+WHOOP-OAuth-/Sync-/Disconnect-Kern und das iPhone-Pairing mit realer AES-GCM-
+IndexedDB-Probe sind implementiert. Ein echter WHOOP-Providerlauf und ein
+realer iPhone-Safari-/PWA-Hardwaretest bleiben weiterhin getrennt als offen
+ausgewiesen. Der isolierte 35.652.207-Byte-Health-Live-Import aus Release 102
+einschließlich vollständigem Cleanup bleibt produktiv verifiziert.
 Release 99 liefert den persistenten read-only
 IMAP-Bestand und das Mail Review Center. Release 100 ergänzt das kontrollierte
 Learning Lab mit `personal-briefing.v1`; Günni führte es mit echten minimierten
@@ -59,7 +59,7 @@ angezeigt.
 3. **Release 94 implementiert, deployed und live abgenommen:** ICS/iCal als
    einfacher Kalenderweg ohne eigene Google-OAuth-App, sicherer HTTPS-Feed,
    Google-Ledger-Projektion sowie serverseitige Konflikt-/Freizeitplanung.
-4. **Release 103 lokal implementiert:** WHOOP-OAuth-/Sync-/Disconnect-Kern
+4. **Release 103 implementiert und deployed:** WHOOP-OAuth-/Sync-/Disconnect-Kern
    einbinden und ohne Credentials ehrlich `NOT_CONFIGURED` anzeigen. OAuth-
    State ist persistent und atomar einmalig; Refresh-Tokens sind
    AES-256-GCM-verschlüsselt, Sync und Provideraufrufe begrenzt. Webhooks

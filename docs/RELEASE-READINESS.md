@@ -201,16 +201,16 @@ Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Sicherheits- und Regressionssuite | PASS LIVE | 273/273 Tests, Production-Build, `verify:local`, npm-Produktionsaudit mit 0 bekannten Schwachstellen sowie lokale und live ausgeführte iPhone-Browser-/Pairing-Security-Regression grün. Health-Ausgaben bleiben deskriptiv und nicht medizinisch. |
 | Deployment | PASS LIVE | Source-Commit `ae1c47b`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-102.tgz`, SHA-256 `a86e200f2250264150e178a81a9eff4ddf84aa46f0799e3f47465d6fc0352395`; Image `purelink/agentone:2026.11.07-102`, ID `sha256:28346c687f8ddcff7d4cc08b37aea5e54d71761cf2f5f979539b2a7718dc8826`; vier private Container healthy. Der isolierte Günni-Smoke importierte 35.652.207 Bytes und zwei Messwerte; Cleanup: 0 Messwerte, 0 Freigaben, keine Secrets exponiert. PWA- und iPhone-Pairing-Live-Smokes bestanden. |
 
-### Release 103 · WHOOP und iPhone-Pairing-Härtung (**LOCAL PASS · DEPLOYMENT PENDING**)
+### Release 103 · WHOOP und iPhone-Pairing-Härtung (**PASS LIVE**)
 
 | Prüfung | Status | Nachweis |
 |---|---|---|
-| WHOOP OAuth und Token-Lebenszyklus | PASS LOCAL | Persistenter, benutzer-/redirectgebundener und atomar einmaliger State; AES-256-GCM-Refresh-Token mit Benutzer-AAD; kein persistierter Access-Token; Callback wird auf allen Pfaden per `303` von Code/State bereinigt. |
-| WHOOP Sync und Disconnect | PASS LOCAL | Begrenzte Pagination, Mengen und Laufzeit; Teilerfolg und Rate-Limit ohne falschen Cursorfortschritt; lokale Trennung bleibt auch bei verlorener Providerkonfiguration möglich und behauptet Providerwiderruf nur nach Bestätigung. |
-| iPhone Vault-Preflight | PASS LOCAL | Vor Confirm: nicht exportierbarer AES-GCM-Schlüssel, verschlüsselte IndexedDB-Schreib-/Leseprobe und Entschlüsselung. Fragmentbereinigung erfolgt vor Netzwerk; Gerätetoken besitzt keinen Kopierpfad. |
-| Safari/PWA-Handoff | PASS LOCAL | Kontextgerechter iOS-Direktlink, Desktop zeigt nur secret-freien Basis-QR plus manuellen Code. Standard-Live-Smoke ist read-only und kann keinen Benutzer-Code überschreiben. |
-| Regression | PASS LOCAL | 296/296 Node-Tests im letzten vollständigen Lauf; automatisierte WebKit-/Chrome- und Pairing-Security-Prüfung. Reales iPhone-WebKit, echte WHOOP-Credentials und Providerroundtrip bleiben offen. |
-| Deployment | PENDING | Kein Live-, Commit-, Archiv-, Image- oder Container-Nachweis wird vor dem tatsächlichen Release-103-Rollout behauptet. |
+| WHOOP OAuth und Token-Lebenszyklus | PASS DEPLOYED | Persistenter, benutzer-/redirectgebundener und atomar einmaliger State; AES-256-GCM-Refresh-Token mit Benutzer-AAD; kein persistierter Access-Token; Callback wird auf allen Pfaden per `303` von Code/State bereinigt. Ohne registrierte WHOOP-App bleibt der Live-Status ehrlich `NOT_CONFIGURED`. |
+| WHOOP Sync und Disconnect | PASS DEPLOYED | Begrenzte Pagination, Mengen und Laufzeit; Teilerfolg und Rate-Limit ohne falschen Cursorfortschritt; lokale Trennung bleibt auch bei verlorener Providerkonfiguration möglich und behauptet Providerwiderruf nur nach Bestätigung. Der echte Providerroundtrip ist mangels Credentials offen. |
+| iPhone Vault-Preflight | PASS LIVE WEB-FLOW | Vor Confirm: nicht exportierbarer AES-GCM-Schlüssel, verschlüsselte IndexedDB-Schreib-/Leseprobe und Entschlüsselung. Fragmentbereinigung erfolgt vor Netzwerk; Gerätetoken besitzt keinen Kopierpfad. |
+| Safari/PWA-Handoff | PASS LIVE WEB-FLOW | Kontextgerechter iOS-Direktlink, Desktop zeigt nur secret-freien Basis-QR plus manuellen Code. Der read-only WebKit-Smoke auf Günni ist grün und kann keinen Benutzer-Code überschreiben. Ein echtes iPhone bleibt als Hardwareabnahme offen. |
+| Regression | PASS LIVE | 296/296 Node-Tests, Production-Build, Local-Smoke, npm-Audit mit 0 bekannten Produktionsschwachstellen sowie automatisierte WebKit-/Chrome- und Pairing-Security-Prüfung. PWA-Abnahme auf PureLink, Fressi und Günni; Günni-iPhone read-only mit HTTPS, Vault-Preflight, 54-px-Touchzielen, 0 Konsolenfehlern und ohne Secrets bestanden. |
+| Deployment | PASS LIVE | Feature-Commit `46c6e0e`; finaler Rollout-Stand `3379cda`; secret-freies Archiv SHA-256 `a12b0b02d9e261c95d858ea98dca8d05b8ce5cd949f6695895132ac81321da8e`; Image `purelink/agentone:2026.11.07-103`, ID `sha256:e7661fa2e8c0cd0bd7e346f2c6b5b97fe6e26fb2a9fdd3eecb054fe0a7bf845e`; vier private Container healthy. Der gestufte Rollout Günni → Fressi besitzt einen verifizierten automatischen Rollback auf das exakte Preflight-Image. |
 
 ```powershell
 npm run verify:local
