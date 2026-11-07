@@ -453,7 +453,7 @@ Jarvis und Planung samt Cleanup sind live geprüft; Runtime und redigierter
 Audit sind healthy. Reales Safari/WebKit sowie EventKit/HealthKit bleiben
 offen.
 
-### Release 2026.11.07-98 · Push-to-talk mit gestreamter Antwort (**PRE-LIVE**)
+### Release 2026.11.07-98 · Push-to-talk mit gestreamter Antwort (**PASS LIVE**)
 
 Jarvis Core erhält einen belastbaren vertikalen Sprachpfad: bewusste
 Mikrofonaufnahme ab einer Sekunde, `gpt-transcribe`, sichtbares und standardmäßig
@@ -465,16 +465,23 @@ Modelltarif. Audio wird nicht in Memory oder Browser-Storage übernommen.
 Der Pfad ist gegen Doppel-Senden, erneute Aufnahme während einer laufenden
 Antwort, Clientabbruch, leere beziehungsweise vorzeitig beendete Streams und
 rohe Providerfehler gehärtet. Der Audit speichert nur Betriebsmetadaten. Eine
-synthetische, reproduzierbare WAV-Fixture wurde zweimal erfolgreich gegen den
-noch live laufenden Release-97-Transkriptionsendpunkt verarbeitet, ohne Audio,
-Transkript oder Schlüssel in Bericht und Access-Log zu schreiben. Der lokale
-Chrome-Smoke bei 430 × 932 px bestätigt genau einen Auto-Send und keinen zweiten
-Mikrofonzugriff während der Antwort.
+synthetische, reproduzierbare WAV-Fixture wurde vor dem Rollout zweimal gegen
+Release 97 und nach dem Rollout erfolgreich gegen Release 98 verarbeitet. Die
+Live-Abnahme meldet vier semantische Treffer in 1319 ms, ohne Audio, Transkript
+oder Schlüssel in Bericht und Access-Log zu schreiben. Chrome bestätigt Chat
+HTTP 200 über Luna, den NDJSON-Antwortstream, die erneute Freigabe des
+Mikrofonbuttons, Stefan als lokale Stimme, den Ausschluss von `Anna` und
+0 Konsolenfehler.
 
-**Abnahmegrenze:** Release 98 ist noch nicht ausgerollt. Der vollständige lokale
-Lauf ist mit 211/211 Tests grün; Release-Archiv, Image, vier private Container, PWA-Wechsel und echter
-Günni-Live-Smoke folgen vor `PASS LIVE`. Der Funktionsumfang ist Push-to-talk
-mit gestreamter Antwort, nicht Full-Duplex-Realtime-Audio oder Wake Word.
+**Abnahme:** 211/211 Tests, vollständige lokale Verifikation, Build, PWA auf drei
+Domains, vier healthy private Container und breite Live-Regression sind grün.
+Source-Commit `f15d1ac`, secret-freies Release-Archiv mit SHA-256
+`bac50692186f3fe835bb202b6fff0c62554dab9f451560b28e1f9a93f7d85ce0` und Image
+`purelink/agentone:2026.11.07-98` mit Digest
+`sha256:35a93b83bdfba82439ebbebfd3e4804a9309e02f7c7d1b2827066cb6676ae4e4`
+sind dokumentiert. Der Funktionsumfang bleibt Push-to-talk mit gestreamter
+Antwort, nicht Full-Duplex-Realtime-Audio oder Wake Word. Echtes Mikrofon,
+Safari/WebKit und native iOS-Funktionen bleiben separat abzunehmen.
 
 ## Primärquellen und Lizenzgrenzen
 

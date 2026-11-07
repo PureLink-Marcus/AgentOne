@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release-Kandidat: `2026.11.07-98` (**PRE-LIVE**)
-Deployment: Release 97 ist weiterhin auf Fressi und Günni live. Alle vier App-/Access-Container sind healthy; PureLink, Fressi und Günni liefern den versionsgebundenen PWA-Stand 97. Release 98 ergänzt lokal den belastbaren Push-to-talk-Pfad mit echter Audio-Transkription, standardmäßigem Auto-Send und gestreamter Antwort. Vollständige Release-Verifikation, Rollout und Live-Abnahme von Stand 98 stehen noch aus.
+Release: `2026.11.07-98` (**PASS LIVE**)
+Deployment: Release 98 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. PureLink, Fressi und Günni bestehen die versionsgebundene PWA-Abnahme. Der Release ergänzt den belastbaren Push-to-talk-Pfad mit echter Audio-Transkription, standardmäßigem Auto-Send und gestreamter Antwort.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS PRE-LIVE | Release 98: 211/211 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build, lokaler API-Smoke und mobiler Chrome-Voice-Smoke bestanden. Das Deployment ist noch ausstehend; Release 97 bleibt der live bestätigte Stand. |
+| Lokale Anwendung | PASS LIVE | Release 98: 211/211 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build, lokaler API-Smoke und mobiler Chrome-Voice-Smoke bestanden; `npm audit --omit=dev --audit-level=high` meldet 0 Schwachstellen. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS LIVE | Release 97 besteht auf Günni den vollständigen Webflow `QR-BASE → INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → SELF-REVOKE-RETRY → RECOVER → VAULT-ROLLBACK`. Der Serverwiderruf kommt vor dem lokalen Tresor-Cleanup; Netz-/503-Fehler behalten den verschlüsselten Token für einen sicheren Retry. Die Abnahme läuft in echtem Chrome mit iPhone-UA und simuliertem Standalone, nicht auf Safari/WebKit. |
+| Apple-Schnellstart | PASS LIVE | Release 98 besteht auf Günni erneut den vollständigen Webflow `QR-BASE → INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → SELF-REVOKE-RETRY → RECOVER → VAULT-ROLLBACK`. Der Serverwiderruf kommt vor dem lokalen Tresor-Cleanup; Netz-/503-Fehler behalten den verschlüsselten Token für einen sicheren Retry. Die Abnahme läuft in echtem Chrome mit iPhone-UA und simuliertem Standalone, nicht auf Safari/WebKit. |
 | Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -29,7 +29,7 @@ Deployment: Release 97 ist weiterhin auf Fressi und Günni live. Alle vier App-/
 | Privates Kalender-Abo | PASS LIVE / NOT_CONNECTED | Release 96 speichert `https://`- oder `webcal://`-Feeds AES-256-GCM-verschlüsselt und benutzerisoliert. Manueller Sync, 15-Minuten-Hintergrundlauf, Backoff, DNS-Pinning/SSRF-Schutz und der letzte gültige Snapshot bei Providerfehlern sind live ausgerollt. API, Audit, DOM und Screenshot enthalten keinen Feed-Link. Günni zeigt ehrlich `NOT_CONNECTED`, bis der Benutzer seinen privaten Link eingibt. |
 | Bedienbarer AI Core | PASS | Luna-Standard, Terra für Dokumente/Bilder und Sol für komplexe Aufgaben synchronisieren sich persistent mit dem HUD; Ollama bleibt bis zum Connector-Healthcheck ehrlich gesperrt. |
 | Lokaler Modellpfad | READY | Connector v4 und App-Pfad sind getestet, allowlist-begrenzt und signiert. Live-Status, `LOCAL`-Datenschutz und Latenz werden sichtbar; ein reales Ollama-Modell auf dem Pi fehlt noch. |
-| Chat-/Voice-Trace | PASS PRE-LIVE | Release 98: Aufnahme ab einer Sekunde, echte `gpt-transcribe`-Transkription, standardmäßig genau einmaliges Auto-Send, NDJSON-Antwortstream, progressive Anzeige und satzweise lokale Sprachausgabe. Doppel-Senden/-Aufnehmen, abgebrochene oder unvollständige Providerstreams und rohe Providerfehler werden sicher abgefangen. Live-Rollout steht aus. |
+| Chat-/Voice-Trace | PASS LIVE | Release 98: Eine synthetische 5,297-Sekunden-WAV wurde live über `gpt-transcribe` mit vier semantischen Treffern in 1319 ms verarbeitet; Logprüfung ohne Audio-, Transkript- oder Secret-Leak. Echte Chrome-Abnahme: Chat HTTP 200 über Luna, NDJSON-Voice-Stream, Mikrofontaste danach erneut aktiv, Stefan gewählt, `Anna` ausgeschlossen, 0 Konsolenfehler. |
 | Mikrofonwahl | PASS | persistente Geräteauswahl, automatische `devicechange`-Aktualisierung und sicherer Fallback auf den Systemstandard im Browser geprüft |
 | Proaktive Hinweise | PASS | Release 85: automatisch geladener Personal Pulse mit echten Mail-/Kalender-/Health-Signalen, maximal drei neue Hinweise pro Tag, Ruhezeit, persistente Deduplizierung und wirksames Feedback (`hilfreich`, `nicht hilfreich`, `falsch`, `später`, `nie wieder`). Live in Chrome ohne Secret-Leak geprüft. |
 | Personal Event Ledger | PASS | Immutable, idempotent, user-isoliert, Retention/Export/Löschung; Mail-Bodies und Secret-Felder werden an der Speichergrenze abgewiesen. |
@@ -64,7 +64,7 @@ Deployment: Release 97 ist weiterhin auf Fressi und Günni live. Alle vier App-/
 | Private Farbwelten | PASS: Fressi nutzt Korall/Amber, Günni Violett/Mint; Login, PWA-Verzeichnis und Browserkonsole online geprüft. |
 | Private Module | Konzept für Alltag, Inbox, Kalender, Dokumente, Zuhause, Haushalt, Fotos, Finanzen und Reisen in `docs/PERSONAL-INSTANCE-CONCEPT.md`. |
 | Benannte Assistenten | PASS: PWA, Login, Command Center, Voice und OpenClaw-Runtime verwenden `Fressi` beziehungsweise `Günni`; AgentOne bleibt Plattformabdruck. |
-| Voice Chat | PRE-LIVE Release 98: authentifizierte Push-to-talk-Transkription mit `gpt-transcribe`, gestreamte persönliche Modellantwort und lokale Browser-Sprachausgabe sind implementiert. Dies ist noch kein Full-Duplex-Realtime- oder Wake-Word-Chat; Release-98-Rollout und Live-Abnahme stehen aus. |
+| Voice Chat | PASS LIVE Release 98: authentifizierte Push-to-talk-Transkription mit `gpt-transcribe`, gestreamte persönliche Modellantwort und lokale Browser-Sprachausgabe sind ausgerollt und in Chrome live geprüft. Dies ist weiterhin kein Full-Duplex-Realtime- oder Wake-Word-Chat; ein echter Mikrofon-, Safari-/WebKit- oder nativer iOS-Gerätetest ist nicht behauptet. |
 | Private Access | PASS für IMAP/Gmail, Home Connector und iPhone-Web-Pairing; Google Kalender ist als getrennter OAuth-Connector mit Kalenderauswahl vorbereitet, aber auf Günni noch nicht autorisiert. Spotify, Twitch und weitere Dienste bleiben einzeln freigabepflichtig. |
 | Native iOS Companion | Web-Pairing und Kurzbefehle sind nutzbar. Direkter HealthKit-, EventKit- und Hintergrundstandort-Zugriff erfordert weiterhin eine signierte iOS-App, Apple-Entitlements und einen echten Gerätetest. Die Oberfläche kennzeichnet das ausdrücklich und meldet dafür kein Fake-`LIVE`. |
 | Raspberry Connector | PASS: signiertes ARM64-/AMD64-Dockerpaket, Tailscale-Sidecar, 176 echte Home-Assistant-Entitäten und Installation unter `output/connector/`. Der Server ist LIVE/read-only; `./update.sh && ./enable-home-control.sh` aktiviert Lichtfarben, Medien und weitere erlaubte Komfortfunktionen. |
@@ -146,16 +146,16 @@ Deployment: Release 97 ist weiterhin auf Fressi und Günni live. Alle vier App-/
 | Apple-Nativgrenze | OFFEN | Die lokale und Live-Web-Abnahme simuliert den Standalone-Modus in Chrome. Reales Safari/WebKit sowie direkter EventKit-/HealthKit-Zugriff benötigen weiterhin echten iPhone-Test, signierte native App und Apple-Entitlements. |
 | Live-Regression | PASS LIVE | PWA auf PureLink/Fressi/Günni; iPhone-Flow einschließlich QR, Installationsgrenze, Self-Revoke-Retry und Cleanup; Connectoren HTTP 200, OpenClaw-Plugins 68/68, Home 345 Entitäten/15 Domains/275 Controls, Mail, Command Stream, Kommunikation, ICS ehrlich `NOT_CONNECTED`, Jarvis und Planung mit temporärem Cleanup bestanden. Runtime-Konfiguration und redigierter Audit sind healthy. |
 
-### Release 98 · belastbares Push-to-talk und Antwortstream (**PRE-LIVE**)
+### Release 98 · belastbares Push-to-talk und Antwortstream (**PASS LIVE**)
 
 | Prüfung | Status | Nachweis |
 |---|---|---|
-| Audioaufnahme und Transkription | PASS LOKAL | Browser und Server verlangen mindestens 1000 ms Aufnahme. Eine deterministische, synthetische deutsche WAV-Fixture mit dokumentiertem SHA-256 wurde zweimal erfolgreich gegen den noch live laufenden Release-97-Transkriptionsendpunkt verarbeitet. Bericht und Access-Log enthalten weder Audio noch Transkript oder Schlüssel. |
-| Auto-Send und Streaming | PASS LOKAL | „Nach Aufnahme direkt senden“ ist sichtbar, standardmäßig aktiv und im bestehenden Voice-Preference-Speicher persistent. Die Antwort wird als NDJSON gestreamt, progressiv angezeigt und in vollständigen Sätzen lokal gesprochen. |
+| Audioaufnahme und Transkription | PASS LIVE | Browser und Server verlangen mindestens 1000 ms Aufnahme. Die deterministische synthetische WAV-Fixture (5297 ms, SHA-256 `943a7a2e410e0dfb8e22b01cb2f1c49e59a9cea76d930425cf40374146067681`) wurde live über `gpt-transcribe` verarbeitet: vier semantische Treffer, 1319 ms. Bericht und Access-Log enthalten weder Audio noch Transkript oder Schlüssel. |
+| Auto-Send und Streaming | PASS LIVE | „Nach Aufnahme direkt senden“ ist sichtbar, standardmäßig aktiv und persistent. Der live geprüfte NDJSON-Stream wird progressiv angezeigt und in vollständigen Sätzen lokal gesprochen; die Mikrofontaste wird anschließend wieder freigegeben. |
 | Fehler-, Abbruch- und Geheimnisgrenze | PASS LOKAL | Providerfehler werden auf stabile öffentliche Codes abgebildet. Clientabbruch beendet den Upstream; fehlendes Terminalereignis, leerer Stream und Providerfehler erzeugen keinen falschen `done`-Status. Audit enthält nur Modell, Modus, Sprache, Status und Latenz. |
 | Mobile Browserabnahme | PASS LOKAL | Headless Chrome bei 430 × 932 px: eine Transkription führt exakt zu einem Auto-Send; Doppelklick erzeugt nur einen weiteren Stream; während der Antwort wird kein zweiter Mikrofonzugriff gestartet. Screenshot: `output/playwright/release-98-voice-mobile.png`. |
 | Produktgrenze | KLAR | Release 98 ist dateibasierter Push-to-talk mit gestreamter Text-/Sprachantwort. Er behauptet weder Full-Duplex-Realtime-Audio noch Wake Word, echten Mikrofon-Hardwaretest oder native iOS-/Safari-Abnahme. |
-| Deployment und Live-Abnahme | PENDING | Der vollständige lokale Gesamttest ist mit 211/211 Tests grün. Release-Archiv, Image-Build, Rollout auf vier private Container, versionsgebundener PWA-Wechsel sowie echter Günni-Audio-/Kommunikations-Smoke folgen vor `PASS LIVE`. |
+| Deployment und Live-Abnahme | PASS LIVE | Source-Commit `f15d1ac`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-98.tgz`, SHA-256 `bac50692186f3fe835bb202b6fff0c62554dab9f451560b28e1f9a93f7d85ce0`; Image `purelink/agentone:2026.11.07-98`, Digest `sha256:35a93b83bdfba82439ebbebfd3e4804a9309e02f7c7d1b2827066cb6676ae4e4`; vier private Container healthy. PWA auf drei Domains, iPhone-Vollflow, 7/7 Connector-APIs, 68/68 Plugins, Home 345 Entitäten/15 Domains/275 Controls, Mail 1 Konto/50 Datensätze, Command Stream, Jarvis, Planung mit Cleanup und ICS ehrlich `NOT_CONNECTED` bestanden. |
 
 ```powershell
 npm run verify:local

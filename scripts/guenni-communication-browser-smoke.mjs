@@ -28,6 +28,7 @@ try{
   await page.locator('#voice-text').fill('Antworte ausschließlich mit: voice-ui-ok');
   await page.locator('#voice-send').click();
   await page.waitForFunction(()=>/voice-ui-ok/i.test(document.querySelector('.voice-message.agent:last-of-type')?.textContent||'')&&/STREAM/i.test(document.querySelector('#voice-status')?.textContent||''),null,{timeout:60_000});
+  await page.waitForFunction(()=>document.querySelector('#voice-record')?.disabled===false,null,{timeout:5_000});
   const voiceText=await page.locator('.voice-message.agent').last().textContent(),voiceStatus=await page.locator('#voice-status').textContent();
   if(!/voice-ui-ok/i.test(voiceText||''))throw new Error(`Voice-UI fehlgeschlagen: ${voiceText} · ${voiceStatus}`);
   const voiceOptions=await page.locator('#voice-choice option').allTextContents();
@@ -36,5 +37,6 @@ try{
   await page.locator('#voice').screenshot({path:screenshot});
   if(errors.length)throw new Error('Browserfehler: '+errors.join(' | '));
   if(voiceOptions.some(value=>/anna/i.test(value)))throw new Error('Anna wurde nicht aus der Jarvis-Core-Stimmenliste entfernt');
-  console.log(JSON.stringify({origin,release,client,chatHttp:chatResponse.status(),chatModel:chatPayload.model||null,chatUi:'PASS',voiceTextUi:'PASS',microphoneUi:await page.locator('#voice-record').isEnabled(),jarvisCore:voiceOptions[0],annaExcluded:true,consoleErrors:0,screenshot,secretsExposed:false},null,2));
+  const microphoneUi=await page.locator('#voice-record').isEnabled();if(!microphoneUi)throw new Error('Mikrofontaste wurde nach dem Voice-Stream nicht wieder freigegeben');
+  console.log(JSON.stringify({origin,release,client,chatHttp:chatResponse.status(),chatModel:chatPayload.model||null,chatUi:'PASS',voiceTextUi:'PASS',microphoneUi,jarvisCore:voiceOptions[0],annaExcluded:true,consoleErrors:0,screenshot,secretsExposed:false},null,2));
 }finally{await browser.close();}
