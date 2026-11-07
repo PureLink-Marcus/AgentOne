@@ -640,7 +640,7 @@ nicht `LIVE`. Der gestufte Rollout auf Fressi und Günni, vier healthy Container
 sowie die produktive read-only Browserabnahme sind abgeschlossen. Der echte
 WHOOP-Providerroundtrip und ein iPhone-Hardwaretest bleiben externe Abnahmen.
 
-### Release 2026.11.07-104 · kontrollierte persönliche Auswertung (**LOCAL RC**)
+### Release 2026.11.07-104 · kontrollierte persönliche Auswertung (**PASS LIVE**)
 
 Mail Insight führt ausschließlich nach einem expliziten Klick einen exakt an
 Benutzer, Konto, UID und UIDVALIDITY gebundenen, begrenzten Nachrichtentext zu
@@ -657,8 +657,11 @@ Kandidaten freigeben oder ablehnen.
 Die mobile Pairing-Oberfläche heißt eindeutig **Günni Companion · Web-App**.
 Sie funktioniert direkt in Safari und optional als Home-Bildschirm-PWA. Das
 ZIP ist nur eine Anleitung; eine native HealthKit-/EventKit-/Hintergrund-App
-existiert noch nicht. `PASS LIVE` folgt erst nach vollständiger Regression,
-gestuftem Rollout und produktiver Browserabnahme.
+existiert noch nicht. 321/321 Tests, Produktions-Build, mobile
+Chrome-/WebKit-/Security-Abnahme und der gestufte Rollout Günni → Fressi sind
+grün. Alle vier privaten Container laufen healthy; die neuen Read-Endpunkte
+antworten live. Günni zeigt bis zu ausreichenden Gesundheitsdaten ehrlich
+`0 TRENDS` statt Beispielwerte zu erfinden.
 
 ## Primärquellen und Lizenzgrenzen
 

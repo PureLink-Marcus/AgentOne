@@ -128,6 +128,10 @@ unveränderten Kandidaten freigeben. Der mobile Pairing-Pfad heißt durchgehend
 **Günni Companion · Web-App** und ist direkt in Safari nutzbar. Sein ZIP ist
 nur eine optionale Anleitung; direkter HealthKit-, EventKit- und
 Hintergrundstandort-Zugriff bleibt Aufgabe einer künftigen signierten iOS-App.
+Release 104 ist auf Günni und Fressi live: 321/321 Tests, mobiler Chrome- und
+WebKit-Smoke, Pairing-Security, drei neue Read-Endpunkte und vier healthy
+Container sind verifiziert. Ein realer Health-Trend erscheint erst bei
+ausreichender 7/28-Tage-Datenbasis.
 
 ## Administration
 

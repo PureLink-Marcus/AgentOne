@@ -161,13 +161,15 @@ angezeigt.
     Disconnect-Lebenszyklus. 296/296 Node-Tests sind im letzten vollständigen
     Lauf grün. Vier private Container sind healthy; `LIVE` bei WHOOP folgt
     weiterhin erst nach registrierter App und echter Provider-Abnahme.
-17. **Release 104 implementiert, Abnahme läuft:** Einzelne IMAP-Nachrichten
+17. **Release 104 live abgeschlossen:** Einzelne IMAP-Nachrichten
     erhalten eine explizite, lokale Einmalanalyse ohne Body-Persistenz oder
     Anhang-/Remote-Image-Abruf. Health-Trends vergleichen 7 Tage mit der
     vorherigen 28-Tage-Basis und trennen Quellen und Metriken. Memory-
     Änderungen werden als exakte Hash-Kandidaten gestaged und nur durch einen
     Menschen freigegeben. Die Companion-Oberfläche benennt den aktuellen Stand
     ehrlich als Web-App; Anleitung und spätere native iOS-App sind getrennt.
+    321/321 Tests, mobile Chrome-/WebKit-/Security-Abnahme und vier healthy
+    Release-104-Container sind nach dem gestuften Rollout bestätigt.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

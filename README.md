@@ -1,7 +1,7 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-103` (**LIVE auf Fressi und Günni**) mit sicherem WHOOP-OAuth/Sync, tatsächlicher AES-GCM-/IndexedDB-Probe vor dem iPhone-Pairing und read-only Live-Smoke ohne Pairing-Code-Nebenwirkungen
+Status: Release `2026.11.07-104` (**LIVE auf Fressi und Günni**) mit kontrollierter Mail-Einmalanalyse, quellengetrennten 7/28-Tage-Health-Trends, menschlich freigegebenem Memory Review und klarer Companion-Web-App
 
 ## 1. Zweck
 
@@ -37,8 +37,11 @@ der vorherigen 28-Tage-Basis und halten Quellen getrennt; Memory-Änderungen
 laufen über exakte Hash-Kandidaten und menschliche Freigabe. Gleichzeitig wird
 die mobile Oberfläche eindeutig als **Günni Companion · Web-App** bezeichnet.
 Das optionale ZIP ist nur eine Anleitung; eine native iOS-App wird nicht als
-vorhandener Download dargestellt. Der produktive Rollout wird erst nach
-vollständiger Regression und Live-Abnahme als `LIVE` markiert.
+vorhandener Download dargestellt. 321/321 Node-Tests, Produktions-Build,
+mobile Chrome-/WebKit-/Security-Abnahme und der gestufte Rollout Günni →
+Fressi sind grün. Vier private Container laufen healthy mit Release 104; die
+öffentlichen Read-Endpunkte für Mail-Metadaten, Health-Trends und Memory Review
+antworten live ohne Secret-Leak.
 
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle
