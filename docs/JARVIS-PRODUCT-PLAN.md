@@ -510,7 +510,7 @@ Source-Commit `c955ae0`, secret-freies Archiv mit SHA-256
 Image-Digest `sha256:5966bd5e7158961f994d8c2e377ee7e8f8fdd9480348bf902ba6f623cc594d15`
 sind dokumentiert.
 
-### Release 2026.11.07-100 · Learning Lab und kontrollierte Jarvis-Skills (**LOKAL VERIFIZIERT**)
+### Release 2026.11.07-100 · Learning Lab und kontrollierte Jarvis-Skills (**PASS LIVE**)
 
 Das Learning Lab macht aus der Hermes-inspirierten Lernschleife erstmals einen
 bedienbaren, aber eng begrenzten Skill-Lebenszyklus. Als einziger ausführbarer
@@ -536,10 +536,42 @@ werden bei jedem Laden und Ausführen gegeneinander geprüft; manipulierte
 Lifecycle- oder Evaluationsdaten werden abgewiesen. Restart-Persistenz,
 Benutzertrennung und der vollständige HTTP-Lebenszyklus sind lokal verifiziert.
 
-**Noch offen:** Produktiv-Deployment, Live-Chrome-Abnahme und die breite
-Fressi-/Günni-Regression. Frei programmierbare Skills bleiben außerhalb dieses
+**Abnahme:** 257/257 Tests, Production-Build, lokaler API-Smoke und Audit mit
+0 bekannten Produktions-Schwachstellen sind grün. Günni führte den Skill mit
+echten minimierten Mail-Signalen aus; zwei vollständige Containerrotationen
+bestätigten Persistenz. Desktop und 390-px-Mobilansicht liefen in Chrome ohne
+Konsolenfehler. Source-Commit `6a19ff4`, secret-freies Archiv SHA-256
+`2d1288f280ac88875828714e036292cfb2767a9486545e58fb52156c025f2f10`
+und Image-ID
+`sha256:174f4e2409797336524f9f922989288c231d55449496cd32b8248350f3ee1516`
+sind dokumentiert. Frei programmierbare Skills bleiben außerhalb dieses
 Releases und benötigen später eine echte Prozess-/Container-Sandbox sowie
 serverseitig signierte Attestierungen.
+
+### Release 2026.11.07-101 · direktes iPhone-Safari-Pairing (**PASS LIVE**)
+
+Der reale Pairing-Fehler lag nicht im Companion-Backend, sondern in einer
+harten UI-Sperre: normaler iPhone-Safari durfte trotz HTTPS, WebCrypto und
+IndexedDB keinen Pairing-Request senden. Release 101 entfernt diese
+Standalone-Pflicht. Pairing funktioniert sofort in Safari; die installierbare
+Home-Bildschirm-App bleibt als optionaler dauerhafter Startpunkt sichtbar.
+
+Der sechsstellige Code kann aus der Zwischenablage übernommen werden. Ein
+Fragmentcode wird vor dem ersten API-Aufruf aus der URL entfernt. Der
+Gerätetoken bleibt AES-GCM-verschlüsselt in IndexedDB; Reload, Status,
+Self-Revoke, Fehler-Retry, Recovery und Vault-Rollback behalten ihre
+fail-safe Reihenfolge. Der QR enthält weiterhin nur die öffentliche
+`/iphone`-Basisadresse und weder Code noch Token.
+
+**Abnahme:** 257/257 Tests, lokale Release-Verifikation, Production-Build,
+Pairing-Sicherheits-Smoke und echter HTTPS-Chrome-Flow auf Günni sind grün.
+Der Ablauf `QR → Safari-Pair → PWA-Pair → Status → Ingest → Reload →
+Self-Revoke-Retry → Recover → Vault-Rollback` endete mit 0 Konsolenfehlern,
+54-px-Touchzielen und ohne Secret-Leak. Source-Commit `aa1a481`, Archiv
+SHA-256 `af8a5c4a4b25b981128ef70cc7a3d23e7eaef094eda3cf47ec5399107d626f75`
+und Image-ID
+`sha256:6e20cd329733ae65a735c8a9e0a5aa20b6c1195f95560a784c3d5bbaefec16f1`
+sind live auf vier healthy privaten Containern ausgerollt.
 
 ## Primärquellen und Lizenzgrenzen
 

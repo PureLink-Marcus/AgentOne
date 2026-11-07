@@ -64,9 +64,16 @@ Manipulierte Status- oder Evaluationszeilen werden daher fail-closed
 abgewiesen. Skill und sichere Ausführungsnachweise überleben einen
 Serverneustart.
 
-**Status:** lokal verifiziert und für Release 100 vorbereitet. Ein
-Produktiv-Rollout und eine Live-Abnahme auf Fressi und Günni sind an dieser
-Stelle noch nicht behauptet.
+**Status:** Release 100 ist produktiv ausgerollt und live verifiziert. Günni
+führte `personal-briefing.v1` nach Draft, serverseitigem Test, Exact-Hash-
+Freigabe und Aktivierung mit echten minimierten Mail-Signalen aus. Zwei
+vollständige Containerrotationen bestätigten Persistenz und Benutzertrennung;
+alle vier privaten App-/Access-Container blieben healthy. Source-Commit
+`6a19ff4`, secret-freies Archiv SHA-256
+`2d1288f280ac88875828714e036292cfb2767a9486545e58fb52156c025f2f10`
+und Image-ID
+`sha256:174f4e2409797336524f9f922989288c231d55449496cd32b8248350f3ee1516`
+sind der abgenommene Release-Stand.
 
 ## Durchgesetzte Grenzen
 

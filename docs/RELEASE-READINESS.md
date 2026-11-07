@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-99` (**PASS LIVE**)
-Deployment: Release 99 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Er ersetzt den flüchtigen IMAP-50er-Snapshot durch einen persistenten UID-/UIDVALIDITY-Sync und ergänzt ein klickbares Mail Review Center.
+Release: `2026.11.07-101` (**PASS LIVE**)
+Deployment: Release 101 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Direktes iPhone-Pairing funktioniert nun in normalem Safari, die Home-Bildschirm-PWA bleibt optional.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LIVE | Release 99: 229/229 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build und lokaler API-Smoke bestanden; der ungenutzte Body-Parser wurde entfernt und der Produktions-Audit meldet 0 Schwachstellen. |
+| Lokale Anwendung | PASS LIVE | Release 101: 257/257 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build, lokaler API-Smoke und Produktions-Audit mit 0 bekannten Schwachstellen bestanden. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS LIVE | Release 98 besteht auf Günni erneut den vollständigen Webflow `QR-BASE → INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → SELF-REVOKE-RETRY → RECOVER → VAULT-ROLLBACK`. Der Serverwiderruf kommt vor dem lokalen Tresor-Cleanup; Netz-/503-Fehler behalten den verschlüsselten Token für einen sicheren Retry. Die Abnahme läuft in echtem Chrome mit iPhone-UA und simuliertem Standalone, nicht auf Safari/WebKit. |
+| Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 101 besteht auf Günni den Flow `QR-BASE → SAFARI-PAIR → PWA-PAIR → STATUS → INGEST → RELOAD → SELF-REVOKE-RETRY → RECOVER → VAULT-ROLLBACK`. Safari ist nicht mehr künstlich gesperrt; PWA-Installation ist optional. Der Serverwiderruf kommt vor dem lokalen Tresor-Cleanup, Netz-/503-Fehler behalten den AES-GCM-geschützten Token. Die Abnahme läuft in echtem Chrome mit iPhone-UA; ein echter Safari-/WebKit-Hardwaretest bleibt separat. |
 | Gmail ohne OAuth-Client | PASS LIVE | Release 99: Günni hält 500 reale IMAP-Metadaten mit persistentem UID-/UIDVALIDITY-Cursor. Zwei direkte inkrementelle Läufe endeten im zweiten Lauf mit 0 Fetches und 0 neuen Datensätzen; nach vollständiger Containerrotation waren alle 500 Datensätze ohne neuen Sync verfügbar. Bodies, Snippets, Anhänge und Roh-Header werden weder geladen noch gespeichert. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -168,6 +168,25 @@ Deployment: Release 99 ist auf Fressi und Günni live; alle vier App-/Access-Con
 | Gesamtabnahme | PASS LIVE | 229/229 Tests, Production-Build, lokaler API-Smoke, zwei echte Günni-Syncs, Restart-Persistenz und breite Live-Regression grün. PWA auf drei Domains, iPhone-Vollflow, Home 345/15/275, 68/68 Plugins, sieben Connector-APIs, Command Stream, Jarvis, Planung, ICS und Voice bestanden. |
 | Produktgrenze | KLAR | IMAP bleibt vollständig read-only; SMTP wird nur verifiziert. Es gibt keinen automatischen Versand, keine Löschung oder Provider-Mutation. Google Kalender bleibt eine getrennte OAuth-/ICS-Freigabe. |
 | Deployment | PASS LIVE | Source-Commit `c955ae0`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-99.tgz`, SHA-256 `c591f0551f4eef66c30c168fb549421e526a9605acab2b1728676b7921fd4315`; Image `purelink/agentone:2026.11.07-99`, Digest `sha256:5966bd5e7158961f994d8c2e377ee7e8f8fdd9480348bf902ba6f623cc594d15`; vier private Container healthy und redigierter 20-Minuten-Logaudit ohne Fehler. |
+
+### Release 100 · kontrolliertes Learning Lab (**PASS LIVE**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Skill-Lifecycle | PASS LIVE | `personal-briefing.v1` durchläuft serverdefinierten Draft, deterministische Evaluation, Exact-Hash-Human-Approval, getrennte Aktivierung, read-only Ausführung und kontrollierten Rollback. Die Tool-Allowlist ist fest auf `mail.read`, `calendar.read` und `health.summary` begrenzt. |
+| Sicherheitsgrenzen | PASS LIVE | Public API und Audit enthalten keine Procedures, Prompts, Payloads, Evidence, Rohdaten oder Secrets. Benutzertrennung, Restart-Persistenz und fail-closed Prüfung manipulierter Lifecycle-/Evaluationsdaten sind abgenommen. |
+| Ergebnisansicht | PASS LIVE | Günni führte den aktiven Skill mit echten minimierten Mail-Signalen aus. Desktop und 390-px-Mobilansicht zeigen das redigierte Ergebnis; 0 Konsolenfehler. |
+| Deployment | PASS LIVE | 257/257 Tests; Source-Commit `6a19ff4`; Archiv SHA-256 `2d1288f280ac88875828714e036292cfb2767a9486545e58fb52156c025f2f10`; Image-ID `sha256:174f4e2409797336524f9f922989288c231d55449496cd32b8248350f3ee1516`; zwei vollständige Rotationen, vier private Container healthy. |
+
+### Release 101 · direktes Safari-Pairing (**PASS LIVE**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Ursachenbehebung | PASS LIVE | Der reale Nutzerpfad erzeugte zuvor nur Seitenaufrufe und keinen Confirm-Request, weil die UI Safari bis zur PWA-Installation hart sperrte. HTTPS, WebCrypto und IndexedDB genügen nun; Installation ist eine sichtbare Empfehlung statt Voraussetzung. |
+| Sicherer Handoff | PASS LIVE | Fragmentcode wird übernommen und vor dem ersten API-Aufruf aus der URL entfernt. Der QR enthält nur `PUBLIC_ORIGIN+/iphone`; Code und Gerätetoken erscheinen weder in QR, Query, Audit, DOM noch Screenshots. |
+| Safari- und PWA-Flow | PASS LIVE WEB-FLOW | `QR → Safari-Pair → PWA-Pair → Status → Ingest → Reload → Self-Revoke-Retry → Recover → Vault-Rollback`; AES-GCM-IndexedDB, 54-px-Touchziele, keine Überbreite, 0 Konsolenfehler. Ein echter Safari-/WebKit-Gerätetest bleibt offen. |
+| Regression | PASS LIVE | 257/257 Tests, lokale Release-Verifikation, Production-Build, API-Smoke, Pairing-Security-Smoke, PWA auf PureLink/Fressi/Günni und redigierter Container-/Auditcheck grün; 0 bekannte Produktions-Schwachstellen. |
+| Deployment | PASS LIVE | Source-Commit `aa1a481`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-101.tgz`, SHA-256 `af8a5c4a4b25b981128ef70cc7a3d23e7eaef094eda3cf47ec5399107d626f75`; Image `purelink/agentone:2026.11.07-101`, ID `sha256:6e20cd329733ae65a735c8a9e0a5aa20b6c1195f95560a784c3d5bbaefec16f1`; vier private Container healthy. |
 
 ```powershell
 npm run verify:local

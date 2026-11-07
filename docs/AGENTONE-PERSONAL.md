@@ -54,9 +54,19 @@ die redigierte, für den angemeldeten Benutzer bestimmte Briefing-Antwort.
 Verfahren, Prompts, Payloads, Evidence, Mail-/Health-Rohdaten und Secrets werden
 nicht öffentlich projiziert oder als Ausführungsnachweis gespeichert.
 Lifecycle- und Testattestierung werden auch nach einem Neustart erneut geprüft;
-direkt manipulierte Datenbankzustände führen zu einem fail-closed Fehler. Der
-Stand ist lokal verifiziert und für Release 100 vorbereitet, aber noch nicht
-als Live-Rollout auf Fressi oder Günni dokumentiert.
+direkt manipulierte Datenbankzustände führen zu einem fail-closed Fehler.
+Release 100 ist auf Fressi und Günni live; Günni hat den Skill mit echten
+minimierten Mail-Signalen ausgeführt und den Zustand über zwei vollständige
+Containerrotationen behalten.
+
+Release 101 entfernt die irrtümliche Standalone-Zwangssperre des iPhone-
+Companions. Ein iPhone kann nun direkt in Safari koppeln, wenn HTTPS,
+WebCrypto und IndexedDB verfügbar sind. Die Home-Bildschirm-App bleibt für
+einen eigenen Startpunkt und getrennten Gerätespeicher empfohlen, ist aber
+keine technische Voraussetzung mehr. Pairing-Code und Geräteschlüssel werden
+weiterhin nicht in Query, QR, Audit oder sichtbarer Oberfläche persistiert;
+der Gerätetoken liegt AES-GCM-verschlüsselt in IndexedDB und wird beim
+Self-Revoke erst nach bestätigtem Serverwiderruf entfernt.
 
 ## Administration
 
