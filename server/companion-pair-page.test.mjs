@@ -8,6 +8,9 @@ test('mobile companion page is installable, secret-free and escapes instance bra
   assert.doesNotMatch(html,/<script>alert\(1\)<\/script>/);
   assert.match(html,/companion-app\.js\?v=2026\.11\.07-91/);
   assert.match(html,/HealthKit benötigt weiterhin die signierte native Companion-App/);
+  assert.match(html,/IPHONE-CHECK/);
+  assert.match(html,/Zum Home-Bildschirm/);
+  assert.match(html,/local-disconnect/);
   assert.doesNotMatch(html,/a1d_[A-Za-z0-9_-]+/);
   assert.equal(manifest.start_url,'/iphone');
   assert.equal(manifest.display,'standalone');
@@ -15,10 +18,14 @@ test('mobile companion page is installable, secret-free and escapes instance bra
 
 test('mobile companion script uses fragment handoff and encrypted IndexedDB storage',()=>{
   assert.match(companionPairJs,/location\.hash/);
+  assert.doesNotMatch(companionPairJs,/location\.search/);
   assert.match(companionPairJs,/indexedDB/);
   assert.match(companionPairJs,/AES-GCM/);
   assert.match(companionPairJs,/crypto\.subtle\.generateKey/);
   assert.match(companionPairJs,/vaultPreflight/);
+  assert.match(companionPairJs,/window\.isSecureContext/);
+  assert.match(companionPairJs,/Home-Bildschirm-App/);
+  assert.match(companionPairJs,/LOKAL GETRENNT/);
   assert.match(companionPairJs,/serviceWorker\.register/);
   assert.match(companionPairJs,/agentone\/companion\/confirm/);
   assert.match(companionPairJs,/agentone\/companion\/status/);

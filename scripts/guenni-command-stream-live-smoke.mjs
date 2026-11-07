@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
+import { chromium } from 'playwright';
+import { loadEnv } from '../server/state.mjs';
+
+const env=loadEnv(path.resolve('.')),origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,''),username=env.AGENTONE_GUENNI_USER,password=env.AGENTONE_GUENNI_PASSWORD,release='2026.11.07-93';
+if(!origin||!username||!password)throw new Error('Günni-Zugang fehlt');
+const browser=await chromium.launch({channel:'chrome',headless:true}),context=await browser.newContext({viewport:{width:1440,height:1000},locale:'de-DE'}),page=await context.newPage(),errors=[];
+page.on('pageerror',error=>errors.push(error.message));page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+try{
+  await page.goto(origin+'/login',{waitUntil:'domcontentloaded'});await page.getByLabel('Benutzername').fill(username);await page.getByLabel('Passwort').fill(password);await page.getByRole('button',{name:/Sicher anmelden/}).click();await page.waitForURL(origin+'/');
+  const worker=await page.evaluate(()=>fetch('/service-worker.js',{cache:'no-store'}).then(response=>response.text()));assert.match(worker,new RegExp('agentone-shell-'+release.replaceAll('.','\\.')));
+  await page.locator('[data-view="tasks"]').click();const center=page.locator('#personal-command-center');await center.waitFor();const mailRun=center.locator('[data-command-run-id]').filter({hasText:'Postfach aktualisieren'}).first();await mailRun.waitFor();await mailRun.click();await center.locator('[data-command-step-type="TOOL"][data-command-step-status="COMPLETED"]').waitFor();
+  const payload=await page.evaluate(()=>fetch('/agentone/commands?limit=10',{cache:'no-store'}).then(response=>response.json())),run=payload.runs.find(item=>item.label==='Postfach aktualisieren');assert.equal(run.status,'COMPLETED');const timeline=await page.evaluate(id=>fetch('/agentone/commands/'+id,{cache:'no-store'}).then(response=>response.json()),run.id),serialized=JSON.stringify(timeline);assert.deepEqual(timeline.steps.map(step=>step.type),['OBSERVE','TOOL','RESULT']);assert.equal(timeline.steps[1].operation,'mail.scan');assert.equal(timeline.steps[1].access,'read');assert.equal(/input|output|payloadHash|actor|password|token/i.test(serialized),false);
+  await mkdir(path.resolve('output/playwright'),{recursive:true});const desktop=path.resolve('output/playwright/guenni-command-stream-release-93-desktop.png'),mobile=path.resolve('output/playwright/guenni-command-stream-release-93-mobile.png');await center.screenshot({path:desktop});const mobilePage=await context.newPage();await mobilePage.setViewportSize({width:390,height:844});await mobilePage.goto(origin,{waitUntil:'domcontentloaded'});await mobilePage.locator('[data-view="tasks"]').click();const mobileCenter=mobilePage.locator('#personal-command-center');await mobileCenter.waitFor();await mobileCenter.locator('[data-command-run-id]').first().waitFor();const layout=await mobilePage.evaluate(()=>{const width=document.documentElement.clientWidth,rect=document.querySelector('#personal-command-center').getBoundingClientRect();return {width,left:Math.round(rect.left),right:Math.round(rect.right)};});assert.ok(layout.left>=0&&layout.right<=layout.width,JSON.stringify(layout));await mobilePage.screenshot({path:mobile,fullPage:true});await mobilePage.close();assert.deepEqual(errors,[]);
+  process.stdout.write(JSON.stringify({origin,release,run:{id:run.id,status:run.status,operation:timeline.steps[1].operation,access:timeline.steps[1].access},steps:timeline.steps.length,desktop,mobile,secretsExposed:false,contentExposed:false},null,2)+'\n');
+}finally{await browser.close();}

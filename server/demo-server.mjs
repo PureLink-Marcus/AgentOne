@@ -60,7 +60,8 @@ state.db.exec(`CREATE TABLE IF NOT EXISTS personal_ics_calendar_state(
   user_id TEXT PRIMARY KEY,status TEXT NOT NULL,event_count INTEGER NOT NULL DEFAULT 0,
   imported_at TEXT,last_error_code TEXT,updated_at TEXT NOT NULL
 );`);
-const companionPepper=env.AGENTONE_SECRET_KEY||env.AGENTONE_INTERNAL_API_TOKEN||'agentone-local-companion';
+const companionPepper=String(env.AGENTONE_COMPANION_PEPPER||env.AGENTONE_SECRET_KEY||'');
+const companionPepperReady=Buffer.byteLength(companionPepper,'utf8')>=32;
 const healthMasterKey=env.AGENTONE_HEALTH_MASTER_KEY||env.AGENTONE_DEMO_MASTER_KEY||'';
 const healthCryptoReady=Boolean(healthMasterKey);
 const healthCryptoEnv=healthCryptoReady?Object.freeze({AGENTONE_DEMO_MASTER_KEY:healthMasterKey}):Object.freeze({});
@@ -355,6 +356,7 @@ async function api(req,res,url){
   }
   if(url.pathname==='/api/internal/personal/companion'||url.pathname.startsWith('/api/internal/personal/companion/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
+    if(!companionPepperReady)return json(res,503,{error:'COMPANION_SECRET_NOT_CONFIGURED',message:'Der iPhone-Dienst ist serverseitig nicht sicher konfiguriert.',secretsExposed:false});
     try{
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/companion')return json(res,200,companionStatus(state.db,userId));
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/companion/status'){const token=String(req.headers['x-agentone-device-token']||'');return json(res,200,companionDeviceStatus(state.db,{userId,deviceToken:token,pepper:companionPepper}));}
@@ -363,7 +365,7 @@ async function api(req,res,url){
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/companion/ingest'){const token=String(req.headers['x-agentone-device-token']||''),device=authorizeCompanion(state.db,{userId,deviceToken:token,pepper:companionPepper}),input=await body(req),scope={health:'health.summary',location:'location.temporary',calendar:'calendar.read',reminders:'reminders.read'}[input.kind];if(!scope||!device.scopes.includes(scope))return json(res,403,{error:'scope_not_granted'});const event=storeCompanionEvent(state.db,{userId,deviceId:device.id,kind:input.kind,input:input.data});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.event.ingested',outcome:'OK',detail:JSON.stringify({deviceId:device.id,eventId:event.id,kind:event.kind,expiresAt:event.expiresAt,secretsExposed:false})});return json(res,201,{event});}
       const deviceMatch=url.pathname.match(/^\/api\/internal\/personal\/companion\/devices\/([^/]+)$/);if(req.method==='DELETE'&&deviceMatch){const result=revokeCompanion(state.db,{userId,deviceId:decodeURIComponent(deviceMatch[1])});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.device.revoked',outcome:result.revoked?'OK':'NOT_FOUND',detail:JSON.stringify({deviceId:result.deviceId,eventsDeleted:result.eventsDeleted,secretsExposed:false})});return json(res,result.revoked?200:404,result);}
       return json(res,405,{error:'method_not_allowed'});
-    }catch(error){return json(res,error.status||400,{error:error.code||'COMPANION_REQUEST_FAILED',message:String(error.message||error).slice(0,180),secretsExposed:false});}
+    }catch(error){const retryAfter=Number(error.retryAfterSeconds);return json(res,error.status||400,{error:error.code||'COMPANION_REQUEST_FAILED',message:String(error.message||error).slice(0,180),retryAfterSeconds:Number.isFinite(retryAfter)?retryAfter:null,secretsExposed:false},Number.isFinite(retryAfter)?{'retry-after':String(Math.max(1,Math.ceil(retryAfter)))}:{});}
   }
   if(url.pathname==='/api/internal/personal/governance'||url.pathname.startsWith('/api/internal/personal/governance/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});

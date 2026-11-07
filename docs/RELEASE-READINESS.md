@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-92`
-Deployment: Release 92 ist lokal vollständig abgenommen und wird als nächstes auf die beiden Personal-Instanzen ausgerollt. Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import erzeugen echte benutzergebundene Runs.
+Release: `2026.11.07-93`
+Deployment: Release 92 ist auf Fressi und Günni live. Release 93 behebt den iPhone-Pairing-Lockout hinter Coolify/Traefik, vereinheitlicht den mobilen Apple-Assistenten und ist lokal vollständig abgenommen; der Remote-Rollout folgt nach dem Image-Build.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS | Release 92: 177/177 Node-Tests, Vite-Production-Build, reversibler Plattform-Smoke und dedizierte Chrome-Abnahme bestanden. |
+| Lokale Anwendung | PASS | Release 93: 182/182 Node-Tests, Vite-Production-Build, Pairing-Security-Smoke sowie dedizierte Chrome-Abnahmen bestanden. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, 343 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS für Web-Companion | Release 91: öffentlicher mobiler Pairing-Wizard, Code-Übergabe im URL-Fragment, AES-GCM/IndexedDB-Tokenablage, Token-Status, explizites Health-/Standort-Opt-in, Geräteliste, Widerruf und Ereignislöschung. Der Browser-Smoke prüft `Pair → Confirm → Status → Ingest → Revoke`; native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
+| Apple-Schnellstart | PASS für Web-Companion | Release 93: einheitlicher 4-Schritt-Assistent, sichtbarer Einmalcode, Fragment-Link/Share, Status-Refresh, Erneuern und Widerruf. Das Reverse-Proxy-Limit trennt reale Mobilclients; ein persistentes Benutzerlimit, atomare Code-Einlösung und fail-closed Server-Pepper schützen den Flow. Die iPhone-Seite prüft HTTPS/WebCrypto/IndexedDB sichtbar. Native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
 | Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -24,7 +24,7 @@ Deployment: Release 92 ist lokal vollständig abgenommen und wird als nächstes 
 | Mobiler Gateway-Login | PASS | AgentOne-Formular → signierte Session → Trusted Proxy → WebSocket; kein Gateway-Token-Dialog |
 | Produktidentität | PASS | Auth-Realm, Agentenname und mobile Chatoberfläche zeigen `AgentOne` |
 | Command Center | PASS | eigene AgentOne-Hülle mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools und Schnellaktionen; keine sichtbare OpenClaw-Navigation |
-| Command-Stream Center | PASS LOKAL | Release 92 persistiert echte Runs für Personal Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import. Der Health-Import benötigt vor der Ausführung ein serverbestätigtes Human Gate für den exakten Payload-Hash. Die öffentliche Timeline enthält ausschließlich freigegebene Run-/Step-Metadaten und niemals Input, Output oder Rohpayload. Desktop und 390-px-Mobilansicht wurden in Google Chrome geprüft. |
+| Command-Stream Center | PASS LIVE | Release 92 persistiert echte Runs für Personal Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import. Günnis echter IMAP-Scan erzeugte live `OBSERVE → TOOL → RESULT`; die öffentliche Timeline enthält ausschließlich freigegebene Run-/Step-Metadaten. Desktop und 390-px-Mobilansicht wurden in Google Chrome geprüft. |
 | Bedienbarer AI Core | PASS | Luna-Standard, Terra für Dokumente/Bilder und Sol für komplexe Aufgaben synchronisieren sich persistent mit dem HUD; Ollama bleibt bis zum Connector-Healthcheck ehrlich gesperrt. |
 | Lokaler Modellpfad | READY | Connector v4 und App-Pfad sind getestet, allowlist-begrenzt und signiert. Live-Status, `LOCAL`-Datenschutz und Latenz werden sichtbar; ein reales Ollama-Modell auf dem Pi fehlt noch. |
 | Chat-/Voice-Trace | PASS | Release 83: echter Browserchat und Voice-Texteingabe antworten über Luna mit HTTP 200; PWA-Erststart bleibt stabil, keine Konsolenfehler. Jarvis Core wählt Stefan, Gerätestimme `Anna` ist ausgeschlossen. |
@@ -82,7 +82,18 @@ Deployment: Release 92 ist lokal vollständig abgenommen und wird als nächstes 
 | Apple-Health-Import mit serverbestätigtem Exact-Payload-Gate | PASS | Browserimport mit `OBSERVE → TOOL → APPROVAL → RESULT`; falsche/fehlende Human-Attestierung wird mit HTTP 403 abgewiesen |
 | Chrome Desktop/Mobil: Center öffnen, Run-Details aufrufen und Statuswechsel prüfen | PASS | `output/playwright/command-stream-release-92-desktop.png` und `command-stream-release-92-mobile.png`; kein Root-Horizontalscroll bei 390 px |
 | Production-Build | PASS | Vite-Production-Build erfolgreich |
-| Deployment, PWA-Cachewechsel und Remote-Smoke | OFFEN | Wird im nächsten Release-Schritt ergänzt |
+| Deployment, PWA-Cachewechsel und Remote-Smoke | PASS | Vier Personal-Container healthy auf Image `purelink/agentone:2026.11.07-92`; PWA, Günni Command Stream, Jarvis/Kommunikation, Connectoren und echter Gmail-IMAP-Scan live bestanden |
+
+### Release 93 · iPhone-Pairing
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Reverse-Proxy-Clienttrennung und `Retry-After` | PASS LOKAL | Zwei Mobilclients hinter derselben vertrauenswürdigen Proxy-IP besitzen getrennte, operationsbezogene Buckets |
+| Persistentes Pairing-Limit, atomarer Einmalcode und Benutzertrennung | PASS LOKAL | Cross-User-, Replay-, Scope-, Revoke- und Log-Redaction-Smoke bestanden; Code und Token werden nie erneut ausgegeben |
+| Einheitlicher Apple-Assistent und iPhone-PWA-Diagnose | PASS LOKAL | 4 Schritte, explizite Rechte, Code/Fragment-Link/Share, Status, Erneuern und Widerruf; 390 px ohne horizontale Überbreite |
+| Stable Companion-Server-Secret | BEREIT ZUM ROLLOUT | Rollout erzeugt einmalig einen geschützten 256-Bit-Pepper im Coolify-Serviceverzeichnis und injiziert ihn nur in die beiden App-Container; Werte erscheinen weder in Logs noch im Browser |
+| Gesamttests und Production-Build | PASS | 182/182 Node-Tests, Pairing-Security-Smoke und Vite-Production-Build grün |
+| Deployment und Live-iPhone-Smoke | OFFEN | Nach Image-Build: `Pair → Status → Ingest → Revoke`, PWA-Cache 93 und vier healthy Container prüfen |
 
 ```powershell
 npm run verify:local

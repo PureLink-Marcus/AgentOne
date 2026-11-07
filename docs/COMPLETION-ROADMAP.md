@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-91` ist der zuletzt live ausgerollte Stand und erweitert Release 90 um ein tatsächlich nutzbares iPhone-Web-Pairing. Release `2026.11.07-92` ist lokal abgenommen: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Der Health-Import bleibt bis zu einem serverbestätigten Human Gate für den exakten Payload-Hash gesperrt. 177/177 Tests, Production-Build sowie Chrome Desktop/Mobil sind bestanden; Deployment und Remote-Nachweis folgen im Release-Schritt. Auf Günni sind aktuell:
+Release `2026.11.07-92` ist auf Fressi und Günni live: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Günnis realer IMAP-Scan ist als payloadfreie Timeline live nachgewiesen. Release `2026.11.07-93` härtet das iPhone-Web-Pairing gegen gemeinsame Reverse-Proxy-IPs, persistiert Fehlversuchslimits und vereinheitlicht Code, Link, Share, Status, Erneuern und Widerruf in einem mobilen Assistenten. 182/182 Tests, Production-Build und lokale Pairing-Security-Abnahme sind bestanden; der Remote-Rollout folgt im Release-Schritt. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
@@ -28,7 +28,7 @@ angezeigt.
 
 1. Personal Event Ledger als einzige persistente Zeitachse für Mail, Kalender,
    Health und Connector-Ergebnisse an die API anbinden.
-2. **Release 92 implementiert und lokal abgenommen:** Command Stream an Briefing,
+2. **Release 92 implementiert, deployed und live abgenommen:** Command Stream an Briefing,
    IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import anbinden. Die
    öffentliche Timeline zeigt nur freigegebene Metadaten; Input, Output,
    Rohpayloads, Secrets und Gesundheitswerte bleiben serverseitig. Der
@@ -41,9 +41,9 @@ angezeigt.
    anbinden; keine autonome Selbstfreigabe.
 6. Alle festen `LIVE`-Texte entfernen und Status ausschließlich aus
    Healthchecks oder gespeicherten Ergebnissen ableiten.
-7. **Release 92 lokal bestanden, Remote-Schritt offen:** PWA-Cachewechsel,
-   Deployment und Git-Push auf die vereinbarten Branches ausführen; danach
-   die realen Remote-Nachweise in der Release Readiness ergänzen.
+7. **Release 92 live bestanden; Release 93 lokal bestanden:** Der nächste
+   PWA-Cachewechsel rollt den gehärteten iPhone-Assistenten und einen stabilen,
+   nur serverseitigen Companion-Pepper auf beide Personal-Instanzen aus.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

@@ -182,8 +182,26 @@ Seiteneffekt beim Retry doppelt auslösen.
 
 **Abnahmestand:** 177/177 automatisierte Tests, Production-Build sowie Chrome
 Desktop/Mobil sind bestanden. Die Screenshots liegen unter
-`output/playwright/command-stream-release-92-*.png`. Deployment und
-PWA-Cache-Nachweis bleiben bis zum Remote-Rollout offen.
+`output/playwright/command-stream-release-92-*.png`. Release 92 ist auf beiden
+Personal-Instanzen live; Günnis echter IMAP-Scan wurde als sicherer
+`OBSERVE → TOOL → RESULT`-Lauf nachgewiesen.
+
+#### Release 2026.11.07-93 · iPhone-Gerätepfad
+
+Der iPhone-Pfad ist kein weiterer Kachel-Platzhalter, sondern ein geschlossener
+Pairing-Lebenszyklus: Berechtigungen wählen, Einmalcode erzeugen, Code oder
+Fragment-Link ans iPhone übergeben, sicheren Speicher prüfen, Gerät bestätigen,
+Status lesen und bei Bedarf widerrufen. Der mobile Companion zeigt HTTPS,
+WebCrypto und IndexedDB sichtbar an und erklärt die Installation auf dem
+Home-Bildschirm.
+
+Die Infrastruktur trennt reale Client-Adressen auch hinter Coolify/Traefik,
+führt zusätzlich ein persistentes benutzergebundenes Fehlversuchslimit und
+liefert ein korrektes `Retry-After`. Code-Einlösung, Ablauf und Widerruf sind
+atomar; Code und Gerätetoken werden nur einmal ausgegeben. Ein stabiler
+Companion-Pepper bleibt ausschließlich in der geschützten Serverumgebung.
+HealthKit, EventKit und Hintergrundstandort bleiben bis zur signierten nativen
+iOS-App weiterhin ehrlich `PREPARED`.
 
 ## Priorisierte vertikale Lieferpakete
 
