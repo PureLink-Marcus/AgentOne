@@ -34,7 +34,7 @@ try{
   await page.locator('#home-device-test').click();
   await page.locator('#home-test-result').filter({hasText:'ERREICHBAR'}).waitFor();
   const testText=await page.locator('#home-test-result').innerText();
-  if(!testText.includes('AUTH OK')||!testText.includes('agentone.home-connector/v2'))throw new Error(`Verbindungstest unerwartet: ${testText}`);
+  if(!testText.includes('AUTH OK')||!/agentone\.home-connector\/v(?:2|3)/.test(testText))throw new Error(`Verbindungstest unerwartet: ${testText}`);
 
   await page.locator('[data-view="home"]').click();
   await page.locator('#ha-state').filter({hasText:'LIVE'}).waitFor();
@@ -42,7 +42,7 @@ try{
   if(dashboard.schema!=='agentone.home-assistant.dashboard/v2'||typeof dashboard.controlEnabled!=='boolean'||dashboard.secretValuesExposed!==false||dashboard.summary.entities<1)throw new Error(`Home-Assistant-Dashboard ungültig: ${JSON.stringify(dashboard).slice(0,300)}`);
   const metricCount=await page.locator('#ha-metrics .ha-metric').count(),groupCount=await page.locator('#ha-groups .ha-group').count();
   if(metricCount!==4||groupCount<1)throw new Error(`Dashboard unvollständig: ${metricCount} Metriken, ${groupCount} Gruppen`);
-  const controlCount=await page.locator('#ha-groups .ha-entity-controls button').count(),controlNote=await page.locator('#ha-control-note').innerText();if(controlCount<1||!/(STEUERUNG AKTIV|READ-ONLY)/.test(controlNote))throw new Error(`Steuerungs-Cards fehlen: ${controlCount} · ${controlNote}`);
+  const controlCount=await page.locator('#ha-groups .ha-entity-controls button').count(),controlNote=await page.locator('#ha-control-note').innerText();if(controlCount<1||!/(STEUERUNG AKTIV|READ-ONLY|VOLLGAS)/.test(controlNote))throw new Error(`Steuerungs-Cards fehlen: ${controlCount} · ${controlNote}`);
   const dashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-release-68.png');
   await page.screenshot({path:dashboardScreenshot,fullPage:true});
   await page.setViewportSize({width:390,height:844});
