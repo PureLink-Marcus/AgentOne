@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-94` ist auf Fressi und Günni live. Release `2026.11.07-95` ist als nächster Stand lokal abgenommen, aber in diesem Dokumentstand noch nicht live ausgerollt. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; die neue Zentrale **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt, einschließlich Abdeckung, Methodentrennung und Datenqualität. 198/198 Tests, Production-Build, lokaler Plattform-Smoke sowie dedizierte Health- und iPhone-Chrome-Smokes sind grün. Auf Günni sind aktuell:
+Release `2026.11.07-95` ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy und der versionsgebundene PWA-Stand 95 ist auf PureLink, Fressi und Günni bestätigt. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; die neue Zentrale **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt, einschließlich Abdeckung, Methodentrennung und Datenqualität. 198/198 Tests, Production-Build, lokaler Plattform-Smoke sowie dedizierte Health- und iPhone-Chrome-Smokes sind grün. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
@@ -47,10 +47,12 @@ angezeigt.
 7. **Release 92 und 93 live bestanden:** Der PWA-Cachewechsel, der gehärtete
    iPhone-Assistent und ein stabiler, nur serverseitiger Companion-Pepper sind
    auf beiden Personal-Instanzen aktiv.
-8. **Release 95 lokal bestanden, Rollout ausstehend:** Health & Recovery ist als
+8. **Release 95 lokal und live bestanden:** Health & Recovery ist als
    Ergebnisansicht statt Setup-Kachel verdrahtet. Das iPhone-Pairing behandelt
    zweite Geräte, iOS-Speichertrennung und fehlgeschlagene lokale Tokenablage
-   fail-closed. Eine reale Safari-/WebKit-Geräteabnahme bleibt getrennt.
+   fail-closed. PWA, iPhone-Webflow, Connectoren, Home, Mail, Command Stream,
+   Planung, Jarvis und Chat/Voice-Text sind live geprüft. Eine reale
+   Safari-/WebKit-Geräteabnahme bleibt getrennt.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

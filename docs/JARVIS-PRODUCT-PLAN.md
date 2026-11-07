@@ -348,9 +348,12 @@ möglich sofort über einen tokengebundenen Self-Revoke-Pfad.
 Companion-/API-/Proxy-Tests, Pairing-Security-Smoke, Production-Build sowie
 lokale Google-Chrome-Smokes bei 390 px sind bestanden. Die iOS-Grenze wurde in
 Chrome mit iPhone-UA und simuliertem Standalone-Modus geprüft; dies ist keine
-echte WebKit-, Safari- oder native HealthKit-Abnahme. Der Live-Rollout von
-Release 95 wird erst nach Container-, PWA- und Domainprüfung als abgeschlossen
-markiert.
+echte WebKit-, Safari- oder native HealthKit-Abnahme. Release 95 ist inzwischen
+auf vier healthy Fressi-/Günni-App-/Access-Containern ausgerollt. Die PWA ist auf
+PureLink, Fressi und Günni verifiziert; Günnis HTTPS-iPhone-Webflow einschließlich
+Vault-Rollback und Cleanup sowie Connectoren, Home, Mail, Command Stream,
+Planung, Jarvis und Chat/Voice-Text sind live ohne Secret- oder Inhaltsleck
+bestanden.
 
 ## Primärquellen und Lizenzgrenzen
 

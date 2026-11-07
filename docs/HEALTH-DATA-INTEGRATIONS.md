@@ -10,7 +10,7 @@ Stand: 7. November 2026
 | Apple-Health-Export | `LIVE (SMALL)` | `export.xml` und das originale Apple-ZIP können bis 32 MiB importiert werden. ZIP-Pfade, Verschlüsselung, Größe, Kompressionsrate und CRC werden geprüft; größere Archive bleiben bis zu einem isolierten Worker `PREPARED`. |
 | Quellenvergleich | `IMPLEMENTED` | Schritte, Schlaf und weitere deckungsgleiche Tageswerte werden Apple gegen WHOOP verglichen; Unterschiede bleiben deskriptiv. |
 | Health-Digest | `IMPLEMENTED` | Datenabdeckung und Quellenabweichungen werden als Hinweise ausgegeben – ausdrücklich ohne Diagnose. |
-| Health & Recovery UI | `IMPLEMENTED / LOCAL VERIFIED` | Release 95 zeigt Apple Health und WHOOP getrennt, einschließlich 14-Tage-Abdeckung, kompatibler Tagesvergleiche, inkompatibler Methoden, Datenqualität und rein datenbasierter Konfidenz. Ohne Daten bleibt der Zustand ehrlich `EMPTY` beziehungsweise `NOT_CONFIGURED`. |
+| Health & Recovery UI | `DEPLOYED / DATA FLOW LOCAL VERIFIED` | Release 95 zeigt Apple Health und WHOOP getrennt, einschließlich 14-Tage-Abdeckung, kompatibler Tagesvergleiche, inkompatibler Methoden, Datenqualität und rein datenbasierter Konfidenz. Die Oberfläche ist auf den Personal-Instanzen ausgerollt; ohne persönliche Daten bleibt der Zustand ehrlich `EMPTY` beziehungsweise `NOT_CONFIGURED`. |
 | WHOOP V2 | `IMPLEMENTED CORE / PREPARED ACTIVATION` | Authorization-Code-Austausch, rotierender Refresh, vollständige V2-Pagination, Retention, idempotente Normalisierung, Teilerfolg und signatur-/zeit-/replaygeprüfte Webhook-Envelopes sind implementiert. Öffentliche OAuth-/Webhook-Routen bleiben bis zur registrierten WHOOP-App, verschlüsselten Tokenpersistenz und Queue bewusst aus. |
 | Native HealthKit-Synchronisation | `PREPARED` | Benötigt die separate iOS-Companion-App, Apple-Entitlement, App-Signierung und Freigabe je Datentyp. Ein Server oder eine PWA kann HealthKit nicht direkt lesen. |
 
@@ -116,6 +116,13 @@ verifiziert den Zustand `EMPTY`. Der Gesamtlauf für Release 95 umfasst 198/198
 Node-Tests und einen erfolgreichen Production-Build. Persönliche Apple- oder
 WHOOP-Daten wurden dabei nicht verwendet; die Live-Anbieterabnahme bleibt von
 Benutzerfreigabe und WHOOP-Credentials abhängig.
+
+Release 95 ist auf Fressi und Günni ausgerollt; die PWA-Version ist auf beiden
+Personal-Instanzen sowie PureLink bestätigt. Damit ist die Health-&-Recovery-
+Oberfläche produktiv erreichbar. Der synthetische Import-/Vergleichsflow bleibt
+bewusst eine lokale Abnahme: Auf Günni wurden weder persönliche Health-Daten
+noch WHOOP-Credentials für diesen Release-Test eingespielt. `DEPLOYED` bedeutet
+daher nicht `LIVE` für einen externen Gesundheitsanbieter.
 
 Apple und WHOOP messen nicht zwingend denselben Zeitraum oder dieselbe physiologische Definition. Insbesondere WHOOP-Zyklen folgen Schlaf-Wach-Zyklen statt Kalendertagen. AgentOne zeigt deshalb immer beide Quellen, deren Zeitgrenzen und die prozentuale Abweichung an. Es überschreibt niemals einen Wert mit dem anderen.
 

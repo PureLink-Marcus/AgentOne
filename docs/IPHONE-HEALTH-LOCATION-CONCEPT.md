@@ -40,6 +40,13 @@ Ingest, Reload, Widerruf, Recovery und simuliertes Vault-Schreibversagen. Alle
 Testgeräte und Ereignisse werden anschließend entfernt. Diese Prüfung belegt
 die Weblogik, ersetzt aber keine Abnahme auf realem iOS WebKit/Safari.
 
+Der gleiche Webflow ist nach dem Release-95-Rollout auf Günni über echtes HTTPS
+live bestanden. Sicherer Kontext, AES-GCM-IndexedDB, Service-Worker-Reload,
+Self-Revoke/Vault-Rollback, 0 Konsolenfehler und vollständiger Cleanup wurden
+bestätigt. Auch diese Live-Prüfung verwendete Chrome mit iPhone-UA und
+simuliertem Standalone-Modus; eine reale Safari-/WebKit- oder signierte native
+HealthKit-Abnahme wird damit ausdrücklich nicht behauptet.
+
 Der Web-Companion ersetzt keine native App: Safari/PWA kann HealthKit, EventKit und CoreLocation im Hintergrund nicht direkt lesen. Diese Funktionen bleiben bis zu Apple-Signing und Geräteabnahme ehrlich `PREPARED`.
 
 ## Technische Grenze
