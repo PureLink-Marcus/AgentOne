@@ -26,7 +26,9 @@ echo "$access_env" | grep -q '^PERSONAL_API_TOKEN=.' && personal_token=true
 echo "$app_env" | grep -Eq '^AGENTONE_(COMPANION_PEPPER|SECRET_KEY)=.{32,}$' && companion_secret=true
 printf 'personalApiUrlConfigured=%s\npersonalApiTokenConfigured=%s\ncompanionSecretConfigured=%s\n' "$personal_url" "$personal_token" "$companion_secret"
 echo '--- companion audit (redacted) ---'
-docker logs --since 2h "$access" 2>&1 | grep 'companion.request' | tail -80 | sed -E 's/(a1d_[A-Za-z0-9_-]+|[0-9]{6})/[REDACTED]/g; s/(token|secret|password|authorization|cookie)[=:][^ ,}]+/\\1=[REDACTED]/Ig' || true`;
+docker logs --since 2h "$access" 2>&1 | grep 'companion.request' | tail -80 | sed -E 's/(a1d_[A-Za-z0-9_-]+|[0-9]{6})/[REDACTED]/g; s/(token|secret|password|authorization|cookie)[=:][^ ,}]+/\\1=[REDACTED]/Ig' || true
+echo '--- companion status counts (24h, metadata only) ---'
+docker logs --since 24h "$access" 2>&1 | grep 'companion.request' | sed -nE 's/.*"operation":"([^"]+)".*"status":([0-9]+).*/\\1 \\2/p' | sort | uniq -c || true`;
 
 const result=spawnSync('ssh',['-i',key,'-o','BatchMode=yes','-o','ConnectTimeout=15','-o','StrictHostKeyChecking=accept-new','-o',`UserKnownHostsFile=${knownHosts}`,`${user}@${host}`,command],{encoding:'utf8',timeout:60_000});
 if(result.status!==0)throw new Error(`iPhone-Diagnose fehlgeschlagen: ${(result.stderr||result.stdout||'').slice(-1000)}`);

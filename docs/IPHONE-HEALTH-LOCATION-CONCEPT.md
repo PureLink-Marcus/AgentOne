@@ -82,6 +82,32 @@ ICS, Jarvis und Planung sind live regressionsgeprüft. Die reale
 Safari-/WebKit-Geräteabnahme steht weiter aus; EventKit und HealthKit bleiben
 native Apple-Arbeitspakete.
 
+Die in Release 95 beschriebene Pflicht zur Home-Screen-PWA wurde mit Release
+101 aufgehoben: normales iPhone-Safari darf bei HTTPS, WebCrypto und IndexedDB
+direkt koppeln. Safari und installierte PWA bleiben jedoch technisch getrennte
+Browsercontainer mit getrennten IndexedDB-Tresoren. Wer den Companion später
+vom Home-Bildschirm aus nutzen will, installiert beziehungsweise öffnet deshalb
+zuerst genau diesen Kontext und koppelt dort mit einem frischen Einmalcode.
+
+Release-Kandidat `2026.11.07-103` prüft den Tresor nicht mehr nur über das
+Vorhandensein von APIs. Vor dem serverseitigen Confirm erzeugt der Companion
+einen nicht exportierbaren AES-GCM-Schlüssel, schreibt eine verschlüsselte
+Probe nach IndexedDB, liest und entschlüsselt sie wieder und blockiert bei
+jeder Abweichung. Optional fordert der Benutzer im selben Klick persistenten
+Browser-Storage an. Speicher- und Netzoperationen besitzen begrenzte Timeouts
+und konkrete Retry-Hinweise. Das Codefragment wird vor jeder Netzwerkanfrage
+aus der URL entfernt; der Gerätetoken hat keinen Kopierbutton mehr.
+
+Auf demselben iPhone führt **Direkt in Safari koppeln** beziehungsweise **In
+dieser App koppeln** in genau den aktuellen Speicherbereich. Auf Desktop bleibt
+dieser Direktlink verborgen; dort werden nur der secret-freie Basis-QR und der
+sechsstellige Code getrennt angezeigt. Automatisierte WebKit- und Chrome-
+Regressionen prüfen sicheren Kontext, Vault-Roundtrip, Reload und Self-Revoke.
+Die Live-Prüfung ist standardmäßig read-only und erzeugt keinen Code, sodass
+sie keinen offenen Benutzer-Code mehr ersetzen kann. Ein echter iPhone-
+Safari-/PWA-Hardwaretest bleibt trotzdem erforderlich; der Release-Kandidat
+ist bis zum produktiven Rollout nicht als `LIVE` gekennzeichnet.
+
 ## Technische Grenze
 
 Eine PWA oder ein Server kann nicht direkt auf HealthKit, Apple Erinnerungen oder dauerhaft auf den iPhone-Standort zugreifen. Dafür wird eine kleine native **AgentOne Companion** App benötigt. Sie hält Apples Berechtigungsdialoge auf dem iPhone und überträgt ausschließlich ausdrücklich freigegebene Daten an die persönliche Instanz.

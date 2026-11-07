@@ -91,6 +91,32 @@ isolierter Günni-Testuser importierte 35.652.207 Bytes und zwei Messwerte; sein
 Cleanup endete mit null Messwerten und null Freigaben. Alle vier privaten
 Container, die PWA-Flows und das direkte iPhone-Pairing sind live grün.
 
+Release 103 ergänzt eine echte WHOOP-Verbindung und härtet den iPhone-
+Pairingpfad. WHOOP verwendet einen persistenten, benutzer- und
+Redirect-gebundenen OAuth-State, der atomar nur einmal einlösbar ist. Der
+Refresh-Token liegt AES-256-GCM-verschlüsselt mit Benutzer-AAD in SQLite;
+Access-Tokens und Provider-Rohantworten werden nicht gespeichert. Der
+read-only Sync ist hinsichtlich Zeit, Seiten und Datensatzmenge begrenzt,
+behandelt Teilerfolg und Rate-Limits ohne falschen globalen Fortschritt und
+hält Apple Health und WHOOP als getrennte Quellen. Trennen behauptet einen
+Providerwiderruf nur nach bestätigter WHOOP-Antwort. Ohne registrierte
+WHOOP-App zeigt die Oberfläche ehrlich `NOT_CONFIGURED`; Webhooks bleiben bis
+zu dauerhafter Queue und Reconciliation deaktiviert.
+
+Vor dem iPhone-Confirm wird nun nicht nur die Existenz von Browser-APIs
+geprüft. Der Companion erzeugt einen nicht exportierbaren AES-GCM-Schlüssel,
+schreibt eine verschlüsselte Probe nach IndexedDB und liest sie wieder zurück.
+Erst danach wird der Einmalcode an den Server gesendet. Safari und die
+installierte PWA werden als getrennte Speicherbereiche erklärt; der passende
+Direktlink erscheint nur auf iOS. Codefragmente verschwinden vor jeder
+Netzwerkanfrage, Zeitüberschreitungen sind begrenzt und der Gerätetoken besitzt
+keinen Kopierpfad mehr. Live-Smokes arbeiten standardmäßig read-only und
+ersetzen deshalb keinen offenen Benutzer-Code. 296/296 Node-Tests sind im
+letzten vollständigen lokalen Lauf grün; automatisierte WebKit-/Chrome-
+Regression und Pairing-Security prüfen die Browserlogik. Release 103 ist bis
+zum separaten Rollout und zur echten WHOOP-/iPhone-Hardwareabnahme kein
+behaupteter Live-Providerstand.
+
 ## Administration
 
 Autorisierte Administratoren können Instanzen und Sessions vollständig analysieren, neu starten, sperren, neu aufbauen, in Quarantäne verschieben und wiederherstellen. Jeder Zugriff auf Sessioninhalte und jede administrative Aktion wird unveränderbar auditiert. Secret-Werte bleiben maskiert.

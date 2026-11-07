@@ -608,6 +608,37 @@ und Image `purelink/agentone:2026.11.07-102` mit ID
 sind auf vier healthy privaten Containern ausgerollt. PWA, Voice und der
 vollständige iPhone-Pairing-Flow bleiben live grün.
 
+### Release 2026.11.07-103 · WHOOP und belastbarer iPhone-Tresor (**RELEASE CANDIDATE**)
+
+WHOOP ist als echte persönliche read-only Quelle statt als Demo-Karte
+verdrahtet. Ein persistenter, benutzer- und Redirect-gebundener OAuth-State
+wird atomar einmal eingelöst; parallele offene States sind begrenzt. Der
+Refresh-Token liegt AES-256-GCM-verschlüsselt mit Benutzer-AAD in SQLite,
+während Access-Token und Provider-Rohantworten flüchtig bleiben. Zyklen,
+Recovery, Schlaf und Workouts werden inkrementell mit Seiten-, Mengen- und
+Zeitgrenzen gelesen. Teilerfolg, `429`, Rotation und Providerwiderruf besitzen
+ehrliche, öffentliche Zustände. Ohne registrierte WHOOP-App zeigt Jarvis
+`NOT_CONFIGURED` und erzeugt keine Beispieldaten. Webhooks bleiben deaktiviert,
+bis eine dauerhafte Queue, Deduplizierung und Reconciliation vorliegen.
+
+Der iPhone-Companion blockiert den serverseitigen Confirm nun so lange, bis
+der konkrete Browserkontext eine verschlüsselte Probe mit nicht exportierbarem
+AES-GCM-Schlüssel nach IndexedDB geschrieben und wieder entschlüsselt hat.
+Safari und Home-Screen-PWA sind sichtbar getrennte Tresore; ein Direktlink
+erscheint nur auf iOS und bleibt auf derselben Ansicht. Das Codefragment wird
+vor jeder Netzwerkanfrage entfernt. Browser- und Speicheroperationen besitzen
+begrenzte Zeitüberschreitungen; der Gerätetoken kann nicht mehr kopiert
+werden. Die produktive Regression ist standardmäßig read-only, sodass ein
+Test keinen vom Benutzer gerade geöffneten Einmalcode mehr ersetzt.
+
+Im letzten vollständigen lokalen Lauf sind 296/296 Node-Tests grün. Die
+automatisierte WebKit-Prüfung bestätigt sicheren Kontext, Fragmentbereinigung,
+AES-GCM-IndexedDB, nicht exportierbaren Schlüssel, Reload und Self-Revoke. Sie
+ersetzt keinen realen iPhone-Safari-/PWA-Hardwaretest. Ebenso bleibt WHOOP bis
+zur Registrierung und Autorisierung einer echten Developer App ausdrücklich
+nicht `LIVE`. Deployment, Image-Digest und produktive Browserabnahme werden
+erst nach dem Rollout ergänzt.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —

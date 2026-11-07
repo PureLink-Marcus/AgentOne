@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { createHealthConsent } from './personal-health.mjs';
-import { exchangeWhoopAuthorizationCode, prepareWhoopWebhookEnvelope, refreshWhoopToken, syncWhoopReadOnly, whoopLiveSyncCapabilities } from './whoop-live-sync.mjs';
+import { exchangeWhoopAuthorizationCode, prepareWhoopWebhookEnvelope, refreshWhoopToken, revokeWhoopAccess, syncWhoopReadOnly, whoopLiveSyncCapabilities } from './whoop-live-sync.mjs';
 
 const consent=createHealthConsent({id:'consent-whoop',userId:'u1',providers:['whoop'],scopes:['activity','sleep','vitals','body','workouts'],grantedAt:'2026-10-01T00:00:00.000Z'});
 const tokenPayload={access_token:'access-secret-never-public',refresh_token:'refresh-secret-rotated',expires_in:3600,token_type:'bearer',scope:'offline read:cycles read:recovery read:sleep read:workout read:body_measurement'};
@@ -13,6 +13,17 @@ test('authorization exchange and refresh rotate tokens without serializing them'
   const exchanged=await exchangeWhoopAuthorizationCode({clientId:'client-id',clientSecret:'client-secret',code:'authorization-code',redirectUri:'https://guenni.example/agentone/whoop/callback',fetchImpl,onRotatedRefreshToken:value=>rotated.push(value)});
   assert.equal(exchanged.accessToken,tokenPayload.access_token);assert.equal(exchanged.refreshToken,tokenPayload.refresh_token);assert.equal(exchanged.refreshRotated,true);assert.deepEqual(rotated,[tokenPayload.refresh_token]);assert.match(requests[0].body,/grant_type=authorization_code/);assert.match(requests[0].body,/redirect_uri=https%3A%2F%2Fguenni\.example/);assert.doesNotMatch(JSON.stringify(exchanged),/access-secret|refresh-secret/);
   const refreshed=await refreshWhoopToken({clientId:'client-id',clientSecret:'client-secret',refreshToken:'old-refresh-secret',fetchImpl});assert.equal(refreshed.refreshToken,tokenPayload.refresh_token);assert.match(requests[1].body,/grant_type=refresh_token/);assert.doesNotMatch(JSON.stringify(refreshed),/old-refresh|access-secret|refresh-secret/);
+});
+
+test('refresh fails closed when WHOOP omits the newly rotated refresh token',async()=>{const rotated=[];await assert.rejects(()=>refreshWhoopToken({clientId:'client-id',clientSecret:'client-secret',refreshToken:'old-refresh-must-not-be-reused',fetchImpl:async()=>json({access_token:'new-access',expires_in:3600,scope:'offline read:sleep'}),onRotatedRefreshToken:value=>rotated.push(value)}),error=>error.code==='WHOOP_INVALID_TOKEN_RESPONSE'&&error.retryable===false);assert.deepEqual(rotated,[]);});
+
+test('disconnect uses the documented V2 revoke operation and redacts credentials',async()=>{
+  const calls=[],success=await revokeWhoopAccess({accessToken:'access-secret-never-public',fetchImpl:async(url,options)=>{calls.push({url:String(url),method:options.method,authorization:options.headers.authorization});return new Response(null,{status:204});}});
+  assert.deepEqual(success,{provider:'whoop',revoked:true,alreadyRevoked:false,secretsExposed:false});
+  assert.equal(calls[0].url,'https://api.prod.whoop.com/developer/v2/user/access');assert.equal(calls[0].method,'DELETE');assert.equal(calls[0].authorization,'Bearer access-secret-never-public');assert.doesNotMatch(JSON.stringify(success),/access-secret/);
+  await assert.rejects(()=>revokeWhoopAccess({accessToken:'access-secret-never-public',fetchImpl:async()=>new Response(null,{status:401})}),error=>error.code==='WHOOP_AUTHORIZATION_REQUIRED');
+  await assert.rejects(()=>revokeWhoopAccess({accessToken:'access-secret-never-public',fetchImpl:async()=>new Response('upstream secret',{status:429,headers:{'retry-after':'7'}})}),error=>error.code==='WHOOP_RATE_LIMITED'&&error.retryAfterSeconds===7&&!String(error.message).includes('upstream'));
+  await assert.rejects(()=>revokeWhoopAccess({accessToken:'access-secret-never-public',fetchImpl:async()=>new Response(null,{status:429,headers:{'x-ratelimit-reset':'11'}})}),error=>error.code==='WHOOP_RATE_LIMITED'&&error.retryAfterSeconds===11);
 });
 
 function whoopFixtureFetch({partial=false,rateLimited=false,tokenScope=tokenPayload.scope}={}){

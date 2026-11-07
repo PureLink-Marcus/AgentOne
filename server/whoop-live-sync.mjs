@@ -2,6 +2,7 @@ import { normalizeWhoopBundle, verifyWhoopWebhook } from './personal-health.mjs'
 
 const WHOOP_API='https://api.prod.whoop.com/developer/v2';
 const WHOOP_TOKEN='https://api.prod.whoop.com/oauth/oauth2/token';
+const WHOOP_REVOKE=`${WHOOP_API}/user/access`;
 const READ_SCOPES=Object.freeze(['read:cycles','read:recovery','read:sleep','read:workout','read:body_measurement']);
 const ALLOWED_SCOPES=new Set(['offline',...READ_SCOPES]);
 const COLLECTIONS=Object.freeze([
@@ -22,32 +23,40 @@ function iso(value,label='Zeitstempel'){const date=value instanceof Date?value:n
 function whoopError(message,code='WHOOP_SYNC_FAILED',{status=400,retryable=false,retryAfterSeconds=null,stage='sync'}={}){return new WhoopSyncError(message,{code,status,retryable,retryAfterSeconds,stage});}
 function assertCredentials({clientId,clientSecret}){if(!clean(clientId,512)||!clean(clientSecret,2048))throw whoopError('WHOOP Client-ID und Client-Secret fehlen','WHOOP_CONFIGURATION_REQUIRED',{status:503,stage:'oauth'});}
 function allowedScopes(scopes){const values=Array.isArray(scopes)?scopes:String(scopes??'').split(/\s+/);return [...new Set(values.map(value=>clean(value)).filter(scope=>ALLOWED_SCOPES.has(scope)))];}
-function retryAfter(response){const raw=response.headers?.get?.('retry-after');if(raw&&/^\d+$/.test(raw))return Number(raw);const date=Date.parse(raw);return Number.isFinite(date)?Math.max(0,Math.ceil((date-Date.now())/1000)):null;}
+function retryAfter(response){const raw=response.headers?.get?.('retry-after');if(raw&&/^\d+$/.test(raw))return Number(raw);const date=Date.parse(raw);if(Number.isFinite(date))return Math.max(0,Math.ceil((date-Date.now())/1000));const reset=response.headers?.get?.('x-ratelimit-reset');return reset&&/^\d+$/.test(reset)?Number(reset):null;}
 function publicFailure(response,stage){if(response.status===401)return whoopError('WHOOP muss erneut verbunden werden.','WHOOP_AUTHORIZATION_REQUIRED',{status:401,stage});if(response.status===429)return whoopError('WHOOP begrenzt Anfragen vorübergehend.','WHOOP_RATE_LIMITED',{status:429,retryable:true,retryAfterSeconds:retryAfter(response),stage});if(response.status>=500)return whoopError('WHOOP ist vorübergehend nicht erreichbar.','WHOOP_PROVIDER_UNAVAILABLE',{status:response.status,retryable:true,retryAfterSeconds:retryAfter(response),stage});return whoopError('WHOOP hat die Anfrage abgelehnt.','WHOOP_REQUEST_REJECTED',{status:response.status,stage});}
 async function responseJson(response,stage){if(!response.ok)throw publicFailure(response,stage);try{return await response.json();}catch{throw whoopError('WHOOP lieferte keine gültige JSON-Antwort.','WHOOP_INVALID_RESPONSE',{status:502,retryable:true,stage});}}
-function tokenSession(payload,{fallbackRefreshToken='' }={}){
-  const accessToken=clean(payload?.access_token,8192),refreshToken=clean(payload?.refresh_token||fallbackRefreshToken,8192),expiresInSeconds=Number(payload?.expires_in),scopes=allowedScopes(payload?.scope);
+function tokenSession(payload,{refreshTokenRequired=false}={}){
+  const accessToken=clean(payload?.access_token,8192),refreshToken=clean(payload?.refresh_token,8192),expiresInSeconds=Number(payload?.expires_in),scopes=allowedScopes(payload?.scope);
   if(!accessToken||!Number.isFinite(expiresInSeconds)||expiresInSeconds<=0)throw whoopError('WHOOP lieferte keinen nutzbaren Zugriffsschlüssel.','WHOOP_INVALID_TOKEN_RESPONSE',{status:502,retryable:true,stage:'oauth'});
+  if(refreshTokenRequired&&!refreshToken)throw whoopError('WHOOP lieferte keinen neuen erneuerbaren Zugriffsschlüssel.','WHOOP_INVALID_TOKEN_RESPONSE',{status:502,retryable:false,stage:'oauth'});
   const value={provider:'whoop',tokenType:clean(payload?.token_type||'bearer',32).toLowerCase(),expiresInSeconds,expiresAt:new Date(Date.now()+expiresInSeconds*1000).toISOString(),scopes,refreshRotated:Boolean(payload?.refresh_token),secretsExposed:false};
   Object.defineProperties(value,{accessToken:{value:accessToken,enumerable:false},refreshToken:{value:refreshToken,enumerable:false}});
   return Object.freeze(value);
 }
-async function requestToken(parameters,{fetchImpl=fetch,signal,onRotatedRefreshToken,fallbackRefreshToken=''}={}){
+async function requestToken(parameters,{fetchImpl=fetch,signal,onRotatedRefreshToken,refreshTokenRequired=false}={}){
   let response;try{response=await fetchImpl(WHOOP_TOKEN,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded',accept:'application/json'},body:new URLSearchParams(parameters),signal});}catch{throw whoopError('WHOOP-Anmeldung ist vorübergehend nicht erreichbar.','WHOOP_NETWORK_FAILURE',{status:503,retryable:true,stage:'oauth'});}
   if(!response.ok){if(response.status===400||response.status===401)throw whoopError('WHOOP muss erneut verbunden werden.','WHOOP_AUTHORIZATION_REQUIRED',{status:401,stage:'oauth'});throw publicFailure(response,'oauth');}
-  const payload=await responseJson(response,'oauth'),session=tokenSession(payload,{fallbackRefreshToken});
+  const payload=await responseJson(response,'oauth'),session=tokenSession(payload,{refreshTokenRequired});
   if(payload.refresh_token&&onRotatedRefreshToken)await onRotatedRefreshToken(session.refreshToken);
   return session;
 }
 
 export async function exchangeWhoopAuthorizationCode({clientId,clientSecret,code,redirectUri,fetchImpl=fetch,signal,onRotatedRefreshToken}={}){
   assertCredentials({clientId,clientSecret});if(!clean(code,4096)||!/^https:\/\//i.test(String(redirectUri??'')))throw whoopError('WHOOP-Code oder HTTPS-Redirect fehlt.','WHOOP_INPUT_INVALID',{stage:'oauth'});
-  return requestToken({grant_type:'authorization_code',code,client_id:clientId,client_secret:clientSecret,redirect_uri:redirectUri},{fetchImpl,signal,onRotatedRefreshToken});
+  return requestToken({grant_type:'authorization_code',code,client_id:clientId,client_secret:clientSecret,redirect_uri:redirectUri},{fetchImpl,signal,onRotatedRefreshToken,refreshTokenRequired:true});
 }
 
 export async function refreshWhoopToken({clientId,clientSecret,refreshToken,fetchImpl=fetch,signal,onRotatedRefreshToken}={}){
   assertCredentials({clientId,clientSecret});if(!clean(refreshToken,8192))throw whoopError('WHOOP Refresh-Token fehlt.','WHOOP_AUTHORIZATION_REQUIRED',{status:401,stage:'oauth'});
-  return requestToken({grant_type:'refresh_token',refresh_token:refreshToken,client_id:clientId,client_secret:clientSecret,scope:'offline'},{fetchImpl,signal,onRotatedRefreshToken,fallbackRefreshToken:refreshToken});
+  return requestToken({grant_type:'refresh_token',refresh_token:refreshToken,client_id:clientId,client_secret:clientSecret,scope:'offline'},{fetchImpl,signal,onRotatedRefreshToken,refreshTokenRequired:true});
+}
+
+export async function revokeWhoopAccess({accessToken,fetchImpl=fetch,signal}={}){
+  const token=clean(accessToken,8192);if(!token)throw whoopError('WHOOP Zugriffsschlüssel fehlt.','WHOOP_AUTHORIZATION_REQUIRED',{status:401,stage:'revoke'});
+  let response;try{response=await fetchImpl(WHOOP_REVOKE,{method:'DELETE',headers:{authorization:`Bearer ${token}`,accept:'application/json'},signal});}catch{throw whoopError('WHOOP-Widerruf ist vorübergehend nicht erreichbar.','WHOOP_NETWORK_FAILURE',{status:503,retryable:true,stage:'revoke'});}
+  if(response.status===204)return Object.freeze({provider:'whoop',revoked:true,alreadyRevoked:false,secretsExposed:false});
+  throw publicFailure(response,'revoke');
 }
 
 async function whoopJson(url,{accessToken,fetchImpl,signal,stage}){let response;try{response=await fetchImpl(url,{headers:{authorization:`Bearer ${accessToken}`,accept:'application/json'},signal});}catch{throw whoopError('WHOOP-Daten sind vorübergehend nicht erreichbar.','WHOOP_NETWORK_FAILURE',{status:503,retryable:true,stage});}return responseJson(response,stage);}
@@ -85,4 +94,4 @@ export function prepareWhoopWebhookEnvelope({rawBody,headers={},secret,replayCac
   return Object.freeze({schema:'agentone.whoop-webhook-envelope/v1',provider:'whoop',traceId,whoopUserId,resourceId,type,operation:type.endsWith('.deleted')?'delete':'refresh',receivedAt:new Date(now).toISOString(),signatureVerified:true,queued:false,rawBodyRetained:false,secretsExposed:false});
 }
 
-export const whoopLiveSyncCapabilities=Object.freeze({apiVersion:'v2',authorization:'oauth2-authorization-code',tokenRotation:true,scopes:['offline',...READ_SCOPES],collections:COLLECTIONS.map(([id,path,scope])=>({id,path,scope})),bodyMeasurementPath:'user/measurement/body',webhookModel:'v2',webhookQueueRequired:true});
+export const whoopLiveSyncCapabilities=Object.freeze({apiVersion:'v2',authorization:'oauth2-authorization-code',tokenRotation:true,revocation:{method:'DELETE',path:'user/access',successStatus:204},scopes:['offline',...READ_SCOPES],collections:COLLECTIONS.map(([id,path,scope])=>({id,path,scope})),bodyMeasurementPath:'user/measurement/body',webhookModel:'v2',webhookQueueRequired:true});

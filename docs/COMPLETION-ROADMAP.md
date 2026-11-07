@@ -8,12 +8,15 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-102` ist auf Fressi und Günni live. 273/273 Tests,
-Production-Build, `verify:local`, Pairing-Sicherheitsprüfung,
-iPhone-Browserregression und npm-Produktionsaudit ohne bekannte Schwachstelle
-sind grün. Vier private Container, PWA, iPhone-Pairing und ein isolierter
-35.652.207-Byte-Health-Live-Import einschließlich vollständigem Cleanup sind
-produktiv verifiziert.
+Release `2026.11.07-102` ist auf Fressi und Günni live. Release
+`2026.11.07-103` ist als lokal geprüfter Release-Kandidat vorbereitet:
+296/296 Node-Tests sind im letzten vollständigen Lauf grün; der WHOOP-
+OAuth-/Sync-/Disconnect-Kern und das iPhone-Pairing mit realer AES-GCM-
+IndexedDB-Probe sind implementiert. Deployment, echter WHOOP-Providerlauf und
+ein realer iPhone-Safari-/PWA-Hardwaretest werden weiterhin getrennt vom
+lokalen Status ausgewiesen. Vier private Release-102-Container, PWA,
+iPhone-Pairing und ein isolierter 35.652.207-Byte-Health-Live-Import
+einschließlich vollständigem Cleanup bleiben produktiv verifiziert.
 Release 99 liefert den persistenten read-only
 IMAP-Bestand und das Mail Review Center. Release 100 ergänzt das kontrollierte
 Learning Lab mit `personal-briefing.v1`; Günni führte es mit echten minimierten
@@ -34,7 +37,8 @@ WHOOP strikt getrennt. Auf Günni sind aktuell:
   verschlüsseltem Staging, Fortschritt, Reload-Fortsetzung und Abbruch;
 - der Kalenderplan produktiv über ICS-Datei nutzbar; der persistente `https://`-/`webcal://`-Feed ist live ausgerollt und bleibt mangels persönlichem Link ehrlich `NOT_CONNECTED`;
 - Health noch ohne persönliche Messwerte; der Apple-/WHOOP-Vergleich und seine sichtbare Release-95-Zentrale sind implementiert und warten auf echte Daten;
-- Google OAuth und WHOOP ohne registrierte Anbieter-Credentials nicht live.
+- Google OAuth und WHOOP ohne registrierte Anbieter-Credentials nicht live;
+  der WHOOP-Kern bleibt deshalb ehrlich `NOT_CONFIGURED`.
 - das Web-Companion-Pairing und die Shortcut-API implementiert. Release 95 korrigiert Mehrgeräte-Pairing, iOS-Standalone-Grenze, Reload/Widerruf und Vault-Fehler-Recovery; direkte HealthKit-/EventKit-Hintergrunddaten benötigen weiterhin die signierte native iOS-App.
 
 `BEREIT` bedeutet implementiert und lokal/live gegen die eigene Grenze geprüft.
@@ -55,8 +59,11 @@ angezeigt.
 3. **Release 94 implementiert, deployed und live abgenommen:** ICS/iCal als
    einfacher Kalenderweg ohne eigene Google-OAuth-App, sicherer HTTPS-Feed,
    Google-Ledger-Projektion sowie serverseitige Konflikt-/Freizeitplanung.
-4. WHOOP-OAuth-/Sync-Kern einbinden und ohne Credentials ehrlich `SETUP`
-   anzeigen.
+4. **Release 103 lokal implementiert:** WHOOP-OAuth-/Sync-/Disconnect-Kern
+   einbinden und ohne Credentials ehrlich `NOT_CONFIGURED` anzeigen. OAuth-
+   State ist persistent und atomar einmalig; Refresh-Tokens sind
+   AES-256-GCM-verschlüsselt, Sync und Provideraufrufe begrenzt. Webhooks
+   bleiben bis zu dauerhafter Queue und Reconciliation deaktiviert.
 5. Learning Lab nur mit serverbestätigter Benutzerrolle und Test-Attestierung
    anbinden; keine autonome Selbstfreigabe.
 6. Alle festen `LIVE`-Texte entfernen und Status ausschließlich aus
@@ -144,6 +151,16 @@ angezeigt.
     exakt zwei Messwerte und entfernte die Testdaten anschließend vollständig.
     Der isolierte Live-Smoke wiederholte dies auf Günni mit 35.652.207 Bytes;
     der Testuser endete mit null Messwerten und null Freigaben.
+16. **Release 103 lokal fertig, Rollout ausstehend:** Der iPhone-Companion
+    validiert seinen tatsächlichen Tresor vor dem Confirm durch
+    AES-GCM-Roundtrip und IndexedDB-Schreib-/Leseprobe mit nicht exportierbarem
+    Schlüssel. Safari und installierte PWA werden getrennt erklärt; der direkte
+    Handoff erscheint nur auf iOS. Live-Verifikation ist standardmäßig
+    read-only und kann keinen offenen Pairing-Code mehr überschreiben. Der
+    WHOOP-Kern besitzt vollständigen OAuth-, begrenzten Sync- und ehrlichen
+    Disconnect-Lebenszyklus. 296/296 Node-Tests sind im letzten vollständigen
+    Lauf grün. Produktivstatus folgt erst nach Deployment; `LIVE` bei WHOOP
+    folgt erst nach registrierter App und Provider-Abnahme.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 
@@ -152,7 +169,9 @@ angezeigt.
 2. Einen echten Apple-Health-Export importieren; Dedupe, Einheiten, Zeitzonen,
    Herkunft, Export und Löschung abnehmen.
 3. WHOOP-App registrieren; minimale Scopes, Tokenrotation, initialen Pull,
-   Webhook-Signatur und periodischen Abgleich mit einem Testkonto abnehmen.
+   periodischen Abgleich und Provider-Widerruf mit einem Testkonto abnehmen.
+   Webhooks erst nach dauerhafter Queue, Deduplizierung und Reconciliation
+   gesondert freigeben.
 4. Mindestens sieben Tage Health-Verlauf einlesen, damit persönliche Baselines
    und Apple-/WHOOP-Vergleiche belastbar werden.
 5. Rückmeldungen `falsch`, `später` und `nie wieder` im nächsten Tagesbild und
@@ -177,7 +196,7 @@ angezeigt.
 | Integration | Benötigte Benutzer-/Anbieteraktion | Ohne Aktion möglich |
 |---|---|---|
 | Google Kalender | Google-OAuth-App mit Client-ID, Secret und Redirect-URI oder privater ICS-Link | Modul, Auswahl, Tests und `SETUP` |
-| WHOOP | WHOOP Developer App, Client-ID/Secret, Redirect- und Webhook-URL, Benutzerconsent | OAuth-/Sync-/Webhook-Code und Mock-Abnahme |
+| WHOOP | WHOOP Developer App, Client-ID/Secret, Redirect-URL und Benutzerconsent | OAuth-/Sync-/Disconnect-Code und Mock-Abnahme; Webhooks bewusst deaktiviert bis Queue/Reconciliation |
 | Apple Health | Health-Export auswählen oder native Companion-App installieren und HealthKit-Rechte vergeben | Importer, Store, Consent und UI |
 | Push auf iPhone | PWA-Benachrichtigungen im Browser erlauben | In-App-Pulse |
 | Lokales Modell | Ollama-Modell auf dem freigegebenen Pi installieren | Router und Healthcheck |

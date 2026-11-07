@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-102` (**PASS LIVE**)
-Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Persistente Apple-Health-Importjobs, PWA, Voice und direktes iPhone-Pairing sind produktiv verifiziert.
+Release: `2026.11.07-103` (**LOCAL PASS · DEPLOYMENT PENDING**)
+Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. Release 103 ist lokal geprüft, aber an dieser Stelle noch nicht als produktiv ausgerollt dokumentiert. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LIVE | Release 102: 273/273 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build, API-Smoke und npm-Produktionsaudit mit 0 bekannten Schwachstellen bestanden. |
+| Lokale Anwendung | PASS LOCAL | Release 103: 296/296 Node-Tests im letzten vollständigen Lauf; WHOOP- und iPhone-Pairing-Regressionssuite grün. Deployment- und Live-Nachweise werden erst nach dem tatsächlichen Rollout ergänzt. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 101 besteht auf Günni den Flow `QR-BASE → SAFARI-PAIR → PWA-PAIR → STATUS → INGEST → RELOAD → SELF-REVOKE-RETRY → RECOVER → VAULT-ROLLBACK`. Safari ist nicht mehr künstlich gesperrt; PWA-Installation ist optional. Der Serverwiderruf kommt vor dem lokalen Tresor-Cleanup, Netz-/503-Fehler behalten den AES-GCM-geschützten Token. Die Abnahme läuft in echtem Chrome mit iPhone-UA; ein echter Safari-/WebKit-Hardwaretest bleibt separat. |
+| Apple-Schnellstart | PASS LOCAL / RELEASE 102 LIVE | Release 103 ergänzt vor dem Confirm eine echte AES-GCM-/IndexedDB-Roundtrip-Probe mit nicht exportierbarem Schlüssel, Safari-/PWA-Erklärung, iOS-only Direktlink und begrenzte Timeouts. Live-Smokes sind standardmäßig read-only und erzeugen keinen Pairing-Code. Release 102 bleibt produktiv; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
 | Gmail ohne OAuth-Client | PASS LIVE | Release 99: Günni hält 500 reale IMAP-Metadaten mit persistentem UID-/UIDVALIDITY-Cursor. Zwei direkte inkrementelle Läufe endeten im zweiten Lauf mit 0 Fetches und 0 neuen Datensätzen; nach vollständiger Containerrotation waren alle 500 Datensätze ohne neuen Sync verfügbar. Bodies, Snippets, Anhänge und Roh-Header werden weder geladen noch gespeichert. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -35,6 +35,7 @@ Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Personal Event Ledger | PASS | Immutable, idempotent, user-isoliert, Retention/Export/Löschung; Mail-Bodies und Secret-Felder werden an der Speichergrenze abgewiesen. |
 | Google Live Sync | PREPARED | OAuth-, Gmail-Metadaten- und Kalender-Sync inklusive Paging, Cursor, Retention, Kalenderauswahl und Teilerfolg ist implementiert und getestet. Auf Günni fehlt noch die serverseitige Google-OAuth-Konfiguration; das vorhandene App-Passwort bleibt bewusst nur IMAP. |
 | Health Ledger | PASS LIVE | Release 102 verarbeitet Apple-Health-XML/ZIP bis 512 MiB als persistente Jobs: Streaming-Upload, AES-256-GCM-Ciphertext-Staging, begrenzter Child-Worker, User-/Consent-Isolation, Human Gate, Command Stream, Restart-Recovery und atomarer Cancel-/Commit-CAS. Browser und Audit sehen nur Status, Fortschritt und sichere Zähler; medizinische Diagnosen bleiben ausgeschlossen. Der lokale Chrome-Mobile-Smoke importierte 35.652.165 Bytes; der isolierte Günni-Live-Smoke importierte 35.652.207 Bytes und zwei Messwerte und endete nach Cleanup bei null Messwerten und null Freigaben. Der frühere Health-&-Recovery-Vergleich bleibt unverändert verfügbar; persönliche Günni-Daten und WHOOP-Credentials fehlen weiterhin. |
+| WHOOP | PASS LOCAL · NOT CONFIGURED LIVE | Persistenter atomar einmaliger OAuth-State, AES-256-GCM-Refresh-Token, begrenzter v2-Sync, Teilerfolg/Rate-Limit, Rotation und Trennung sind implementiert und getestet. Ohne Developer-App bleibt der Status ehrlich `NOT_CONFIGURED`; Webhooks bleiben bis zu Queue und Reconciliation deaktiviert. |
 | Persönliches Memory | PASS | persistente, benutzerisolierte Einträge mit Herkunft, Quellenreferenz, Bereich, Schutzklasse, Ablaufdatum, Suche und gezieltem Vergessen; Server- und Browsertests bestanden |
 | Persönliche Routinen | PASS | Read-only-Routinen mit Aktion, Berliner Zeitplan, Wochentagen, Simulation, payloadgebundenem Freigabe-Hash, Aktivieren/Pausieren, täglicher Einmallauf-Garantie und sicherem Löschen |
 | Live-Chat-Theme | PASS | eingebettete Runtime in AgentOne-Farben, dunkle Composer-/Verlaufskanten und aktive WebSocket-Verbindung |
@@ -199,6 +200,17 @@ Deployment: Release 102 ist auf Fressi und Günni live; alle vier App-/Access-Co
 | Mobile Oberfläche | PASS LIVE | Chrome 390×844: 35.652.165-Byte-XML, sichtbarer Upload 100 %, derselbe Job nach Reload, `COMPLETED`, exakt zwei Messwerte, mindestens 44 px Touchziel und Cleanup auf 0. Fortschritt, Polling und Jobabbruch sind über die UI verfügbar. |
 | Sicherheits- und Regressionssuite | PASS LIVE | 273/273 Tests, Production-Build, `verify:local`, npm-Produktionsaudit mit 0 bekannten Schwachstellen sowie lokale und live ausgeführte iPhone-Browser-/Pairing-Security-Regression grün. Health-Ausgaben bleiben deskriptiv und nicht medizinisch. |
 | Deployment | PASS LIVE | Source-Commit `ae1c47b`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-102.tgz`, SHA-256 `a86e200f2250264150e178a81a9eff4ddf84aa46f0799e3f47465d6fc0352395`; Image `purelink/agentone:2026.11.07-102`, ID `sha256:28346c687f8ddcff7d4cc08b37aea5e54d71761cf2f5f979539b2a7718dc8826`; vier private Container healthy. Der isolierte Günni-Smoke importierte 35.652.207 Bytes und zwei Messwerte; Cleanup: 0 Messwerte, 0 Freigaben, keine Secrets exponiert. PWA- und iPhone-Pairing-Live-Smokes bestanden. |
+
+### Release 103 · WHOOP und iPhone-Pairing-Härtung (**LOCAL PASS · DEPLOYMENT PENDING**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| WHOOP OAuth und Token-Lebenszyklus | PASS LOCAL | Persistenter, benutzer-/redirectgebundener und atomar einmaliger State; AES-256-GCM-Refresh-Token mit Benutzer-AAD; kein persistierter Access-Token; Callback wird auf allen Pfaden per `303` von Code/State bereinigt. |
+| WHOOP Sync und Disconnect | PASS LOCAL | Begrenzte Pagination, Mengen und Laufzeit; Teilerfolg und Rate-Limit ohne falschen Cursorfortschritt; lokale Trennung bleibt auch bei verlorener Providerkonfiguration möglich und behauptet Providerwiderruf nur nach Bestätigung. |
+| iPhone Vault-Preflight | PASS LOCAL | Vor Confirm: nicht exportierbarer AES-GCM-Schlüssel, verschlüsselte IndexedDB-Schreib-/Leseprobe und Entschlüsselung. Fragmentbereinigung erfolgt vor Netzwerk; Gerätetoken besitzt keinen Kopierpfad. |
+| Safari/PWA-Handoff | PASS LOCAL | Kontextgerechter iOS-Direktlink, Desktop zeigt nur secret-freien Basis-QR plus manuellen Code. Standard-Live-Smoke ist read-only und kann keinen Benutzer-Code überschreiben. |
+| Regression | PASS LOCAL | 296/296 Node-Tests im letzten vollständigen Lauf; automatisierte WebKit-/Chrome- und Pairing-Security-Prüfung. Reales iPhone-WebKit, echte WHOOP-Credentials und Providerroundtrip bleiben offen. |
+| Deployment | PENDING | Kein Live-, Commit-, Archiv-, Image- oder Container-Nachweis wird vor dem tatsächlichen Release-103-Rollout behauptet. |
 
 ```powershell
 npm run verify:local

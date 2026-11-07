@@ -15,6 +15,11 @@ test('mobile companion page is installable, secret-free and escapes instance bra
   assert.match(html,/Wenn du jetzt in Safari koppelst, bleibt der Schlüssel nur in Safari/);
   assert.match(html,/id="install-check"/);
   assert.match(html,/id="paste-code"/);
+  assert.doesNotMatch(html,/token-copy|Schlüssel kopieren/);
+  assert.match(html,/id="pair-diagnostic"/);
+  assert.match(html,/Pairing klappt nicht\?/);
+  assert.match(html,/Safari und Home-Bildschirm-App besitzen getrennte Speicher/);
+  assert.match(html,/muss vor dem Pairing erfolgen/);
   assert.match(html,/Code aus Zwischenablage einfügen/);
   assert.match(html,/local-disconnect/);
   assert.match(html,/id="pair-card"/);
@@ -43,7 +48,14 @@ test('mobile companion script uses fragment handoff and encrypted IndexedDB stor
   assert.match(companionPairJs,/location\.pathname\+location\.search/);
   assert.doesNotMatch(companionPairJs,/INSTALLIEREN ERFORDERLICH/);
   assert.match(companionPairJs,/navigator\.standalone/);
-  assert.match(companionPairJs,/ready=secure&&cryptoReady&&storageReady;/);
+  assert.match(companionPairJs,/basicReady=secure&&cryptoReady&&storageReady,ready=basicReady&&vaultVerified/);
+  assert.match(companionPairJs,/verifyCapabilities/);
+  assert.match(companionPairJs,/await bounded\(vaultPreflight\(\),STORAGE_TIMEOUT_MS/);
+  assert.match(companionPairJs,/navigator\.storage\?\.persist/);
+  assert.match(companionPairJs,/navigator\.storage\?\.persisted/);
+  assert.match(companionPairJs,/key\.type==='secret'/);
+  assert.match(companionPairJs,/key\.extractable===false/);
+  assert.match(companionPairJs,/SICHERER SPEICHER FEHLGESCHLAGEN/);
   assert.match(companionPairJs,/installGuide\.classList\.toggle\('hidden',!installRecommended\)/);
   assert.match(companionPairJs,/navigator\.clipboard\.readText/);
   assert.match(companionPairJs,/SAFARI BEREIT/);
@@ -51,6 +63,9 @@ test('mobile companion script uses fragment handoff and encrypted IndexedDB stor
   assert.match(companionPairJs,/addEventListener\('pageshow',consumeFragmentCode\)/);
   assert.match(companionPairJs,/agentone\/companion\/self/);
   assert.match(companionPairJs,/Serverfreigabe wurde zurückgenommen/);
+  assert.match(companionPairJs,/STORAGE_TIMEOUT_MS=12000,NETWORK_TIMEOUT_MS=15000/);
+  assert.match(companionPairJs,/function timedFetch/);
+  assert.doesNotMatch(companionPairJs,/clipboard\.writeText\(token\)|Geräteschlüssel einmalig kopieren/);
   assert.match(companionPairJs,/vaultKey\(\{create:false\}\)/);
   assert.match(companionPairJs,/serviceWorker\.register/);
   assert.match(companionPairJs,/controllerchange/);
@@ -62,14 +77,26 @@ test('mobile companion script uses fragment handoff and encrypted IndexedDB stor
   assert.doesNotMatch(companionPairJs,/console\.(?:log|debug|info)/);
 });
 
+test('pairing waits for a verified encrypted vault before calling the server',()=>{
+  const start=companionPairJs.indexOf("form.addEventListener('submit'");
+  const end=companionPairJs.indexOf("refresh.addEventListener('click'",start);
+  assert.ok(start>=0&&end>start);
+  const flow=companionPairJs.slice(start,end);
+  const confirm=flow.indexOf("timedFetch('/agentone/companion/confirm'");
+  assert.ok(confirm>0);
+  assert.ok(flow.indexOf('await verifyCapabilities')<confirm);
+  assert.ok(flow.indexOf('await bounded(vaultPreflight()')<confirm);
+  assert.doesNotMatch(flow,/location\.search|console\./);
+});
+
 test('mobile disconnect revokes the server grant before removing the local token',()=>{
   const start=companionPairJs.indexOf("disconnect.addEventListener('click'");
   const end=companionPairJs.indexOf("if('serviceWorker' in navigator)",start);
   assert.ok(start>=0&&end>start);
   const flow=companionPairJs.slice(start,end);
-  assert.match(flow,/fetch\('\/agentone\/companion\/self',\{method:'DELETE'/);
+  assert.match(flow,/timedFetch\('\/agentone\/companion\/self',\{method:'DELETE'/);
   assert.match(flow,/response\.status===401&&data\?\.error==='DEVICE_NOT_AUTHORIZED'/);
   assert.match(flow,/TRENNEN FEHLGESCHLAGEN/);
   assert.match(flow,/lokale Schlüssel bleibt/);
-  assert.ok(flow.indexOf('fetch(')<flow.indexOf('await vaultDelete(TOKEN)'),'Serverwiderruf muss vor lokaler Löschung erfolgen');
+  assert.ok(flow.indexOf('timedFetch(')<flow.indexOf('vaultDelete(TOKEN)'),'Serverwiderruf muss vor lokaler Löschung erfolgen');
 });

@@ -29,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-102');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-103');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -356,9 +356,50 @@ async function personalCalendarPlan(req,res){
   const requestUrl=new URL(String(req.url||'/agentone/calendar/plan'),publicOrigin||'http://127.0.0.1'),allowed=new Set(['date','timeZone','workdayStart','workdayEnd','minFreeMinutes']);if([...requestUrl.searchParams.keys()].some(key=>!allowed.has(key)||requestUrl.searchParams.getAll(key).length!==1))return jsonResponse(res,400,{error:'invalid_calendar_plan_query',secretsExposed:false});
   try{const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/plan${requestUrl.search}`,{method:'GET',headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(20_000)});return await streamHealthResponse(response,res);}catch{return jsonResponse(res,502,{error:'calendar_plan_unavailable',secretsExposed:false});}
 }
-async function personalWhoopStatus(res){
-  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'whoop_status_unavailable'});
-  try{const response=await fetch(`${personalApiUrl}/api/internal/personal/whoop/status`,{headers:{'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},signal:AbortSignal.timeout(15_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch{return jsonResponse(res,502,{error:'whoop_status_failed',message:'WHOOP-Status ist vorübergehend nicht erreichbar.',secretsExposed:false});}
+const whoopPublicStates=new Set(['NOT_CONFIGURED','READY','CONNECTING','LIVE','RECONNECT_REQUIRED','DEGRADED']);
+const whoopProviderStatuses=new Set(['REVOKED_CONFIRMED','REVOCATION_UNCONFIRMED','NO_LOCAL_CONNECTION']);
+function safeWhoopDate(value){const text=typeof value==='string'?value.trim():'';return text&&text.length<=40&&Number.isFinite(Date.parse(text))?text:null;}
+function safeWhoopCode(value,fallback='WHOOP_REQUEST_FAILED'){const text=String(value||'').toUpperCase();return /^[A-Z][A-Z0-9_]{2,63}$/.test(text)?text:fallback;}
+function safeWhoopText(value,fallback='',max=180){const text=typeof value==='string'?value.replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,max):'';return text||fallback;}
+function safeWhoopNumber(value){const number=Number(value);return Number.isFinite(number)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.trunc(number))):0;}
+function safeWhoopPayload(payload,responseOk=false){
+  const source=payload&&typeof payload==='object'&&!Array.isArray(payload)?payload:{},connection=source.connection&&typeof source.connection==='object'?source.connection:{},lastSync=connection.lastSync&&typeof connection.lastSync==='object'?connection.lastSync:{},status=whoopPublicStates.has(String(source.status||''))?String(source.status):null,providerStatus=whoopProviderStatuses.has(String(source.providerStatus||''))?String(source.providerStatus):null,reasonCode=/^WHOOP_[A-Z0-9_]{2,60}$/.test(String(source.reasonCode||''))?String(source.reasonCode):null,scopes=Array.isArray(source.scopes)?source.scopes.slice(0,16).map(scope=>({id:safeWhoopText(scope?.id,'scope',64).toLowerCase().replace(/[^a-z0-9:_-]/g,''),label:safeWhoopText(scope?.label,'WHOOP-Daten',80),access:'read-only',optional:Boolean(scope?.optional)})):[],syncSource=source.sync&&typeof source.sync==='object'?source.sync:{},errorCode=source.error?safeWhoopCode(typeof source.error==='string'?source.error:source.error.code):null;
+  const result={schema:'agentone.whoop-public/v1',ok:Boolean(source.ok??responseOk),status:status||undefined,configured:Boolean(source.configured),connected:Boolean(source.connected??connection.connected),reason:safeWhoopText(source.reason,'',180)||undefined,missingEnv:Array.isArray(source.missingEnv)?source.missingEnv.filter(value=>/^[A-Z][A-Z0-9_]{1,63}$/.test(String(value))).slice(0,16):[],scopes,lastSyncAt:safeWhoopDate(source.lastSyncAt||syncSource.lastSyncAt||source.syncedAt||lastSync.syncedAt),connectedAt:safeWhoopDate(source.connectedAt||source.authorizedAt||connection.authorizedAt),sync:{lastAttemptAt:safeWhoopDate(syncSource.lastAttemptAt||connection.updatedAt),records:safeWhoopNumber(syncSource.records??source.records??source.metrics),sleep:safeWhoopNumber(syncSource.sleep),recovery:safeWhoopNumber(syncSource.recovery),workouts:safeWhoopNumber(syncSource.workouts)},privacy:{access:'read-only',provider:'WHOOP',tokensExposed:false,secretsExposed:false},actions:{connect:Boolean(source.actions?.connect??source.cta?.routeAvailable??(status==='READY'||status==='RECONNECT_REQUIRED')),sync:Boolean(source.actions?.sync??(status==='LIVE'||status==='DEGRADED')),disconnect:Boolean(source.actions?.disconnect??source.connected??connection.connected)},disconnected:Boolean(source.disconnected),alreadyDisconnected:Boolean(source.alreadyDisconnected),providerRevocationConfirmed:source.providerRevocationConfirmed===true,providerReviewRequired:source.providerReviewRequired===true,providerStatus:providerStatus||undefined,reasonCode:reasonCode||undefined,dataRetainedUntilExplicitDeletion:source.dataRetainedUntilExplicitDeletion===true,error:errorCode||undefined,retryable:Boolean(source.retryable??source.error?.retryable),secretsExposed:false};
+  if(!result.status)delete result.status;if(!result.reason)delete result.reason;if(!result.error)delete result.error;return result;
+}
+async function readWhoopUpstream(response){
+  const raw=await response.text();if(Buffer.byteLength(raw)>262_144)throw Object.assign(new Error('whoop_response_too_large'),{status:502});
+  let payload={};try{payload=raw?JSON.parse(raw):{};}catch{throw Object.assign(new Error('whoop_response_invalid'),{status:502});}
+  return safeWhoopPayload(payload,response.ok);
+}
+function whoopRedirect(res,location){res.writeHead(303,securityHeaders({location,'cache-control':'no-store, private','referrer-policy':'no-referrer'}));res.end();}
+function validWhoopAuthorizationLocation(value){
+  try{const url=new URL(value),expectedCallback=publicOrigin+'/agentone/whoop/callback';if(url.protocol!=='https:'||url.origin!=='https://api.prod.whoop.com'||url.pathname!=='/oauth/oauth2/auth'||url.username||url.password||url.hash)return false;const required=['client_id','redirect_uri','response_type','scope','state'];return required.every(key=>url.searchParams.getAll(key).length===1&&url.searchParams.get(key))&&url.searchParams.get('redirect_uri')===expectedCallback&&url.searchParams.get('response_type')==='code'&&url.searchParams.get('state').length<=2048;}catch{return false;}
+}
+function safeWhoopCallbackLocation(value){
+  if(typeof value!=='string'||!value.startsWith('/?')||value.startsWith('//')||value.includes('#'))return null;
+  try{const url=new URL(value,'https://agentone.invalid'),keys=[...url.searchParams.keys()];if(url.origin!=='https://agentone.invalid'||url.pathname!=='/'||keys.some(key=>!['whoop','code'].includes(key))||keys.some(key=>url.searchParams.getAll(key).length!==1))return null;const outcome=url.searchParams.get('whoop');if(outcome==='connected'&&keys.length===1)return '/?whoop=connected';if(outcome==='error'&&keys.length===2){const code=safeWhoopCode(url.searchParams.get('code'),'');if(code)return `/?whoop=error&code=${encodeURIComponent(code)}`;}return null;}catch{return null;}
+}
+async function personalWhoop(req,res){
+  const requestUrl=new URL(String(req.url||'/agentone/whoop/status'),publicOrigin||'http://127.0.0.1'),pathname=requestUrl.pathname,method=String(req.method||'GET').toUpperCase(),callbackRequest=pathname==='/agentone/whoop/callback';
+  if(instanceType!=='personal')return callbackRequest?whoopRedirect(res,'/?whoop=error&code=WHOOP_CALLBACK_UNAVAILABLE'):jsonResponse(res,404,{error:'not_found',secretsExposed:false});
+  if(!personalApiUrl||!personalApiToken)return callbackRequest?whoopRedirect(res,'/?whoop=error&code=WHOOP_SERVICE_NOT_CONFIGURED'):jsonResponse(res,503,{error:'WHOOP_SERVICE_NOT_CONFIGURED',message:'WHOOP ist serverseitig noch nicht konfiguriert.',secretsExposed:false});
+  const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},options={method,headers,redirect:'manual',signal:AbortSignal.timeout(30_000)};
+  let internalPath='';
+  if(method==='GET'&&pathname==='/agentone/whoop/status'&&!requestUrl.search)internalPath='/api/internal/personal/whoop/status';
+  else if(method==='GET'&&pathname==='/agentone/whoop/start'&&!requestUrl.search){if(!originAllowed(req))return jsonResponse(res,403,{error:'WHOOP_ORIGIN_REJECTED',secretsExposed:false});headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='whoop-oauth-start-confirmed';internalPath='/api/internal/personal/whoop/start';}
+  else if(method==='GET'&&pathname==='/agentone/whoop/callback'){
+    const keys=[...requestUrl.searchParams.keys()],code=requestUrl.searchParams.get('code'),state=requestUrl.searchParams.get('state'),providerError=requestUrl.searchParams.get('error'),codeFlow=Boolean(code)&&!providerError,errorFlow=Boolean(providerError)&&!code;if(!state||state.length>2048||String(code||providerError||'').length>4096||(!codeFlow&&!errorFlow)||keys.some(key=>!['code','state','error','error_description'].includes(key))||keys.some(key=>requestUrl.searchParams.getAll(key).length!==1)||codeFlow&&keys.some(key=>!['code','state'].includes(key))||errorFlow&&keys.some(key=>!['error','state','error_description'].includes(key)))return whoopRedirect(res,'/?whoop=error&code=WHOOP_CALLBACK_INVALID');headers['content-type']='application/json';options.method='POST';options.body=JSON.stringify(codeFlow?{code,state}:{error:providerError,state});internalPath='/api/internal/personal/whoop/callback';
+  }
+  else if(method==='POST'&&pathname==='/agentone/whoop/sync'&&!requestUrl.search){if(!originAllowed(req))return jsonResponse(res,403,{error:'WHOOP_ORIGIN_REJECTED',secretsExposed:false});headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='whoop-sync-confirmed';headers['content-type']='application/json';options.body='{}';internalPath='/api/internal/personal/whoop/sync';}
+  else if(method==='DELETE'&&pathname==='/agentone/whoop/connection'&&!requestUrl.search){if(!originAllowed(req))return jsonResponse(res,403,{error:'WHOOP_ORIGIN_REJECTED',secretsExposed:false});headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='whoop-disconnect-confirmed';internalPath='/api/internal/personal/whoop/connection';}
+  else return callbackRequest?whoopRedirect(res,'/?whoop=error&code=WHOOP_CALLBACK_INVALID'):jsonResponse(res,404,{error:'not_found',secretsExposed:false});
+  try{
+    const response=await fetch(personalApiUrl+internalPath,options);
+    if(pathname==='/agentone/whoop/start'){const location=response.headers.get('location');if(response.status!==303||!validWhoopAuthorizationLocation(location))return jsonResponse(res,502,{error:'WHOOP_OAUTH_REDIRECT_REJECTED',message:'WHOOP-Anmeldung konnte nicht sicher gestartet werden.',secretsExposed:false});return whoopRedirect(res,location);}
+    if(pathname==='/agentone/whoop/callback'){const location=safeWhoopCallbackLocation(response.headers.get('location'));if(response.status!==303||!location)return whoopRedirect(res,'/?whoop=error&code=WHOOP_CALLBACK_FAILED');return whoopRedirect(res,location);}
+    const payload=await readWhoopUpstream(response);return jsonResponse(res,response.status,payload,{'cache-control':'no-store, private'});
+  }catch(error){if(pathname==='/agentone/whoop/callback')return whoopRedirect(res,'/?whoop=error&code=WHOOP_SERVICE_UNAVAILABLE');return jsonResponse(res,Number(error?.status)||502,{error:'WHOOP_SERVICE_UNAVAILABLE',message:'WHOOP ist vorübergehend nicht erreichbar.',retryable:true,secretsExposed:false});}
 }
 function safeHealthUploadName(value,contentType){const fallback=String(contentType).includes('zip')?'export.zip':'export.xml',leaf=String(value||'').split(/[\\/]/).pop().normalize('NFKC').replace(/[^A-Za-z0-9._ -]/g,'_').replace(/\.{2,}/g,'.').trim().slice(0,120);if(!leaf||leaf==='.'||leaf==='..')return fallback;return (fallback.endsWith('.zip')?/\.zip$/i:/\.xml$/i).test(leaf)?leaf:fallback;}
 const healthImportJobStates=new Set(['QUEUED','RUNNING','COMPLETED','FAILED','CANCELLED']);
@@ -486,6 +527,7 @@ const server=http.createServer((req,res)=>{
   if(req.url==='/login'&&req.method==='GET'){if(user)return redirect(res,'/');return showLogin(res);}
   if(req.url==='/login'&&req.method==='POST')return handleLogin(req,res);
   if(req.url==='/logout'&&req.method==='POST'){if(!originAllowed(req)){res.writeHead(403);return res.end();}return redirect(res,'/login',{'set-cookie':`${cookieName}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`});}
+  if(!user&&/^\/agentone\/whoop\/callback(?:\?|$)/.test(req.url||''))return whoopRedirect(res,'/?whoop=error&code=WHOOP_AUTHENTICATION_REQUIRED');
   if(!user){if(req.method==='GET'&&String(req.headers.accept||'').includes('text/html'))return redirect(res,'/login');res.writeHead(401,securityHeaders({'content-type':'application/json'}));return res.end('{"error":"authentication_required"}');}
   if(req.url?.startsWith('/agentone/private-access/keys'))return privateAccessKeys(req,res);
   if(req.method==='GET'&&req.url==='/agentone/siri/status')return siriStatus(res);
@@ -512,7 +554,7 @@ const server=http.createServer((req,res)=>{
   }
   if(req.method==='GET'&&/^\/agentone\/calendar\/plan(?:\?|$)/.test(req.url||''))return personalCalendarPlan(req,res);
   if(/^\/agentone\/calendar\/ics(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalIcsCalendar(req,res);
-  if(req.method==='GET'&&/^\/agentone\/whoop\/status(?:\?|$)/.test(req.url||''))return personalWhoopStatus(res);
+  if(/^\/agentone\/whoop(?:\/|\?|$)/.test(req.url||''))return personalWhoop(req,res);
   if(/^\/agentone\/health(?:\/|\?|$)/.test(req.url||'')&&['GET','POST','DELETE'].includes(req.method||''))return personalHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/integrations\/[a-z0-9-]+\/health$/.test(req.url||''))return integrationHealth(req,res);
   if(req.method==='POST'&&/^\/agentone\/gates\/[^/]+\/decision$/.test(req.url||''))return decideGate(req,res);

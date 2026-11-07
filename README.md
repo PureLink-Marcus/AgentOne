@@ -1,13 +1,32 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-102` (**PASS LIVE**) mit restartfesten Apple-Health-Importjobs bis 512 MiB, Jarvis-inspiriertem Command Center, kontrolliertem Learning Lab, dauerhaftem Mail Review Center, Voice und direktem sicherem iPhone-Pairing
+Status: Release `2026.11.07-103` (**RELEASE CANDIDATE**) mit sicherem WHOOP-OAuth/Sync, tatsächlicher AES-GCM-/IndexedDB-Probe vor dem iPhone-Pairing und read-only Live-Smoke-Strategie ohne Pairing-Code-Nebenwirkungen; Release 102 bleibt bis zum Rollout der produktive Stand
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
 Release 102 läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+
+Release 103 härtet den iPhone-Pfad dort, wo ein sichtbarer Browsercheck allein
+nicht ausreicht: Vor dem serverseitigen Confirm führt die gewählte Safari-
+beziehungsweise PWA-Ansicht eine echte AES-GCM-/IndexedDB-Probe mit einem
+nicht exportierbaren Schlüssel aus. Codefragmente werden vor jeder
+Netzwerkanfrage entfernt; ein direkter Handoff ist nur auf iOS sichtbar. Die
+Live-Regression liest standardmäßig nur Status und Laufzeitdaten und erzeugt
+keinen Pairing-Code mehr. Dadurch kann ein Test einen gerade vom Benutzer
+geöffneten Einmalcode nicht mehr still ersetzen. Ein realer iPhone-
+Safari-/PWA-Hardwaretest bleibt trotz automatisierter WebKit-Abnahme offen.
+
+Parallel ergänzt Release 103 WHOOP als echte read-only Gesundheitsquelle mit
+persistentem, atomar einmaligem OAuth-State, verschlüsseltem Refresh-Token,
+begrenztem inkrementellem Sync, sauberer Trennung und ehrlichen Zuständen. Ohne
+registrierte WHOOP-App bleibt die Oberfläche `NOT_CONFIGURED`; Webhooks bleiben
+bis zu dauerhafter Queue und Reconciliation deaktiviert. Details stehen in
+[`docs/WHOOP-INTEGRATION.md`](docs/WHOOP-INTEGRATION.md). Der letzte vollständige
+lokale Lauf des Release-Kandidaten umfasst 296/296 grüne Node-Tests; Deployment
+und externe Provider-Abnahme sind noch nicht als `LIVE` dokumentiert.
 
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle
