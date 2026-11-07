@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-92` ist auf Fressi und Günni live: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Günnis realer IMAP-Scan ist als payloadfreie Timeline live nachgewiesen. Release `2026.11.07-93` härtet das iPhone-Web-Pairing gegen gemeinsame Reverse-Proxy-IPs, persistiert Fehlversuchslimits und vereinheitlicht Code, Link, Share, Status, Erneuern und Widerruf in einem mobilen Assistenten. 182/182 Tests, Production-Build und lokale Pairing-Security-Abnahme sind bestanden; der Remote-Rollout folgt im Release-Schritt. Auf Günni sind aktuell:
+Release `2026.11.07-93` ist auf Fressi und Günni live: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Günnis realer IMAP-Scan ist als payloadfreie Timeline live nachgewiesen. Das iPhone-Web-Pairing trennt gemeinsame Reverse-Proxy-IPs, persistiert Fehlversuchslimits und vereinheitlicht Code, Link, Share, Status, Erneuern und Widerruf in einem mobilen Assistenten. 182/182 Tests, Production-Build, PWA-Cachewechsel und der echte Chrome-Flow `Pair → Status → Ingest → Revoke` sind bestanden. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
@@ -41,9 +41,9 @@ angezeigt.
    anbinden; keine autonome Selbstfreigabe.
 6. Alle festen `LIVE`-Texte entfernen und Status ausschließlich aus
    Healthchecks oder gespeicherten Ergebnissen ableiten.
-7. **Release 92 live bestanden; Release 93 lokal bestanden:** Der nächste
-   PWA-Cachewechsel rollt den gehärteten iPhone-Assistenten und einen stabilen,
-   nur serverseitigen Companion-Pepper auf beide Personal-Instanzen aus.
+7. **Release 92 und 93 live bestanden:** Der PWA-Cachewechsel, der gehärtete
+   iPhone-Assistent und ein stabiler, nur serverseitiger Companion-Pepper sind
+   auf beiden Personal-Instanzen aktiv.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

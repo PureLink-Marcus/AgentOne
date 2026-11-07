@@ -203,6 +203,12 @@ Companion-Pepper bleibt ausschließlich in der geschützten Serverumgebung.
 HealthKit, EventKit und Hintergrundstandort bleiben bis zur signierten nativen
 iOS-App weiterhin ehrlich `PREPARED`.
 
+**Abnahmestand:** 182/182 Tests, Production-Build und Cross-User-Security-Smoke
+sind grün. Release 93 läuft auf vier healthy Personal-Containern. Der echte
+Günni-Chrome-Smoke bestätigt bei 390 px HTTPS, sicheren Browser-Speicher,
+Fragment-Übergabe, Ingest und Widerruf ohne horizontale Überbreite,
+Konsolenfehler oder Secret-Leak.
+
 ## Priorisierte vertikale Lieferpakete
 
 Die Reihenfolge maximiert echten Nutzen und hält externe Freigaben aus dem

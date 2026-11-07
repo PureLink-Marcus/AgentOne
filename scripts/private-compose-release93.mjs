@@ -36,6 +36,7 @@ fi
 if [ "$companionPepperLines" -eq 0 ]; then
   sed -i '/AGENTONE_INTERNAL_API_TOKEN:/a\      AGENTONE_COMPANION_PEPPER: \${AGENTONE_COMPANION_PEPPER}' "$file"
 fi
+sed -i 's/^AGENTONE_COMPANION_PEPPER:/      AGENTONE_COMPANION_PEPPER:/' "$file"
 sed -i "s/purelink\\/agentone:2026.11.07-92/purelink\\/agentone:2026.11.07-93/g" "$file"
 sed -i -E "s/(AGENTONE_RELEASE:[[:space:]]*).*/\\12026.11.07-93/g" "$file"
 test "$(grep -c "purelink/agentone:2026.11.07-93" "$file")" -eq 4

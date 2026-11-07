@@ -2,7 +2,7 @@
 
 Stand: 7. November 2026
 Release: `2026.11.07-93`
-Deployment: Release 92 ist auf Fressi und Günni live. Release 93 behebt den iPhone-Pairing-Lockout hinter Coolify/Traefik, vereinheitlicht den mobilen Apple-Assistenten und ist lokal vollständig abgenommen; der Remote-Rollout folgt nach dem Image-Build.
+Deployment: Release 93 ist auf Fressi und Günni live. Der iPhone-Pairing-Lockout hinter Coolify/Traefik ist behoben; der mobile Apple-Assistent, PWA-Cachewechsel und der vollständige Pairing-Lebenszyklus sind remote abgenommen.
 
 ## Abgenommen
 
@@ -91,9 +91,9 @@ Deployment: Release 92 ist auf Fressi und Günni live. Release 93 behebt den iPh
 | Reverse-Proxy-Clienttrennung und `Retry-After` | PASS LOKAL | Zwei Mobilclients hinter derselben vertrauenswürdigen Proxy-IP besitzen getrennte, operationsbezogene Buckets |
 | Persistentes Pairing-Limit, atomarer Einmalcode und Benutzertrennung | PASS LOKAL | Cross-User-, Replay-, Scope-, Revoke- und Log-Redaction-Smoke bestanden; Code und Token werden nie erneut ausgegeben |
 | Einheitlicher Apple-Assistent und iPhone-PWA-Diagnose | PASS LOKAL | 4 Schritte, explizite Rechte, Code/Fragment-Link/Share, Status, Erneuern und Widerruf; 390 px ohne horizontale Überbreite |
-| Stable Companion-Server-Secret | BEREIT ZUM ROLLOUT | Rollout erzeugt einmalig einen geschützten 256-Bit-Pepper im Coolify-Serviceverzeichnis und injiziert ihn nur in die beiden App-Container; Werte erscheinen weder in Logs noch im Browser |
+| Stable Companion-Server-Secret | PASS LIVE | Ein geschützter 256-Bit-Pepper liegt im Coolify-Serviceverzeichnis und wird nur in die beiden App-Container injiziert; beide melden `READY`, Werte erscheinen weder in Logs noch im Browser |
 | Gesamttests und Production-Build | PASS | 182/182 Node-Tests, Pairing-Security-Smoke und Vite-Production-Build grün |
-| Deployment und Live-iPhone-Smoke | OFFEN | Nach Image-Build: `Pair → Status → Ingest → Revoke`, PWA-Cache 93 und vier healthy Container prüfen |
+| Deployment und Live-iPhone-Smoke | PASS | Vier Container healthy auf Image `purelink/agentone:2026.11.07-93`; PWA-Cache 93 aktiv; Günni Chrome 390 px: `Pair → Status → Ingest → Revoke`, HTTPS/WebCrypto/IndexedDB bereit, 0 Konsolenfehler, keine Secrets |
 
 ```powershell
 npm run verify:local
