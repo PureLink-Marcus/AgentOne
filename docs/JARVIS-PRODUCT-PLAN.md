@@ -324,6 +324,34 @@ Er hält Quellen und inkompatible Messmethoden getrennt, nennt Abdeckung und
 Konfidenz und liefert keine Diagnose, Therapie- oder Medikamentenempfehlung.
 Ohne persönliche Daten zeigt die Oberfläche weiterhin nur `READY`.
 
+### Release 2026.11.07-95 · Health & Recovery und iPhone-Recovery
+
+Der Quellenvergleich ist jetzt als sichtbare **Health-&-Recovery-Zentrale**
+verdrahtet. Apple Health und WHOOP besitzen getrennte Karten, Messwertzahlen,
+Abdeckung und Status. Nur gleicher Tag, gleiche Einheit und gleiche Methode
+werden verglichen. HRV-SDNN/RMSSD und Körper-/Hauttemperatur erscheinen als
+bewusst getrennte Verfahren. Die Konfidenz ist ausschließlich eine Aussage zur
+Datenabdeckung und ausdrücklich kein Gesundheitswert. Ein synthetischer,
+personenfreier Chrome-Flow importiert Apple-Daten, zeigt den Vergleich und
+löscht Testwerte und Freigaben anschließend wieder.
+
+Der Web-Companion behandelt nun auch den realen Lebenszyklus mehrerer Geräte.
+Ein neuer gültiger Code bleibt als `PAIRING` sichtbar, selbst wenn ein älteres
+iPhone verbunden ist. Auf iOS darf nur die installierte Home-Screen-PWA einen
+Code bestätigen; eine gewöhnliche Safari-/In-App-Ansicht entfernt das
+URL-Fragment sofort und verbraucht den Code nicht. Gerätetokens bleiben
+AES-GCM-verschlüsselt, ein fehlender Wrap-Key ist fail-closed, und ein Fehler
+beim lokalen Speichern widerruft die gerade erzeugte Serverfreigabe soweit
+möglich sofort über einen tokengebundenen Self-Revoke-Pfad.
+
+**Abnahmestand:** 198/198 Gesamttests, 26/26 fokussierte
+Companion-/API-/Proxy-Tests, Pairing-Security-Smoke, Production-Build sowie
+lokale Google-Chrome-Smokes bei 390 px sind bestanden. Die iOS-Grenze wurde in
+Chrome mit iPhone-UA und simuliertem Standalone-Modus geprüft; dies ist keine
+echte WebKit-, Safari- oder native HealthKit-Abnahme. Der Live-Rollout von
+Release 95 wird erst nach Container-, PWA- und Domainprüfung als abgeschlossen
+markiert.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —

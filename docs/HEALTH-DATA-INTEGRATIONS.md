@@ -10,6 +10,7 @@ Stand: 7. November 2026
 | Apple-Health-Export | `LIVE (SMALL)` | `export.xml` und das originale Apple-ZIP können bis 32 MiB importiert werden. ZIP-Pfade, Verschlüsselung, Größe, Kompressionsrate und CRC werden geprüft; größere Archive bleiben bis zu einem isolierten Worker `PREPARED`. |
 | Quellenvergleich | `IMPLEMENTED` | Schritte, Schlaf und weitere deckungsgleiche Tageswerte werden Apple gegen WHOOP verglichen; Unterschiede bleiben deskriptiv. |
 | Health-Digest | `IMPLEMENTED` | Datenabdeckung und Quellenabweichungen werden als Hinweise ausgegeben – ausdrücklich ohne Diagnose. |
+| Health & Recovery UI | `IMPLEMENTED / LOCAL VERIFIED` | Release 95 zeigt Apple Health und WHOOP getrennt, einschließlich 14-Tage-Abdeckung, kompatibler Tagesvergleiche, inkompatibler Methoden, Datenqualität und rein datenbasierter Konfidenz. Ohne Daten bleibt der Zustand ehrlich `EMPTY` beziehungsweise `NOT_CONFIGURED`. |
 | WHOOP V2 | `IMPLEMENTED CORE / PREPARED ACTIVATION` | Authorization-Code-Austausch, rotierender Refresh, vollständige V2-Pagination, Retention, idempotente Normalisierung, Teilerfolg und signatur-/zeit-/replaygeprüfte Webhook-Envelopes sind implementiert. Öffentliche OAuth-/Webhook-Routen bleiben bis zur registrierten WHOOP-App, verschlüsselten Tokenpersistenz und Queue bewusst aus. |
 | Native HealthKit-Synchronisation | `PREPARED` | Benötigt die separate iOS-Companion-App, Apple-Entitlement, App-Signierung und Freigabe je Datentyp. Ein Server oder eine PWA kann HealthKit nicht direkt lesen. |
 
@@ -98,6 +99,23 @@ Die Antwort enthält getrennte Serien je Quelle, Tagesabdeckung,
 vergleichbare Tageswerte, Methodendifferenzen, datenbasierte Konfidenz und
 minimierte Provenienz. Sie enthält weder Rohdatensatz-/Consent-IDs noch Secrets
 oder medizinische Empfehlungen.
+
+Release `2026.11.07-95` veröffentlicht diesen Vergleich in der persönlichen
+Oberfläche als **Health & Recovery**. Die Oberfläche liest ausschließlich die
+authentifizierten, benutzergebundenen Health-, Digest-, Comparison- und
+WHOOP-Statuspfade. Sie berechnet keine zweite Browserwahrheit und zeigt keine
+erfundenen Scores. Apple-Freigaben werden nur gezählt, wenn der Consent aktiv
+ist und `apple_health` tatsächlich enthält; WHOOP-Freigaben werden nicht in die
+Apple-Zahl eingerechnet.
+
+Der lokale 390-px-Chrome-Smoke importiert eine kleine synthetische, PII-freie
+Apple-XML-Datei mit drei Messwerten und vergleicht sie mit drei synthetischen
+WHOOP-Werten. Erwartet werden zwei kompatible Vergleiche und eine explizite
+HRV-Methodentrennung. Der Test löscht anschließend Messwerte und Freigaben und
+verifiziert den Zustand `EMPTY`. Der Gesamtlauf für Release 95 umfasst 198/198
+Node-Tests und einen erfolgreichen Production-Build. Persönliche Apple- oder
+WHOOP-Daten wurden dabei nicht verwendet; die Live-Anbieterabnahme bleibt von
+Benutzerfreigabe und WHOOP-Credentials abhängig.
 
 Apple und WHOOP messen nicht zwingend denselben Zeitraum oder dieselbe physiologische Definition. Insbesondere WHOOP-Zyklen folgen Schlaf-Wach-Zyklen statt Kalendertagen. AgentOne zeigt deshalb immer beide Quellen, deren Zeitgrenzen und die prozentuale Abweichung an. Es überschreibt niemals einen Wert mit dem anderen.
 

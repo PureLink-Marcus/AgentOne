@@ -28,7 +28,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-94');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-95');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -221,7 +221,7 @@ async function personalServices(req,res){
   try{const suffix=String(req.url||'').slice('/agentone/services'.length),headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json'},options={method:req.method,headers,signal:AbortSignal.timeout(25_000)};if(req.method!=='GET')options.body=(await readBody(req,32_768)).toString('utf8');const response=await fetch(`${personalApiUrl}/api/internal/personal/services${suffix}`,options),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch(error){return jsonResponse(res,502,{error:'personal_service_failed',detail:String(error.message||error).slice(0,100)});}
 }
 async function personalCompanion(req,res,{native=false}={}){
-  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found',message:'Companion ist nur in persönlichen Instanzen verfügbar.',secretsExposed:false});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'COMPANION_SERVICE_NOT_CONFIGURED',message:'Der iPhone-Dienst ist serverseitig noch nicht konfiguriert.',secretsExposed:false});const suffix=String(req.url||'').slice('/agentone/companion'.length),operation=suffix==='/confirm'||suffix==='/redeem'?'confirm':suffix==='/status'?'status':suffix==='/ingest'?'ingest':'browser',limit=native?companionLimit(req,operation):null;if(limit?.limited)return jsonResponse(res,429,{error:'COMPANION_RATE_LIMIT',message:operation==='confirm'?'Zu viele Pairing-Versuche. Bitte später erneut versuchen.':'Zu viele Companion-Anfragen. Bitte kurz warten.',retryAfterSeconds:limit.retryAfterSeconds,secretsExposed:false},{'retry-after':String(limit.retryAfterSeconds)});if(!native&&req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'COMPANION_ORIGIN_REJECTED',message:'Die Anfrage stammt nicht von dieser AgentOne-Instanz.',secretsExposed:false});
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found',message:'Companion ist nur in persönlichen Instanzen verfügbar.',secretsExposed:false});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'COMPANION_SERVICE_NOT_CONFIGURED',message:'Der iPhone-Dienst ist serverseitig noch nicht konfiguriert.',secretsExposed:false});const suffix=String(req.url||'').slice('/agentone/companion'.length),operation=suffix==='/confirm'||suffix==='/redeem'?'confirm':suffix==='/status'?'status':suffix==='/ingest'?'ingest':suffix==='/self'?'self-revoke':'browser',limit=native?companionLimit(req,operation):null;if(limit?.limited)return jsonResponse(res,429,{error:'COMPANION_RATE_LIMIT',message:operation==='confirm'?'Zu viele Pairing-Versuche. Bitte später erneut versuchen.':'Zu viele Companion-Anfragen. Bitte kurz warten.',retryAfterSeconds:limit.retryAfterSeconds,secretsExposed:false},{'retry-after':String(limit.retryAfterSeconds)});if(!native&&req.method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'COMPANION_ORIGIN_REJECTED',message:'Die Anfrage stammt nicht von dieser AgentOne-Instanz.',secretsExposed:false});
   try{const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'content-type':'application/json','accept':'application/json'};if(req.headers['x-agentone-device-token'])headers['x-agentone-device-token']=String(req.headers['x-agentone-device-token']).slice(0,160);const options={method:req.method,headers,signal:AbortSignal.timeout(15_000)};if(!['GET','HEAD'].includes(req.method||''))options.body=(await readBody(req,32_768)).toString('utf8');const response=await fetch(`${personalApiUrl}/api/internal/personal/companion${suffix}`,options),payload=await response.text(),forward={'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)},retryAfter=response.headers.get('retry-after');if(retryAfter&&/^\d{1,6}$/.test(retryAfter))forward['retry-after']=retryAfter;auditLog('companion.request',{operation,status:response.status,ok:response.ok});res.writeHead(response.status,securityHeaders(forward));return res.end(payload);}catch(error){auditLog('companion.request',{operation,status:error.status||502,ok:false});return jsonResponse(res,error.status||502,{error:error.status===413?'COMPANION_BODY_TOO_LARGE':'COMPANION_SERVICE_UNAVAILABLE',message:error.status===413?'Die Companion-Anfrage ist zu groß.':'Der iPhone-Dienst ist vorübergehend nicht erreichbar.',secretsExposed:false});}
 }
 async function personalGovernance(req,res){
@@ -312,8 +312,12 @@ async function personalWhoopStatus(res){
 async function personalHealth(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'health_store_unavailable'});
   const requestUrl=new URL(String(req.url||'/agentone/health'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/health'.length),method=String(req.method||'GET');
-  const allowed=(method==='GET'&&['','/','/consents','/digest'].includes(suffix))||(method==='POST'&&['/consents','/apple-import','/export'].includes(suffix))||(method==='DELETE'&&(suffix==='/data'||/^\/consents\/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(suffix)));
+  const allowed=(method==='GET'&&['','/','/consents','/digest','/comparison'].includes(suffix))||(method==='POST'&&['/consents','/apple-import','/export'].includes(suffix))||(method==='DELETE'&&(suffix==='/data'||/^\/consents\/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(suffix)));
   if(!allowed)return jsonResponse(res,404,{error:'not_found'});
+  if(method==='GET'){
+    const queryKeys=suffix==='/digest'?new Set(['source','from','to']):suffix==='/comparison'?new Set(['periodDays','minimumCoverageDays','timeZone']):new Set();
+    if([...requestUrl.searchParams.keys()].some(key=>!queryKeys.has(key)||requestUrl.searchParams.getAll(key).length!==1))return jsonResponse(res,400,{error:'HEALTH_QUERY_INVALID',secretsExposed:false});
+  }
   const isUpload=method==='POST'&&suffix==='/apple-import',mutating=method!=='GET';if(mutating&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
   const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'};
   try{
@@ -324,11 +328,16 @@ async function personalHealth(req,res){
       const consentId=String(req.headers['x-agentone-health-consent-id']||'').trim();if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(consentId))return jsonResponse(res,400,{error:'HEALTH_CONSENT_REQUIRED'});
       headers['content-type']=contentType;headers['x-agentone-health-consent-id']=consentId;headers['x-agentone-human-actor']=expectedUser;headers['x-agentone-human-action']='health-import-confirmed';let transferred=0,limitFailure=null;
       options.duplex='half';options.body=(async function*(){for await(const chunk of req){transferred+=chunk.length;if(transferred>max){limitFailure=Object.assign(new Error('Upload too large'),{status:413});throw limitFailure;}yield chunk;}if(!transferred){limitFailure=Object.assign(new Error('Upload empty'),{status:400});throw limitFailure;}})();
-      try{const response=await fetch(`${personalApiUrl}/api/internal/personal/health/apple-import`,options);return await streamHealthResponse(response,res);}catch(error){if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'HEALTH_UPLOAD_TOO_LARGE':'HEALTH_UPLOAD_EMPTY'});throw error;}
+      try{const response=await fetch(`${personalApiUrl}/api/internal/personal/health/apple-import`,options);return await streamPersonalHealthResponse(response,res);}catch(error){if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'HEALTH_UPLOAD_TOO_LARGE':'HEALTH_UPLOAD_EMPTY'});throw error;}
     }
     if(mutating){headers['content-type']='application/json';options.body=(await readBody(req,32_768)).toString('utf8');}
-    const response=await fetch(`${personalApiUrl}/api/internal/personal/health${suffix}${requestUrl.search}`,options);return await streamHealthResponse(response,res);
-  }catch(error){return jsonResponse(res,error.status||502,{error:'health_service_failed',detail:String(error.message||error).slice(0,100)});}
+    const response=await fetch(`${personalApiUrl}/api/internal/personal/health${suffix}${requestUrl.search}`,options);return await streamPersonalHealthResponse(response,res);
+  }catch(error){return jsonResponse(res,error.status||502,{error:'health_service_failed',secretsExposed:false});}
+}
+async function streamPersonalHealthResponse(response,res){
+  if(response.ok)return streamHealthResponse(response,res);
+  let error='HEALTH_REQUEST_FAILED';try{const payload=JSON.parse(await response.text()),candidate=String(payload?.error||'');if(/^[A-Z][A-Z0-9_]{2,79}$/.test(candidate))error=candidate;}catch{try{await response.body?.cancel();}catch{}}
+  return jsonResponse(res,response.status,{error,secretsExposed:false});
 }
 async function streamHealthResponse(response,res){
   const type=String(response.headers.get('content-type')||'application/json; charset=utf-8'),disposition=response.headers.get('content-disposition'),headers={'content-type':type,'cache-control':'no-store','x-content-type-options':'nosniff'};if(disposition==='attachment; filename="agentone-health-export.json"')headers['content-disposition']=disposition;
@@ -402,7 +411,7 @@ const server=http.createServer((req,res)=>{
     const body=fs.readFileSync(file);return asset(res,'font/ttf',body);
   }
   if(req.method==='GET'&&/^\/iphone\/?(?:\?|$)/.test(req.url||''))return showCompanionPairing(res);
-  if((req.method==='POST'&&['/agentone/companion/confirm','/agentone/companion/redeem','/agentone/companion/ingest'].includes(req.url||''))||(req.method==='GET'&&req.url==='/agentone/companion/status'))return personalCompanion(req,res,{native:true});
+  if((req.method==='POST'&&['/agentone/companion/confirm','/agentone/companion/redeem','/agentone/companion/ingest'].includes(req.url||''))||(req.method==='GET'&&req.url==='/agentone/companion/status')||(req.method==='DELETE'&&req.url==='/agentone/companion/self'))return personalCompanion(req,res,{native:true});
   if(req.method==='POST'&&req.url==='/agentone/siri/v1/execute')return siriExecute(req,res);
   const user=authenticatedUser(req);
   if(req.url==='/login'&&req.method==='GET'){if(user)return redirect(res,'/');return showLogin(res);}

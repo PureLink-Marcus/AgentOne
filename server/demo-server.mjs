@@ -293,11 +293,22 @@ async function personalIntelligenceSnapshot(userId){
 }
 
 const healthConsentScopes=new Set(['activity','sleep','vitals','body','workouts']);
+const healthEmptyQueryKeys=new Set();
+const healthDigestQueryKeys=new Set(['source','from','to']);
+const healthMetricSources=new Set(['apple_health','whoop']);
 const healthComparisonQueryKeys=new Set(['periodDays','minimumCoverageDays','timeZone']);
 const healthComparisonTimeZones=new Set(['Europe/Berlin','UTC']);
+function healthQueryError(code='HEALTH_QUERY_INVALID'){return Object.assign(new Error('Ungültige Health-Anfrageparameter'),{code,status:400});}
+function assertHealthQuery(searchParams,allowed,code='HEALTH_QUERY_INVALID'){for(const key of searchParams.keys())if(!allowed.has(key)||searchParams.getAll(key).length!==1)throw healthQueryError(code);}
+function healthDigestOptions(searchParams){
+  assertHealthQuery(searchParams,healthDigestQueryKeys);
+  const source=searchParams.get('source')||undefined;if(source&&!healthMetricSources.has(source))throw healthQueryError();
+  const timestamp=name=>{const value=searchParams.get(name);if(value===null)return undefined;const dateOnly=/^\d{4}-\d{2}-\d{2}$/.test(value),instant=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value),parsed=new Date(dateOnly?`${value}T00:00:00.000Z`:value);if((!dateOnly&&!instant)||!Number.isFinite(parsed.getTime())||(dateOnly&&parsed.toISOString().slice(0,10)!==value)||(instant&&parsed.toISOString()!==value))throw healthQueryError();return value;};
+  const from=timestamp('from'),to=timestamp('to');if(from&&to&&new Date(from)>new Date(to))throw healthQueryError();return {source,from,to};
+}
 function healthComparisonOptions(searchParams){
-  const invalid=()=>Object.assign(new Error('Ungültige Health-Vergleichsparameter'),{code:'HEALTH_COMPARISON_QUERY_INVALID',status:400});
-  for(const key of searchParams.keys())if(!healthComparisonQueryKeys.has(key)||searchParams.getAll(key).length!==1)throw invalid();
+  const invalid=()=>healthQueryError('HEALTH_COMPARISON_QUERY_INVALID');
+  assertHealthQuery(searchParams,healthComparisonQueryKeys,'HEALTH_COMPARISON_QUERY_INVALID');
   const integer=(name,fallback,max)=>{const raw=searchParams.get(name);if(raw===null)return fallback;if(!/^[1-9]\d{0,1}$/.test(raw))throw invalid();const value=Number(raw);if(value>max)throw invalid();return value;};
   const periodDays=integer('periodDays',14,90),minimumCoverageDays=integer('minimumCoverageDays',Math.min(3,periodDays),periodDays),timeZone=searchParams.get('timeZone')||'Europe/Berlin';
   if(!healthComparisonTimeZones.has(timeZone))throw invalid();
@@ -375,6 +386,7 @@ async function api(req,res,url){
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/companion/pair'){const input=await body(req),scopes=Array.isArray(input.scopes)?input.scopes:undefined,pairing=createCompanionPairing(state.db,{userId,pepper:companionPepper,scopes});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.pair.created',outcome:'OK',detail:JSON.stringify({expiresAt:pairing.expiresAt,scopes:pairing.scopes,secretsExposed:false})});return json(res,201,{pairing});}
       if(req.method==='POST'&&(url.pathname==='/api/internal/personal/companion/confirm'||url.pathname==='/api/internal/personal/companion/redeem')){const input=await body(req),device=redeemCompanionPairing(state.db,{userId,code:input.code,deviceName:input.deviceName,pepper:companionPepper});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.pair.confirmed',outcome:'OK',detail:JSON.stringify({deviceId:device.deviceId,scopes:device.scopes,secretsExposed:false})});return json(res,201,{device,status:'CONNECTED',secretsExposed:false});}
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/companion/ingest'){const token=String(req.headers['x-agentone-device-token']||''),device=authorizeCompanion(state.db,{userId,deviceToken:token,pepper:companionPepper}),input=await body(req),scope={health:'health.summary',location:'location.temporary',calendar:'calendar.read',reminders:'reminders.read'}[input.kind];if(!scope||!device.scopes.includes(scope))return json(res,403,{error:'scope_not_granted'});const event=storeCompanionEvent(state.db,{userId,deviceId:device.id,kind:input.kind,input:input.data});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.event.ingested',outcome:'OK',detail:JSON.stringify({deviceId:device.id,eventId:event.id,kind:event.kind,expiresAt:event.expiresAt,secretsExposed:false})});return json(res,201,{event});}
+      if(req.method==='DELETE'&&url.pathname==='/api/internal/personal/companion/self'){const token=String(req.headers['x-agentone-device-token']||''),device=authorizeCompanion(state.db,{userId,deviceToken:token,pepper:companionPepper}),result=revokeCompanion(state.db,{userId,deviceId:device.id});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.device.self-revoked',outcome:result.revoked?'OK':'NOT_FOUND',detail:JSON.stringify({eventsDeleted:result.eventsDeleted,secretsExposed:false})});return json(res,result.revoked?200:404,{revoked:result.revoked,alreadyRevoked:result.alreadyRevoked,eventsDeleted:result.eventsDeleted,selfRevoked:true,secretsExposed:false});}
       const deviceMatch=url.pathname.match(/^\/api\/internal\/personal\/companion\/devices\/([^/]+)$/);if(req.method==='DELETE'&&deviceMatch){const result=revokeCompanion(state.db,{userId,deviceId:decodeURIComponent(deviceMatch[1])});recordAudit(state.db,{userId,connectorId:'apple-companion',action:'companion.device.revoked',outcome:result.revoked?'OK':'NOT_FOUND',detail:JSON.stringify({deviceId:result.deviceId,eventsDeleted:result.eventsDeleted,secretsExposed:false})});return json(res,result.revoked?200:404,result);}
       return json(res,405,{error:'method_not_allowed'});
     }catch(error){const retryAfter=Number(error.retryAfterSeconds);return json(res,error.status||400,{error:error.code||'COMPANION_REQUEST_FAILED',message:String(error.message||error).slice(0,180),retryAfterSeconds:Number.isFinite(retryAfter)?retryAfter:null,secretsExposed:false},Number.isFinite(retryAfter)?{'retry-after':String(Math.max(1,Math.ceil(retryAfter)))}:{});}
@@ -478,9 +490,9 @@ async function api(req,res,url){
   if(url.pathname==='/api/internal/personal/health'||url.pathname.startsWith('/api/internal/personal/health/')){
     if(!internalPersonal)return json(res,403,{error:'forbidden'});const userId=String(req.headers['x-agentone-user']||'').trim().slice(0,80);if(!userId)return json(res,400,{error:'user_required'});
     try{
-      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health')return json(res,200,{schema:'agentone.health-status/v1',encryptionReady:healthCryptoReady,consents:healthCryptoReady?listHealthConsents(state.db,{userId,decrypt:healthDecrypt}):[],store:healthStoreAuditSummary(state.db,userId),capabilities:healthConnectorCapabilities,policy:{userIsolated:true,encryptedAtRest:true,medicalDiagnosis:false,secretsExposed:false}});
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health'){assertHealthQuery(url.searchParams,healthEmptyQueryKeys);return json(res,200,{schema:'agentone.health-status/v1',encryptionReady:healthCryptoReady,consents:healthCryptoReady?listHealthConsents(state.db,{userId,decrypt:healthDecrypt}):[],store:healthStoreAuditSummary(state.db,userId),capabilities:healthConnectorCapabilities,policy:{userIsolated:true,encryptedAtRest:true,medicalDiagnosis:false,secretsExposed:false}});}
       if(!healthCryptoReady)return json(res,503,{error:'HEALTH_ENCRYPTION_NOT_CONFIGURED',message:'Health-Verschlüsselung ist noch nicht konfiguriert',secretsExposed:false,medicalDiagnosis:false});
-      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/consents')return json(res,200,{consents:listHealthConsents(state.db,{userId,decrypt:healthDecrypt}),secretsExposed:false});
+      if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/consents'){assertHealthQuery(url.searchParams,healthEmptyQueryKeys);return json(res,200,{consents:listHealthConsents(state.db,{userId,decrypt:healthDecrypt}),secretsExposed:false});}
       if(req.method==='POST'&&url.pathname==='/api/internal/personal/health/consents'){
         const input=await body(req),scopes=[...new Set((Array.isArray(input.scopes)?input.scopes:[]).map(String).filter(value=>healthConsentScopes.has(value)))];
         if(!scopes.length)return json(res,400,{error:'HEALTH_CONSENT_SCOPES_REQUIRED',allowedScopes:[...healthConsentScopes]});
@@ -506,7 +518,7 @@ async function api(req,res,url){
         }catch(error){try{recordCommandError(state.db,{userId,runId:run.id,toolStepId:tool.id,code:error.code||'HEALTH_IMPORT_FAILED',message:'Apple-Health-Import konnte nicht abgeschlossen werden',retryable:false});}catch{}error.commandStream=publicCommandTimeline(state.db,{userId,runId:run.id});throw error;}
       }
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/digest'){
-        const metrics=queryHealthMetrics(state.db,{userId,source:url.searchParams.get('source')||undefined,from:url.searchParams.get('from')||undefined,to:url.searchParams.get('to')||undefined,limit:5_000,decrypt:healthDecrypt});
+        const options=healthDigestOptions(url.searchParams),metrics=queryHealthMetrics(state.db,{userId,...options,limit:5_000,decrypt:healthDecrypt});
         return json(res,200,{schema:'agentone.health-digest/v1',metricCount:metrics.length,digest:buildHealthDigest(metrics),policy:{medicalDiagnosis:false,secretsExposed:false}});
       }
       if(req.method==='GET'&&url.pathname==='/api/internal/personal/health/comparison'){

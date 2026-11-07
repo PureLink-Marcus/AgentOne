@@ -11,6 +11,9 @@ test('mobile companion page is installable, secret-free and escapes instance bra
   assert.match(html,/IPHONE-CHECK/);
   assert.match(html,/Zum Home-Bildschirm/);
   assert.match(html,/local-disconnect/);
+  assert.match(html,/id="pair-card"/);
+  assert.match(html,/enterkeyhint="done"/);
+  assert.ok(html.indexOf('id="status-refresh"')>html.indexOf('</form>'),'Statusprüfung muss auch bei ausgeblendetem Pairing-Formular erreichbar bleiben');
   assert.doesNotMatch(html,/a1d_[A-Za-z0-9_-]+/);
   assert.equal(manifest.start_url,'/iphone');
   assert.equal(manifest.display,'standalone');
@@ -18,7 +21,9 @@ test('mobile companion page is installable, secret-free and escapes instance bra
 
 test('mobile companion script uses fragment handoff and encrypted IndexedDB storage',()=>{
   assert.match(companionPairJs,/location\.hash/);
-  assert.doesNotMatch(companionPairJs,/location\.search/);
+  assert.doesNotMatch(companionPairJs,/URLSearchParams\(location\.search\)/);
+  assert.equal(companionPairJs.split('replace(/\\D/g').length-1,3);
+  assert.equal(companionPairJs.includes('replace(/D/g'),false);
   assert.match(companionPairJs,/indexedDB/);
   assert.match(companionPairJs,/AES-GCM/);
   assert.match(companionPairJs,/crypto\.subtle\.generateKey/);
@@ -26,8 +31,23 @@ test('mobile companion script uses fragment handoff and encrypted IndexedDB stor
   assert.match(companionPairJs,/window\.isSecureContext/);
   assert.match(companionPairJs,/Home-Bildschirm-App/);
   assert.match(companionPairJs,/LOKAL GETRENNT/);
+  assert.match(companionPairJs,/showPairForm\(false\)/);
+  assert.match(companionPairJs,/response\.status===401/);
+  assert.match(companionPairJs,/showPairForm\(true,\{focus:!quiet\}\)/);
+  assert.match(companionPairJs,/location\.pathname\+location\.search/);
+  assert.match(companionPairJs,/INSTALLIEREN ERFORDERLICH/);
+  assert.match(companionPairJs,/navigator\.standalone/);
+  assert.match(companionPairJs,/addEventListener\('hashchange',consumeFragmentCode\)/);
+  assert.match(companionPairJs,/addEventListener\('pageshow',consumeFragmentCode\)/);
+  assert.match(companionPairJs,/agentone\/companion\/self/);
+  assert.match(companionPairJs,/Serverfreigabe wurde zurückgenommen/);
+  assert.match(companionPairJs,/vaultKey\(\{create:false\}\)/);
   assert.match(companionPairJs,/serviceWorker\.register/);
+  assert.match(companionPairJs,/controllerchange/);
+  assert.match(companionPairJs,/visibilitychange/);
   assert.match(companionPairJs,/agentone\/companion\/confirm/);
   assert.match(companionPairJs,/agentone\/companion\/status/);
+  assert.match(companionPairJs,/agentone\/companion\/self/);
+  assert.match(companionPairJs,/Serverfreigabe wurde zurückgenommen/);
   assert.doesNotMatch(companionPairJs,/console\.(?:log|debug|info)/);
 });

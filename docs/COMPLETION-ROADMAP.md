@@ -8,7 +8,7 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-94` ist auf Fressi und Günni live: Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. Der neue Bereich **Heute & Planung** liest den serverseitigen Tagesplan, zeigt reale Termine, Konflikte, freie Arbeitsfenster und Mail-Handlungsbedarf. Ein temporärer Live-ICS-Test mit zwei Terminen, einem Konflikt und zwei freien Fenstern wurde auf Günni bei 390 px bestanden und danach vollständig entfernt. 195/195 Tests, Production-Build, PWA-Cachewechsel, iPhone-Pairing und echte Chrome-Smokes sind grün. Auf Günni sind aktuell:
+Release `2026.11.07-94` ist auf Fressi und Günni live. Release `2026.11.07-95` ist als nächster Stand lokal abgenommen, aber in diesem Dokumentstand noch nicht live ausgerollt. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; die neue Zentrale **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt, einschließlich Abdeckung, Methodentrennung und Datenqualität. 198/198 Tests, Production-Build, lokaler Plattform-Smoke sowie dedizierte Health- und iPhone-Chrome-Smokes sind grün. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
@@ -16,9 +16,9 @@ Release `2026.11.07-94` ist auf Fressi und Günni live: Das Command-Stream Cente
 - Feedback pro Signal wirksam und benutzerisoliert;
 - Apple-Health-Import, Verschlüsselung, Consent, Export und Löschung bereit;
 - der Kalenderplan produktiv nutzbar über ICS-Datei oder sicheren öffentlichen HTTPS-Feed; nach der Abnahme ist Günnis Testkalender wieder `NOT_CONNECTED`;
-- Health noch ohne persönliche Messwerte; der Apple-/WHOOP-Vergleich ist implementiert und wartet auf echte Daten;
+- Health noch ohne persönliche Messwerte; der Apple-/WHOOP-Vergleich und seine sichtbare Release-95-Zentrale sind implementiert und warten auf echte Daten;
 - Google OAuth und WHOOP ohne registrierte Anbieter-Credentials nicht live.
-- das Web-Companion-Pairing und die Shortcut-API implementiert; direkte HealthKit-/EventKit-Hintergrunddaten benötigen weiterhin die signierte native iOS-App.
+- das Web-Companion-Pairing und die Shortcut-API implementiert. Release 95 korrigiert Mehrgeräte-Pairing, iOS-Standalone-Grenze, Reload/Widerruf und Vault-Fehler-Recovery; direkte HealthKit-/EventKit-Hintergrunddaten benötigen weiterhin die signierte native iOS-App.
 
 `BEREIT` bedeutet implementiert und lokal/live gegen die eigene Grenze geprüft.
 `LIVE` wird ausschließlich bei erfolgreichem Zugriff auf reale Nutzerdaten
@@ -47,6 +47,10 @@ angezeigt.
 7. **Release 92 und 93 live bestanden:** Der PWA-Cachewechsel, der gehärtete
    iPhone-Assistent und ein stabiler, nur serverseitiger Companion-Pepper sind
    auf beiden Personal-Instanzen aktiv.
+8. **Release 95 lokal bestanden, Rollout ausstehend:** Health & Recovery ist als
+   Ergebnisansicht statt Setup-Kachel verdrahtet. Das iPhone-Pairing behandelt
+   zweite Geräte, iOS-Speichertrennung und fehlgeschlagene lokale Tokenablage
+   fail-closed. Eine reale Safari-/WebKit-Geräteabnahme bleibt getrennt.
 
 ### Abschlussblock 2 · reale Datenabnahme (1–2 Tage)
 

@@ -57,6 +57,32 @@ test('AgentOne login creates a secure session and trusted identity',async()=>{
   }finally{child.kill();await new Promise(resolve=>upstream.close(resolve));}
 });
 
+test('personal Health read proxy is authenticated, user-bound, no-store and query-allowlisted',async()=>{
+  const upstreamPort=await freePort(),proxyPort=await freePort(),requests=[],internalSecret='health-upstream-secret-must-not-leak';
+  const upstream=http.createServer((req,res)=>{
+    requests.push({url:req.url,method:req.method,headers:req.headers});
+    res.setHeader('content-type','application/json');
+    if(req.method==='GET'&&req.url==='/api/internal/personal/health')return res.end(JSON.stringify({schema:'agentone.health-status/v1',encryptionReady:true,policy:{userIsolated:true,secretsExposed:false}}));
+    if(req.method==='GET'&&req.url==='/api/internal/personal/health/digest?source=apple_health')return res.end(JSON.stringify({schema:'agentone.health-digest/v1',metricCount:1,digest:{notices:[]},policy:{medicalDiagnosis:false,secretsExposed:false}}));
+    if(req.method==='GET'&&req.url==='/api/internal/personal/health/comparison?periodDays=7&minimumCoverageDays=1&timeZone=UTC')return res.end(JSON.stringify({schema:'agentone.personal-health-comparison/v1',sources:{apple_health:{coverageDays:1},whoop:{coverageDays:0}},comparisons:[],policy:{medicalDiagnosis:false,rawRecordIdsIncluded:false,secretsExposed:false}}));
+    res.statusCode=500;return res.end(JSON.stringify({error:'unexpected_route',detail:internalSecret}));
+  });
+  await new Promise(resolve=>upstream.listen(upstreamPort,'127.0.0.1',resolve));
+  const origin=`http://127.0.0.1:${proxyPort}`,child=spawn(process.execPath,['server/basic-proxy.mjs'],{cwd:process.cwd(),env:{...process.env,HOST:'127.0.0.1',PORT:String(proxyPort),UPSTREAM_URL:`http://127.0.0.1:${upstreamPort}`,PERSONAL_API_URL:`http://127.0.0.1:${upstreamPort}`,PERSONAL_API_TOKEN:'health-internal-token',BASIC_AUTH_USER:'health-user',BASIC_AUTH_PASSWORD:'health-password-with-enough-length',ACCESS_SESSION_SECRET:'health-session-secret-with-enough-length',PUBLIC_ORIGIN:origin},stdio:'ignore'});
+  try{
+    await waitFor(`${origin}/proxy-health`);
+    for(const path of ['/agentone/health','/agentone/health/digest?source=apple_health','/agentone/health/comparison?periodDays=7&minimumCoverageDays=1&timeZone=UTC'])assert.equal((await fetch(origin+path)).status,401,path);
+    const login=await fetch(`${origin}/login`,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded',origin},body:'username=health-user&password=health-password-with-enough-length',redirect:'manual'}),cookie=login.headers.get('set-cookie').split(';')[0],headers={cookie,'x-agentone-user':'forged-user','x-agentone-internal-token':'forged-token'};
+    const status=await fetch(`${origin}/agentone/health`,{headers});assert.equal(status.status,200);assert.match(status.headers.get('cache-control'),/no-store/);const statusText=await status.text();assert.equal(JSON.parse(statusText).policy.userIsolated,true);
+    const digest=await fetch(`${origin}/agentone/health/digest?source=apple_health`,{headers});assert.equal(digest.status,200);assert.match(digest.headers.get('cache-control'),/no-store/);assert.equal((await digest.json()).schema,'agentone.health-digest/v1');
+    const comparison=await fetch(`${origin}/agentone/health/comparison?periodDays=7&minimumCoverageDays=1&timeZone=UTC`,{headers});assert.equal(comparison.status,200);assert.match(comparison.headers.get('cache-control'),/no-store/);const comparisonText=await comparison.text();assert.equal(JSON.parse(comparisonText).schema,'agentone.personal-health-comparison/v1');
+    for(const text of [statusText,comparisonText]){assert.equal(text.includes(internalSecret),false);assert.doesNotMatch(text,/health-internal-token|forged-user|forged-token|sourceRecordId|consent-/i);}
+    assert.equal(requests.length,3);for(const request of requests){assert.equal(request.method,'GET');assert.equal(request.headers['x-agentone-user'],'health-user');assert.equal(request.headers['x-agentone-internal-token'],'health-internal-token');assert.equal(request.headers['x-agentone-user']==='forged-user',false);}
+    const upstreamFailure=await fetch(`${origin}/agentone/health/digest?source=whoop`,{headers});assert.equal(upstreamFailure.status,500);const failureText=await upstreamFailure.text();assert.match(failureText,/HEALTH_REQUEST_FAILED/);assert.equal(failureText.includes(internalSecret),false);assert.doesNotMatch(failureText,/unexpected_route|detail/);
+    const beforeInvalid=requests.length;for(const path of ['/agentone/health?extra=1','/agentone/health/digest?source=apple_health&source=whoop','/agentone/health/digest?source=apple_health&extra=1','/agentone/health/comparison?periodDays=7&periodDays=8','/agentone/health/comparison?extra=1']){const response=await fetch(origin+path,{headers});assert.equal(response.status,400,path);assert.match(response.headers.get('cache-control'),/no-store/);const payload=await response.json();assert.equal(payload.error,'HEALTH_QUERY_INVALID');assert.equal(payload.secretsExposed,false);}assert.equal(requests.length,beforeInvalid);
+  }finally{child.kill();await new Promise(resolve=>upstream.close(resolve));}
+});
+
 test('personal Command Stream GET proxy is allowlisted, user-bound and detail-safe',async()=>{
   const upstreamPort=await freePort(),proxyPort=await freePort(),requests=[],runId='11111111-1111-4111-8111-111111111111',missingId='22222222-2222-4222-8222-222222222222',explodeId='33333333-3333-4333-8333-333333333333';
   const upstream=http.createServer((req,res)=>{

@@ -4,7 +4,7 @@ Stand: 7. November 2026
 
 Die normalisierte Import- und Vergleichspipeline ist inzwischen implementiert. Der aktuelle technische und datenschutzbezogene Stand steht in [HEALTH-DATA-INTEGRATIONS.md](./HEALTH-DATA-INTEGRATIONS.md). Diese Datei beschreibt weiterhin den geplanten iPhone-Companion und die Standortmodi.
 
-Seit Release `2026.11.07-93` ist die Geräteebene praktisch nutzbar: `/iphone` liefert einen installierbaren Web-Companion, der HTTPS, WebCrypto und IndexedDB vor dem Pairing sichtbar prüft. Ein einmaliger sechsstelliger Code wird ausschließlich im URL-Fragment übergeben, atomar eingelöst und danach entfernt. Der Gerätetoken liegt mit einem nicht exportierbaren WebCrypto-Schlüssel AES-GCM-verschlüsselt in IndexedDB. Health und temporärer Standort sind keine Standardrechte, sondern müssen vor der Codeerzeugung ausdrücklich gewählt werden. Verbundene Geräte, letzte Aktivität und Rechte sind in Private Access sichtbar; ein Widerruf löscht Token-Hash und zugehörige Companion-Ereignisse.
+Seit Release `2026.11.07-93` ist die Geräteebene praktisch nutzbar: `/iphone` liefert einen installierbaren Web-Companion, der HTTPS, WebCrypto und IndexedDB vor dem Pairing sichtbar prüft. Ein einmaliger sechsstelliger Code wird atomar eingelöst und danach entfernt. Der Gerätetoken liegt mit einem nicht exportierbaren WebCrypto-Schlüssel AES-GCM-verschlüsselt in IndexedDB. Health und temporärer Standort sind keine Standardrechte, sondern müssen vor der Codeerzeugung ausdrücklich gewählt werden. Verbundene Geräte, letzte Aktivität und Rechte sind in Private Access sichtbar; ein Widerruf löscht Token-Hash und zugehörige Companion-Ereignisse.
 
 Release `2026.11.07-94` ergänzt die serverseitige Auswertung: gespeicherte,
 normalisierte Apple-Health- und WHOOP-Metriken können für 1 bis 90 Tage
@@ -14,7 +14,31 @@ eine ausschließlich daraus abgeleitete Konfidenz. HRV-SDNN versus HRV-RMSSD
 sowie Körper- versus Hauttemperatur werden ausdrücklich nicht als identische
 Messung verglichen. Der Pfad erzeugt keine Diagnose oder Therapieempfehlung.
 
-Für die Home-Bildschirm-App wird `/iphone` zuerst in Safari geöffnet und über **Teilen → Zum Home-Bildschirm** installiert. Danach wird der Einmalcode in der installierten Ansicht eingegeben. So bleibt der Geräteschlüssel im Speicher genau dieser Ansicht. Privates Surfen ist für eine dauerhafte Kopplung ungeeignet. Das Rate-Limit unterscheidet echte Mobilclients auch hinter Coolify/Traefik; zusätzlich gilt ein persistentes, benutzergebundenes Fehlversuchslimit.
+Release `2026.11.07-95` schließt mehrere Pairing-Lücken. Ein gültiger offener
+Code besitzt im Status Vorrang vor bereits verbundenen Geräten, sodass ein
+zweites oder erneut gekoppeltes iPhone nicht mehr als bloß `CONNECTED`
+maskiert wird. Auf iOS ist die Bestätigung ausschließlich in der installierten
+Home-Screen-PWA möglich. Eine gewöhnliche Safari-, Chrome- oder In-App-Ansicht
+entfernt ein übergebenes Code-Fragment sofort, übernimmt es nicht in das Feld
+und sendet keinen Confirm. Die Admin-Oberfläche teilt deshalb Basis-URL und
+Einmalcode getrennt.
+
+Reload und Widerruf stellen den passenden verbundenen beziehungsweise erneut
+koppelbaren Zustand wieder her. Fehlt zu einem verschlüsselten Token der lokale
+Wrap-Key, erzeugt der Client keinen neuen unpassenden Schlüssel, sondern bleibt
+fail-closed. Wird der Code serverseitig bestätigt, aber die anschließende
+IndexedDB-Ablage schlägt fehl, widerruft der Client das gerade erzeugte Gerät
+best-effort über einen ausschließlich tokenautorisierten Self-Revoke-Pfad.
+Dieser Pfad gibt weder Token noch Geräte-ID zurück. Der Service Worker prüft bei
+`pageshow` und Rückkehr in den Vordergrund auf eine neue Version.
+
+Für die Home-Bildschirm-App wird die Basis-URL `/iphone` zuerst in Safari geöffnet und über **Teilen → Zum Home-Bildschirm** installiert. Erst danach wird der getrennt angezeigte Einmalcode manuell in der installierten Ansicht eingegeben. So bleibt der Geräteschlüssel im Speicher genau dieser Ansicht. Privates Surfen ist für eine dauerhafte Kopplung ungeeignet. Das Rate-Limit unterscheidet echte Mobilclients auch hinter Coolify/Traefik; zusätzlich gilt ein persistentes, benutzergebundenes Fehlversuchslimit.
+
+Der Release-95-Flow wurde in echtem Google Chrome bei 390 px mit iPhone-UA und
+simuliertem `navigator.standalone` geprüft: Installationssperre, Pair, Status,
+Ingest, Reload, Widerruf, Recovery und simuliertes Vault-Schreibversagen. Alle
+Testgeräte und Ereignisse werden anschließend entfernt. Diese Prüfung belegt
+die Weblogik, ersetzt aber keine Abnahme auf realem iOS WebKit/Safari.
 
 Der Web-Companion ersetzt keine native App: Safari/PWA kann HealthKit, EventKit und CoreLocation im Hintergrund nicht direkt lesen. Diese Funktionen bleiben bis zu Apple-Signing und Geräteabnahme ehrlich `PREPARED`.
 

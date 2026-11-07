@@ -1,17 +1,17 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-94`
-Deployment: Release 94 ist auf Fressi und Günni live. Der persönliche Tagesplan verarbeitet reale ICS-/Google-Kalenderdaten serverseitig, zeigt Konflikte und freie Arbeitsfenster und verbindet diese mit dem echten Mail-Handlungsbedarf. Der Apple-Health-/WHOOP-Vergleich ist als streng benutzerisolierte, nicht-medizinische API verdrahtet.
+Release: `2026.11.07-95`
+Deployment: Release 95 ist lokal vollständig abgenommen; der Rollout auf Fressi und Günni ist in diesem Stand noch nicht als live bestätigt. Der Release ergänzt die sichtbare Health-&-Recovery-Zentrale sowie einen belastbaren iPhone-Pairing-Lebenszyklus. Die produktiven Personal-Container laufen bis zum anschließenden Rollout weiterhin auf Release 94.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS | Release 94: 195/195 Node-Tests, Vite-Production-Build, Plattform-, Pairing-, Command-Stream- und Planungs-Smokes sowie dedizierte Chrome-Abnahmen bestanden. |
+| Lokale Anwendung | PASS | Release 95: 198/198 Node-Tests, Vite-Production-Build, Plattform-, Pairing-, Command-Stream-, Planungs- und Health-Smokes sowie dedizierte Chrome-Abnahmen bestanden. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
-| Apple-Schnellstart | PASS für Web-Companion | Release 93: einheitlicher 4-Schritt-Assistent, sichtbarer Einmalcode, Fragment-Link/Share, Status-Refresh, Erneuern und Widerruf. Das Reverse-Proxy-Limit trennt reale Mobilclients; ein persistentes Benutzerlimit, atomare Code-Einlösung und fail-closed Server-Pepper schützen den Flow. Die iPhone-Seite prüft HTTPS/WebCrypto/IndexedDB sichtbar. Native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
+| Apple-Schnellstart | PASS LOKAL für Web-Companion | Release 95: iOS bestätigt einen Code nur noch in der installierten Home-Screen-PWA. Safari und andere nicht installierte iOS-Ansichten entfernen das Fragment sofort, übernehmen den Code nicht und senden keinen Confirm. Offene Codes bleiben auch bei bereits verbundenen Geräten als `PAIRING` sichtbar. Reload, 401, Widerruf, fehlender Wrap-Key und ein simuliertes IndexedDB-Schreibversagen besitzen sichere Recovery-Pfade; letzteres widerruft die gerade erzeugte Serverfreigabe tokengebunden. Native HealthKit-Rechte bleiben bis zur signierten iOS-App `PREPARED`. |
 | Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
@@ -33,7 +33,7 @@ Deployment: Release 94 ist auf Fressi und Günni live. Der persönliche Tagespla
 | Proaktive Hinweise | PASS | Release 85: automatisch geladener Personal Pulse mit echten Mail-/Kalender-/Health-Signalen, maximal drei neue Hinweise pro Tag, Ruhezeit, persistente Deduplizierung und wirksames Feedback (`hilfreich`, `nicht hilfreich`, `falsch`, `später`, `nie wieder`). Live in Chrome ohne Secret-Leak geprüft. |
 | Personal Event Ledger | PASS | Immutable, idempotent, user-isoliert, Retention/Export/Löschung; Mail-Bodies und Secret-Felder werden an der Speichergrenze abgewiesen. |
 | Google Live Sync | PREPARED | OAuth-, Gmail-Metadaten- und Kalender-Sync inklusive Paging, Cursor, Retention, Kalenderauswahl und Teilerfolg ist implementiert und getestet. Auf Günni fehlt noch die serverseitige Google-OAuth-Konfiguration; das vorhandene App-Passwort bleibt bewusst nur IMAP. |
-| Health Ledger | READY | Verschlüsselte, benutzerisolierte Apple-Health-XML/ZIP-Imports mit Consent, Deduplizierung, Digest, Export und Löschung sind live bereit. Release 94 ergänzt einen deterministischen Apple-Health-/WHOOP-Vergleich mit getrennten Quellen, Abdeckung, Konfidenz und Methodentrennung; keine Diagnose oder Therapieaussage. Auf Günni fehlen noch persönliche Health-Daten und WHOOP-Credentials. |
+| Health Ledger | PASS LOKAL / READY LIVE | Verschlüsselte, benutzerisolierte Apple-Health-XML/ZIP-Imports mit Consent, Deduplizierung, Digest, Export und Löschung sind bereit. Release 95 macht den deterministischen Apple-Health-/WHOOP-Vergleich als **Health & Recovery** sichtbar: getrennte Quellkarten, 14-Tage-Abdeckung, ausschließlich datenbasierte Konfidenz, kompatible Vergleiche, Methodentrennung und Datenqualität. Der 390-px-Chrome-Smoke importierte drei synthetische Apple-Werte, verglich sie mit drei WHOOP-Werten und entfernte alle Testdaten wieder. Auf Günni fehlen weiterhin persönliche Health-Daten und WHOOP-Credentials. |
 | Persönliches Memory | PASS | persistente, benutzerisolierte Einträge mit Herkunft, Quellenreferenz, Bereich, Schutzklasse, Ablaufdatum, Suche und gezieltem Vergessen; Server- und Browsertests bestanden |
 | Persönliche Routinen | PASS | Read-only-Routinen mit Aktion, Berliner Zeitplan, Wochentagen, Simulation, payloadgebundenem Freigabe-Hash, Aktivieren/Pausieren, täglicher Einmallauf-Garantie und sicherem Löschen |
 | Live-Chat-Theme | PASS | eingebettete Runtime in AgentOne-Farben, dunkle Composer-/Verlaufskanten und aktive WebSocket-Verbindung |
@@ -106,8 +106,23 @@ Deployment: Release 94 ist auf Fressi und Günni live. Der persönliche Tagespla
 | Mail, Home, Kommunikation und iPhone-Regression | PASS LIVE | 50 IMAP-Nachrichten, acht aktuelle Mail-Aktionen, Home Connector v3 mit 345 Entitäten, Chat HTTP 200 über Luna sowie `Pair → Status → Ingest → Revoke` auf Günni bestanden |
 | Deployment | PASS | Secret-freies Archiv SHA-256 `a1478420a5356340648c10decb3dbab470550c8cbbd027ca95fb89eb1f46cc86`; Image `sha256:67d7b590b3394231ad1dd82e52e345e529324524bb131296570b71a896bf68c3`; vier private Container healthy auf `purelink/agentone:2026.11.07-94` |
 
+### Release 95 · Health & Recovery und belastbares iPhone-Pairing
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| Health-&-Recovery-Zentrale | PASS LOKAL | Apple Health und WHOOP werden als getrennte Quellen mit Messwertzahl, 14-Tage-Abdeckung, aktiven Freigaben beziehungsweise Sync-Status dargestellt. Kompatible Tageswerte und inkompatible Messmethoden bleiben getrennt; Konfidenz beschreibt nur Datenabdeckung. |
+| Health-Browserflow bei 390 px | PASS LOKAL | Synthetischer Apple-XML-Import: drei Apple- plus drei WHOOP-Werte, zwei kompatible Vergleiche, eine explizite HRV-Methodentrennung, Touchziele mindestens 44 px; anschließender Cleanup endet in `EMPTY`. |
+| Zweites und erneutes iPhone-Pairing | PASS LOKAL | Ein gültiger offener Code priorisiert `PAIRING`, auch wenn bereits ein Gerät verbunden ist. Nach Bestätigung bleiben beide Geräte aktiv; Codes sind weiterhin einmalig und benutzergebunden. |
+| iOS-Installationsgrenze und Recovery | PASS LOKAL | Nicht-Standalone-iOS übernimmt oder bestätigt keinen Code. Standalone-Pairing, AES-GCM-Reload, Status, Ingest, Widerruf, erneute Kopplung und Service-Worker-Aktualisierung wurden in Google Chrome mit iPhone-UA und simuliertem `navigator.standalone` geprüft. Ein fehlender Wrap-Key bleibt fail-closed; IndexedDB-Schreibfehler lösen best-effort Self-Revoke aus. |
+| Pairing-Security | PASS LOKAL | 26/26 fokussierte Companion-/API-/Proxy-Tests sowie Cross-User-, Replay-, Scope-, Self-Revoke- und Redaction-Smoke bestanden; der Gesamtlauf steht bei 198/198 Tests. |
+| Native iOS/WebKit und HealthKit | OFFEN | Die Chrome-Abnahme simuliert iOS-Standalone, ist aber keine reale Safari-/WebKit-Geräteabnahme. Direkter HealthKit-, EventKit- und Hintergrundzugriff benötigt weiterhin die signierte native App, Apple-Entitlements und einen echten iPhone-Test. |
+| Deployment | AUSSTEHEND | Für Release 95 werden erst nach Commit, Image-Build, Container-Rollout, PWA-Cachewechsel und Live-Smokes ein Image-Digest und der Status `PASS LIVE` eingetragen. |
+
 ```powershell
 npm run verify:local
+npm run verify:health-recovery
+npm run verify:iphone-browser
+npm run verify:iphone-security
 npm run screenshots
 npm run verify:remote
 ```

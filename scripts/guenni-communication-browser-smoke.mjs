@@ -3,8 +3,8 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { loadEnv } from '../server/state.mjs';
 
-const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN;
-const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
+const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-95';
+const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(String(error.message||error)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 try{
@@ -13,8 +13,9 @@ try{
   await page.locator('input[name="password"]').fill(env.AGENTONE_GUENNI_PASSWORD);
   await Promise.all([page.waitForURL(origin+'/**'),page.getByRole('button',{name:'Sicher anmelden'}).click()]);
   await page.waitForTimeout(2500);
-  const client=await page.evaluate(async()=>{const text=await fetch('/agentone/app.js?v=2026.11.07-94',{cache:'no-store'}).then(response=>response.text());return {nonstream:text.includes("fetch('/agentone/voice/chat'"),stream:text.includes("fetch('/agentone/voice/chat/stream'"),annaFilter:text.includes('/anna/i'),firstInstallStable:text.includes('hadServiceWorkerController')};});
-  if(!client.nonstream||client.stream||!client.annaFilter||!client.firstInstallStable)throw new Error('Nicht die erwartete Release-84-Clientlogik geladen: '+JSON.stringify(client));
+  const releaseState=await page.evaluate(()=>fetch('/agentone/release.json?smoke=communication',{cache:'no-store'}).then(response=>response.json()));if(releaseState.release!==release)throw new Error('Live-Release ist '+releaseState.release+' statt '+release);
+  const client=await page.evaluate(async activeRelease=>{const text=await fetch('/agentone/app.js?v='+encodeURIComponent(activeRelease),{cache:'no-store'}).then(response=>response.text());return {nonstream:text.includes("fetch('/agentone/voice/chat'"),stream:text.includes("fetch('/agentone/voice/chat/stream'"),annaFilter:text.includes('/anna/i'),firstInstallStable:text.includes('hadServiceWorkerController')};},release);
+  if(!client.nonstream||client.stream||!client.annaFilter||!client.firstInstallStable)throw new Error('Nicht die erwartete Release-95-Clientlogik geladen: '+JSON.stringify(client));
   await page.locator('[data-view="chat"]').click();
   await page.locator('#native-chat-input').fill('Antworte ausschließlich mit: chat-ui-ok');
   const chatResponsePromise=page.waitForResponse(response=>response.url().endsWith('/agentone/voice/chat')&&response.request().method()==='POST',{timeout:70_000});
@@ -31,9 +32,9 @@ try{
   if(!/voice-ui-ok/i.test(voiceText||''))throw new Error(`Voice-UI fehlgeschlagen: ${voiceText} · ${voiceStatus}`);
   const voiceOptions=await page.locator('#voice-choice option').allTextContents();
   await mkdir(path.resolve('output/playwright'),{recursive:true});
-  const screenshot=path.resolve('output/playwright/guenni-communication-release-94.png');
+  const screenshot=path.resolve('output/playwright/guenni-communication-release-95.png');
   await page.locator('#voice').screenshot({path:screenshot});
   if(errors.length)throw new Error('Browserfehler: '+errors.join(' | '));
   if(voiceOptions.some(value=>/anna/i.test(value)))throw new Error('Anna wurde nicht aus der Jarvis-Core-Stimmenliste entfernt');
-  console.log(JSON.stringify({origin,release:'2026.11.07-94',client,chatHttp:chatResponse.status(),chatModel:chatPayload.model||null,chatUi:'PASS',voiceTextUi:'PASS',microphoneUi:await page.locator('#voice-record').isEnabled(),jarvisCore:voiceOptions[0],annaExcluded:true,consoleErrors:0,screenshot,secretsExposed:false},null,2));
+  console.log(JSON.stringify({origin,release,client,chatHttp:chatResponse.status(),chatModel:chatPayload.model||null,chatUi:'PASS',voiceTextUi:'PASS',microphoneUi:await page.locator('#voice-record').isEnabled(),jarvisCore:voiceOptions[0],annaExcluded:true,consoleErrors:0,screenshot,secretsExposed:false},null,2));
 }finally{await browser.close();}

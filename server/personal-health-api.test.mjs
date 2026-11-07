@@ -51,9 +51,11 @@ test('personal health API persists user-isolated scoped imports and requires con
     await waitFor(`${origin}/api/health`);
     const forbidden = await fetch(`${origin}/api/internal/personal/health`, { headers: internalHeaders('wrong-token', 'alice') });
     assert.equal(forbidden.status, 403);
+    for(const path of ['/api/internal/personal/health/digest','/api/internal/personal/health/comparison'])assert.equal((await fetch(origin+path,{headers:internalHeaders('wrong-token','alice')})).status,403,path);
 
-    const status = await fetch(`${origin}/api/internal/personal/health`, { headers: internalHeaders(token, 'alice') }).then((response) => response.json());
+    const statusResponse = await fetch(`${origin}/api/internal/personal/health`, { headers: internalHeaders(token, 'alice') }); assert.match(statusResponse.headers.get('cache-control'), /no-store/); const status = await statusResponse.json();
     assert.equal(status.encryptionReady, true); assert.equal(status.policy.medicalDiagnosis, false); assert.equal(status.policy.secretsExposed, false);
+    const invalidStatusQuery=await fetch(`${origin}/api/internal/personal/health?extra=private-value`,{headers:internalHeaders(token,'alice')});assert.equal(invalidStatusQuery.status,400);assert.match(invalidStatusQuery.headers.get('cache-control'),/no-store/);const invalidStatusPayload=await invalidStatusQuery.json();assert.equal(invalidStatusPayload.error,'HEALTH_QUERY_INVALID');assert.equal(JSON.stringify(invalidStatusPayload).includes('private-value'),false);
 
     const created = await fetch(`${origin}/api/internal/personal/health/consents`, {
       method: 'POST', headers: internalHeaders(token, 'alice', { 'content-type': 'application/json' }), body: JSON.stringify({ scopes: ['sleep'] }),
@@ -88,12 +90,15 @@ test('personal health API persists user-isolated scoped imports and requires con
     const duplicate = await fetch(`${origin}/api/internal/personal/health/apple-import`, { method: 'POST', headers: uploadHeaders, body: xml });
     assert.equal(duplicate.status, 200); assert.equal((await duplicate.json()).import.alreadyImported, true);
 
-    const aliceDigest = await fetch(`${origin}/api/internal/personal/health/digest`, { headers: internalHeaders(token, 'alice') }).then((response) => response.json());
-    const bobDigest = await fetch(`${origin}/api/internal/personal/health/digest`, { headers: internalHeaders(token, 'bob') }).then((response) => response.json());
+    const aliceStatusAfterImport=await fetch(`${origin}/api/internal/personal/health`,{headers:internalHeaders(token,'alice')}).then(response=>response.json()),bobStatusAfterImport=await fetch(`${origin}/api/internal/personal/health`,{headers:internalHeaders(token,'bob')}).then(response=>response.json());assert.equal(aliceStatusAfterImport.store.metrics,1);assert.equal(bobStatusAfterImport.store.metrics,0);
+
+    const aliceDigestResponse = await fetch(`${origin}/api/internal/personal/health/digest`, { headers: internalHeaders(token, 'alice') });assert.match(aliceDigestResponse.headers.get('cache-control'),/no-store/);const aliceDigest=await aliceDigestResponse.json();
+    const bobDigestResponse = await fetch(`${origin}/api/internal/personal/health/digest`, { headers: internalHeaders(token, 'bob') });assert.match(bobDigestResponse.headers.get('cache-control'),/no-store/);const bobDigest=await bobDigestResponse.json();
     assert.equal(aliceDigest.metricCount, 1); assert.equal(bobDigest.metricCount, 0); assert.match(aliceDigest.digest.disclaimer, /Keine Diagnose/);
+    for(const query of ['extra=1','source=apple_health&source=whoop','source=other','from=2026-02-30']){const invalid=await fetch(`${origin}/api/internal/personal/health/digest?${query}`,{headers:internalHeaders(token,'alice')});assert.equal(invalid.status,400,query);assert.equal((await invalid.json()).error,'HEALTH_QUERY_INVALID');}
 
     const comparisonResponse=await fetch(`${origin}/api/internal/personal/health/comparison?periodDays=7&minimumCoverageDays=1&timeZone=Europe%2FBerlin`,{headers:internalHeaders(token,'alice')});
-    assert.equal(comparisonResponse.status,200);const comparison=await comparisonResponse.json();
+    assert.equal(comparisonResponse.status,200);assert.match(comparisonResponse.headers.get('cache-control'),/no-store/);const comparison=await comparisonResponse.json();
     assert.equal(comparison.schema,'agentone.personal-health-comparison/v1');assert.equal(comparison.sources.apple_health.coverageDays,1);assert.equal(comparison.sources.whoop.status,'missing');assert.deepEqual(comparison.comparisons,[]);assert.equal(comparison.policy.medicalDiagnosis,false);assert.equal(comparison.policy.secretsExposed,false);
     const serializedComparison=JSON.stringify(comparison);assert.equal(serializedComparison.includes(consentId),false);assert.equal(serializedComparison.includes('sourceRecordId'),false);assert.equal(serializedComparison.includes('<HealthData>'),false);assert.equal(serializedComparison.includes('4200'),false);
     const bobComparison=await fetch(`${origin}/api/internal/personal/health/comparison?periodDays=7&minimumCoverageDays=1&timeZone=UTC`,{headers:internalHeaders(token,'bob')}).then(response=>response.json());assert.equal(bobComparison.sources.apple_health.coverageDays,0);
@@ -136,7 +141,7 @@ test('Graph client secret never enables health encryption', async () => {
     const status = await fetch(`${origin}/api/internal/personal/health`, { headers: internalHeaders(token, 'alice') }).then((response) => response.json());
     assert.equal(status.encryptionReady, false); assert.deepEqual(status.consents, []);
     const comparison = await fetch(`${origin}/api/internal/personal/health/comparison`, { headers: internalHeaders(token, 'alice') });
-    assert.equal(comparison.status, 503); assert.equal((await comparison.json()).error, 'HEALTH_ENCRYPTION_NOT_CONFIGURED');
+    assert.equal(comparison.status, 503); assert.match(comparison.headers.get('cache-control'), /no-store/); assert.equal((await comparison.json()).error, 'HEALTH_ENCRYPTION_NOT_CONFIGURED');
     const create = await fetch(`${origin}/api/internal/personal/health/consents`, { method: 'POST', headers: internalHeaders(token, 'alice', { 'content-type': 'application/json' }), body: JSON.stringify({ scopes: ['activity'] }) });
     assert.equal(create.status, 503); assert.equal((await create.json()).error, 'HEALTH_ENCRYPTION_NOT_CONFIGURED');
   } finally {
