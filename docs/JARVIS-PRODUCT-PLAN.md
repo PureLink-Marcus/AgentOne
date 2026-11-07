@@ -735,3 +735,20 @@ Mail-/WebKit-Regression, Secret-Grenzaudit und der gestufte Rollout Günni →
 Fressi sind grün. Die abschließende Geräteberechtigung bleibt bewusst eine
 Aktion des jeweiligen Benutzers auf seinem Browser oder iPhone.
 
+### Release 2026.11.07-108 · belastbare Run Control (**MASTER-KANDIDAT · PASS LOCAL**)
+
+Jarvis-artige Assistenz darf einen Auftrag nach Timeout, Reload oder
+Netzwerkfehler nicht unkontrolliert doppelt ausführen. AgentOne Personal führt
+deshalb ein persistentes Effect Ledger ein: atomarer Claim, Lease-Recovery,
+stabile Idempotenz und terminaler Zustand. Resultate bleiben im eigentlichen
+Command-/Intelligence-Pfad; das Ledger persistiert nur Hash und sichere
+Operationsmetadaten.
+
+Die neue sichtbare Run-Control-Karte macht den Zustand erklärbar. Retry gilt
+ausschließlich für fehlgeschlagene idempotente read-only Briefings; Cancel
+benötigt die bestätigte Benutzersitzung und propagiert ein echtes
+Abbruchsignal. Damit wird ein zentrales Hermes-/Jarvis-Prinzip – beobachtbare,
+kontrollierbare Tool-Ausführung – umgesetzt, ohne allgemeine autonome
+Mutationen freizuschalten. 368/368 Tests, Produktions-Build, npm-Audit und
+mobile Chrome-End-to-End-Abnahme sind lokal grün.
+

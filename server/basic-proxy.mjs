@@ -29,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-107');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-108');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -338,6 +338,10 @@ async function personalCommandsRead(req,res){
     const payload=await response.json();return jsonResponse(res,200,payload);
   }catch{return jsonResponse(res,502,{error:'personal_commands_unavailable',secretsExposed:false});}
 }
+async function personalCommandAction(req,res){
+  if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'personal_commands_unavailable',secretsExposed:false});if(!originAllowed(req))return jsonResponse(res,403,{error:'forbidden',secretsExposed:false});
+  try{const requestUrl=new URL(String(req.url||''),publicOrigin||'http://127.0.0.1'),match=requestUrl.pathname.match(/^\/agentone\/commands\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/(retry|cancel)$/i);if(!match||requestUrl.search)return jsonResponse(res,400,{error:'invalid_command_action',secretsExposed:false});const action=match[2].toLowerCase(),headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,'x-agentone-human-actor':expectedUser,'x-agentone-human-action':`command-${action}`,'content-type':'application/json'},response=await fetch(`${personalApiUrl}/api/internal/personal/commands/${encodeURIComponent(match[1])}/${action}`,{method:'POST',headers,body:'{}',signal:AbortSignal.timeout(45_000)}),payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}catch{return jsonResponse(res,502,{error:'personal_command_action_failed',message:'Ablaufsteuerung ist vorübergehend nicht erreichbar.',secretsExposed:false});}
+}
 async function personalIcsCalendar(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'ics_calendar_unavailable'});
   const requestUrl=new URL(String(req.url||'/agentone/calendar/ics'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/calendar/ics'.length),method=String(req.method||'GET'),upload=method==='POST'&&suffix==='/import',feed=method==='POST'&&suffix==='/feed',sync=method==='POST'&&suffix==='/sync',allowed=(method==='GET'&&(suffix===''||suffix==='/'))||upload||feed||sync||(method==='DELETE'&&(suffix===''||suffix==='/'));
@@ -555,6 +559,7 @@ const server=http.createServer((req,res)=>{
   if(req.method==='POST'&&req.url==='/agentone/commands/briefing')return personalBriefingCommand(req,res);
   if(/^\/agentone\/commands(?:\/|\?|$)/.test(req.url||'')){
     if(req.method==='GET')return personalCommandsRead(req,res);
+    if(req.method==='POST'&&/^\/agentone\/commands\/[0-9a-f-]{36}\/(?:retry|cancel)$/.test(String(req.url||'')))return personalCommandAction(req,res);
     return jsonResponse(res,405,{error:'method_not_allowed',secretsExposed:false});
   }
   if(req.method==='GET'&&/^\/agentone\/calendar\/plan(?:\?|$)/.test(req.url||''))return personalCalendarPlan(req,res);

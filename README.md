@@ -1,7 +1,7 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-107` (**MASTER · LIVE auf Fressi und Günni**) mit kontrollierten PWA-Benachrichtigungen, explizitem Geräte-Opt-in und verschlüsselten Push-Abos
+Status: Release `2026.11.07-108` (**MASTER-KANDIDAT · LOCAL PASS**) mit persistentem Effect Ledger, atomaren Claims und kontrolliertem Retry/Cancel für read-only Briefings
 
 ## 1. Zweck
 
@@ -84,6 +84,20 @@ liegen ausschließlich in der gitignorierten Master-ENV.
 Smoke, PWA auf drei Domains, private TLS-/Login-Grenzen, Mail-Mobile sowie
 WebKit/iPhone sind grün. Vier private Container laufen healthy; das Live-Audit
 bestätigt die Push-Secret-Grenze ausschließlich in den beiden App-Containern.
+
+Release 108 macht die Ausführung eines persönlichen Tagesbilds dauerhaft
+nachvollziehbar und wiederholbar. Ein persistentes Effect Ledger beansprucht
+jeden read-only Lauf atomar, bindet ihn an einen stabilen Idempotenzschlüssel
+und speichert ausschließlich sichere Zustandsmetadaten. Ein bereits
+abgeschlossener Effect wird nicht doppelt ausgeführt. Fehlgeschlagene,
+ausdrücklich retryfähige read-only Tools können kontrolliert wiederholt und
+laufende Effects nach bestätigter Benutzersitzung abgebrochen werden;
+Schreibwerkzeuge bleiben von diesen öffentlichen Aktionen ausgeschlossen.
+Das Command Center zeigt Zustand, Versuch, atomaren Claim und stabile
+Idempotenz als neue mobile Run-Control-Karte. 368/368 Node-Tests,
+Produktions-Build, npm-Produktionsaudit und ein realer Chrome-Smoke bei
+390×844 sind lokal grün; der gestufte Live-Rollout folgt nach dem
+Commit-gebundenen secret-freien Release-Build.
 
 Release 102 streamt Apple-Health-XML/ZIP mit Backpressure und legt nur
 AES-256-GCM-Ciphertext ab. Ein begrenzter Child-Worker verarbeitet die Quelle

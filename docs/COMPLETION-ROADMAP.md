@@ -277,3 +277,20 @@ Feedback und Deduplizierung gelten weiterhin serverseitig; In-App und PWA sind
 getrennte, nachvollziehbare Zustellkanäle. Lokale und Live-Chrome-Smokes bei
 390×844, Secret-Grenzaudit, vollständige Regression und der gestufte Rollout
 sind grün. Release 107 ist als Master auf Fressi und Günni live.
+
+## Release 108 · Persistentes Effect Ledger
+
+Persönliche Briefing-Läufe besitzen nun einen dauerhaften, benutzergebundenen
+Effect-Datensatz mit atomarem Claim, Lease, stabilem Idempotenzschlüssel und
+terminalem Zustand. Ein erfolgreich abgeschlossener Effect läuft nicht ein
+zweites Mal. Nur ein fehlgeschlagenes, ausdrücklich retryfähiges und
+idempotentes read-only Tool darf erneut beansprucht werden; Cancel benötigt
+eine serverseitig bestätigte menschliche Sitzung und signalisiert den Abbruch
+bis in die Operation. Öffentliche Projektionen enthalten weder Claim-Token
+noch Idempotenz-, Input- oder Result-Hash und keine Ergebnis-Payloads.
+
+Das Command Center zeigt diese Ausführungskontrolle als echte mobile Karte.
+368/368 Tests, Build, npm-Audit und Chrome 390×844 sind lokal grün. Der Punkt
+„persistentes Effect Ledger vor generischem Retry/Cancel“ ist damit technisch
+abgeschlossen; Schreibaktionen bleiben weiterhin hinter ihren eigenen
+hashgebundenen Human Gates und sind nicht Teil dieses Retry-Endpunkts.

@@ -203,3 +203,19 @@ Sperrbildschirm erhält keine Mail-, Termin-, Gesundheits-, Personen- oder
 Secret-Daten, sondern nur einen generischen Hinweis und eine relative URL zur
 authentifizierten PWA. Ruhezeit, Tagesbudget, Feedback, Benutzertrennung und
 Widerruf bleiben serverseitig verbindlich.
+
+## Release 108 · Kontrollierte Ausführung statt Doppelklick
+
+Das persönliche Tagesbild läuft über ein persistentes Effect Ledger. Jeder
+Lauf wird atomar beansprucht, an Benutzer, Run, Eingabehash und stabilen
+Idempotenzschlüssel gebunden und endet in `COMPLETED`, `FAILED` oder
+`CANCELLED`. Ein Browser-Doppelklick oder ein erneut zugestellter Request kann
+einen abgeschlossenen Effect deshalb nicht nochmals ausführen.
+
+Die sichtbare Run-Control-Karte zeigt ausschließlich sichere Metadaten:
+Zustand, Versuch und Zeitpunkte. Ein Retry erscheint nur bei einem
+fehlgeschlagenen, idempotenten read-only Briefing-Tool. Ein Abbruch erscheint
+nur während eines aktiven Claims und benötigt die authentifizierte
+Benutzersitzung. Claim-Token, Idempotenz-, Input- und Result-Hash sowie das
+eigentliche Ergebnis bleiben außerhalb der Browserprojektion. Schreibaktionen
+werden über diesen Pfad grundsätzlich nicht wiederholt.
