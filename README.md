@@ -1,13 +1,13 @@
 # AgentOne – eigenständige Agentenplattform
 
 Stand: 07.11.2026
-Status: Release `2026.11.07-111` (**MASTER · LIVE auf Fressi und Günni**) mit Fokus-Kompass, Terminfragmentierung und erklärbarer Feedback-Schleife
+Status: Release `2026.11.07-112` (**MASTER · LIVE auf Fressi und Günni**) mit Source Sync Center, Fokus-Kompass und erklärbarer Feedback-Schleife
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
-AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 111 läuft dort auf vier gesunden Containern; der gestufte Rollout Günni → Fressi besitzt einen automatischen Rückfall auf das exakte Preflight-Image. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 112 läuft dort auf vier gesunden Containern; der gestufte Rollout Günni → Fressi besitzt einen automatischen Rückfall auf das exakte Preflight-Image. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
 
 Release 110 schließt die Rückkopplung des persönlichen Assistenten im Frontend:
 erkannte Muster lassen sich nach aktiv oder ausgeblendet filtern, ihre Quelle
@@ -24,6 +24,13 @@ drei Termine mit zwei Wechseln unter 30 Minuten als Fragmentierung. Dringende
 Personenpost kann damit auch bei weniger als drei reinen Termin-Stunden einen
 Planungshinweis erzeugen. Alles bleibt read-only; AgentOne verschiebt keine
 Termine und versendet keine Nachricht.
+
+Release 112 ergänzt das **Source Sync Center** für Post, Google und
+Kalender-Feeds. Der Statusabruf ist garantiert nebenwirkungsfrei; eine manuelle
+Synchronisierung ist ausdrücklich read-only, respektiert Provider-Backoff und
+behält bei Fehlern den letzten gültigen Stand. Der vollständige Lauf umfasst
+385/385 Tests, Produktions-Build, npm-Audit ohne bekannte Schwachstelle sowie
+lokale und produktive Chrome-/WebKit-Abnahmen.
 
 Release 103 härtet den iPhone-Pfad dort, wo ein sichtbarer Browsercheck allein
 nicht ausreicht: Vor dem serverseitigen Confirm führt die gewählte Safari-

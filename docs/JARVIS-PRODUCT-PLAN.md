@@ -30,6 +30,12 @@ Eine deterministische Regel erkennt kurze Terminwechsel als Fragmentierung und
 verknüpft sie bei Bedarf mit dringender Personenpost. Der Assistent erklärt die
 Belege und Gegenargumente, verändert aber weder Kalender noch Postfach.
 
+Release `2026.11.07-112` schließt eine weitere Produktivitätslücke: Der
+Assistent zeigt, ob Post, Google und Kalender tatsächlich aktuell sind. Ein
+reiner Statuscheck löst keinen Providerabruf aus. Die ausdrücklich gestartete
+Synchronisierung bleibt read-only, respektiert Backoff, erhält den letzten
+gültigen Stand und wird nachvollziehbar im Command Stream dargestellt.
+
 ## Warum es so viele Jarvis-Projekte gibt
 
 `Jarvis` ist ein popkultureller Gattungsname und kein technischer Standard.

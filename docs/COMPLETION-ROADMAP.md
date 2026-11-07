@@ -6,11 +6,12 @@ Ziel ist kein Portal mit vorbereiteten Kacheln, sondern ein Assistent mit einem
 geschlossenen Kreislauf aus echten Quellen, erklärbaren Mustern, Rückmeldung,
 Freigabe und nachvollziehbarer Ausführung.
 
-Release `2026.11.07-111` ist der aktuelle Masterstand. Pattern Feed und
+Release `2026.11.07-112` ist der aktuelle Masterstand. Pattern Feed und
 Fokus-Kompass besitzen Filter, Quellnavigation, persistentes Feedback und eine
-konkrete nächste Priorität. Terminfragmentierung wird regelbasiert erkannt und
-mit dringender Personenpost verbunden. Der Stand ist auf Günni und Fressi
-ausgerollt und mit 380/380 Tests, Build, Audit sowie Chrome-/WebKit-Live-Smokes
+konkrete nächste Priorität. Das neue Source Sync Center zeigt Post, Google und
+Kalender-Feeds ehrlich an und trennt nebenwirkungsfreies Statuslesen von einer
+expliziten read-only Synchronisierung. Der Stand ist auf Günni und Fressi
+ausgerollt und mit 385/385 Tests, Build, Audit sowie Chrome-/WebKit-Live-Smokes
 abgenommen. Extern
 offen bleiben ausschließlich Nachweise, die echte Benutzerhardware oder noch
 nicht bereitgestellte Provider-Credentials erfordern: WHOOP und ein realer

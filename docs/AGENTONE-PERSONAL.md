@@ -16,6 +16,12 @@ aktive Attention-Muster vor Information, zeigt unterdrückte Muster transparent
 und führt in den echten Tagesplan. Es bleibt ein Vorschlag: keine automatische
 Kalender- oder Mailmutation.
 
+Release `2026.11.07-112` ergänzt ein sichtbares Source Sync Center. Es zeigt
+für Postfächer, Google und Kalender-Feeds den letzten sicheren Stand,
+Freshness, Backoff und degradierte Zustände. Der Statuspfad ist
+nebenwirkungsfrei; die manuelle Aktion führt nur freigegebene read-only
+Providerabrufe aus und schreibt den Ablauf in den Command Stream.
+
 ## Verantwortungsgrenzen
 
 - AgentOne Platform verwaltet Projekte, Welten, Workflows und zentrale Richtlinien.
