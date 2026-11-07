@@ -1,18 +1,19 @@
 # AgentOne Release Readiness
 
-Stand: 6. November 2026
-Release: `2026.11.06-79`
-Deployment: Release 79 läuft auf Günni und Fressi; alle vier App-/Access-Container sind healthy. AI Core, gesperrter lokaler Modellpfad ohne Healthcheck, mobile Ansichten, PWA-Cachewechsel und Instanzumschaltung sind live geprüft. Der öffentliche Connector-v4-Download besteht HTTP-, SHA-256- und Ed25519-Prüfung.
+Stand: 7. November 2026
+Release: `2026.11.07-83`
+Deployment: Release 83 läuft auf Günni und Fressi; alle vier App-/Access-Container sind healthy. Gmail-Sichtbarkeit, Konto-Connector-Auswahl, Jarvis-Core-Kommunikation, stabiler PWA-Erststart, AI Core, mobile Ansichten und Instanzumschaltung sind live geprüft.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS | 60/60 Node-Tests, Vite-Production-Build und Chrome-Smoke |
+| Lokale Anwendung | PASS | 61/61 Node-Tests, Vite-Production-Build und Chrome-Smoke |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, 343 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS | Vier mobile Schritte für Pairing, Companion-Paket, getrennte Health-/Standortrechte und Siri-Vorlage; Serverstatus und Downloads auf Günni Release 71 öffentlich geprüft |
-| Gmail ohne OAuth-Client | PASS (Einrichtung) | Release 71: direkter Gmail-Button unter Zugänge, 16-stelliges Google-App-Passwort wird vorgeprüft, read-only IMAP und optionales SMTP sind getrennt, Fehlerstufe/-code werden ohne Konto- oder Secret-Werte geloggt. Echte Kontoanmeldung benötigt die Benutzerdaten. |
+| Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
+| Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
 | Home-Live-Schreibpfad | PASS (zustandserhaltend) | RGB-Licht und Media-Player-Lautstärke wurden live auf ihre jeweiligen Istwerte geschrieben; HTTP 200, persistenter Audit, Testwert redigiert, 0 Browserfehler |
 | Screendesign | PASS | neun reproduzierbare Hell-/Dunkel-Screenshots unter `output/demo/screenshots/` |
 | Coolify-Stack | PASS | sechs AgentOne-Komponenten `running:healthy` |
@@ -22,9 +23,9 @@ Deployment: Release 79 läuft auf Günni und Fressi; alle vier App-/Access-Conta
 | Mobiler Gateway-Login | PASS | AgentOne-Formular → signierte Session → Trusted Proxy → WebSocket; kein Gateway-Token-Dialog |
 | Produktidentität | PASS | Auth-Realm, Agentenname und mobile Chatoberfläche zeigen `AgentOne` |
 | Command Center | PASS | eigene AgentOne-Hülle mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools und Schnellaktionen; keine sichtbare OpenClaw-Navigation |
-| Bedienbarer AI Core | PASS | Luna-Standard und Sol-Fallback synchronisieren sich persistent mit dem HUD; serverseitige Schlüsselgrenze, Guarded-Modus, ehrlicher Strict/Ollama-Status und Jarvis-Neon-Preset live geprüft |
+| Bedienbarer AI Core | PASS | Luna-Standard, Terra für Dokumente/Bilder und Sol für komplexe Aufgaben synchronisieren sich persistent mit dem HUD; Ollama bleibt bis zum Connector-Healthcheck ehrlich gesperrt. |
 | Lokaler Modellpfad | READY | Connector v4 und App-Pfad sind getestet, allowlist-begrenzt und signiert. Live-Status, `LOCAL`-Datenschutz und Latenz werden sichtbar; ein reales Ollama-Modell auf dem Pi fehlt noch. |
-| Chat-/Voice-Trace | PASS | verwendetes allowlist-geprüftes Modell, Streamingzustand, Latenz und Fehler sichtbar; Serveraudit enthält nur Modell, Sprache, Latenz und Modus, niemals Prompttext oder Secret |
+| Chat-/Voice-Trace | PASS | Release 83: echter Browserchat und Voice-Texteingabe antworten über Luna mit HTTP 200; PWA-Erststart bleibt stabil, keine Konsolenfehler. Jarvis Core wählt Stefan, Gerätestimme `Anna` ist ausgeschlossen. |
 | Mikrofonwahl | PASS | persistente Geräteauswahl, automatische `devicechange`-Aktualisierung und sicherer Fallback auf den Systemstandard im Browser geprüft |
 | Proaktive Hinweise | PASS | Release 75: echte Konto-/Connector-/Gate-/Audit-Zustände, Priorität, Ruhezeit, persistente Benutzerregeln und Feedback; Live-API und UI auf Günni ohne Secret-Leak geprüft |
 | Persönliches Memory | PASS | persistente, benutzerisolierte Einträge mit Herkunft, Quellenreferenz, Bereich, Schutzklasse, Ablaufdatum, Suche und gezieltem Vergessen; Server- und Browsertests bestanden |

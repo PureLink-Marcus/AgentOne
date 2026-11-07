@@ -12,7 +12,7 @@ Günni bündelt mehrere private Postfächer und zeigt sie nach **echten Personen
 | Gmail | `imap.gmail.com:993`, SSL/TLS | `smtp.gmail.com:465`, SSL/TLS | E-Mail-Adresse und Google-App-Passwort; später bevorzugt Google OAuth |
 | Andere | öffentlicher Host, ausschließlich Port 993 | öffentlicher Host, Port 465 oder 587 | anbieterspezifisch |
 
-Der Verbindungstest authentifiziert IMAP und SMTP, versendet aber keine Nachricht. Passwörter werden mit AES-256-GCM und einem instanzgebundenen Schlüssel gespeichert und nie wieder an Browser, API-Antwort oder Log zurückgegeben.
+Der Verbindungstest authentifiziert IMAP und optional SMTP, versendet aber keine Nachricht. Eine erfolgreiche IMAP-Anbindung liest und gruppiert sofort die letzten Nachrichten; der persistierte Scan erscheint nach jedem Neuladen wieder in der Oberfläche. Passwörter werden mit AES-256-GCM und einem instanzgebundenen Schlüssel gespeichert und nie wieder an Browser, API-Antwort oder Log zurückgegeben.
 
 ## Verarbeitung
 
@@ -21,6 +21,10 @@ Der Verbindungstest authentifiziert IMAP und SMTP, versendet aber keine Nachrich
 3. OpenClaws eingebauter IMAP-Trigger verarbeitet künftig nur zugelassene neue Nachrichten in einem isolierten `mail_reader`-Agenten ohne Datei-, Shell-, Browser- oder Netzwerkwerkzeuge.
 4. SMTP bleibt zunächst auf Anmeldung und spätere Entwürfe begrenzt. Senden wird erst als eigene, widerrufbare Freigabe ergänzt.
 5. Verschieben, Löschen, Spam-Markierung und automatische Antworten bleiben ausgeschaltet, bis der Benutzer konkrete Regeln bestätigt.
+
+Die Gruppierung ist deterministisch und verursacht keine Modellkosten. Die Günni-Live-Abnahme für Release 81 bestätigte ein verbundenes Gmail-Konto, 50 read-only gelesene und sichtbar gruppierte Nachrichten sowie einen optionalen, nicht blockierenden SMTP-Status. Inhalte, Adressen und Zugangsdaten werden im Prüfnachweis nicht ausgegeben.
+
+Ab Release 82 besitzt jedes Gmail-Konto eine Connector-Auswahl für Mail und Kalender. Mail bleibt über das Google-App-Passwort verbunden. Kalender wird getrennt aktiviert und erhält keine Kopie dieses Passworts: Google Kalender verlangt eine eigene OAuth-Freigabe. Bis diese Freigabe erfolgt ist, zeigt die Oberfläche bewusst `FREIGABE NÖTIG` statt eines falschen LIVE-Status.
 
 ## OpenClaw-Grenze
 

@@ -5,7 +5,7 @@ import { loadEnv } from '../server/state.mjs';
 
 const env=loadEnv(path.resolve('.'));
 const origin=env.AGENTONE_GUENNI_ORIGIN;
-const release='2026.11.06-79';
+const release='2026.11.07-83';
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const page=await browser.newPage({viewport:{width:1280,height:900}});
 const errors=[];
@@ -28,10 +28,10 @@ try{
     await surface.waitFor({state:'visible'});
     await surface.getByText(headline,{exact:true}).waitFor();
     if(await page.locator('[data-layout-surface]:visible').count()!==1)throw new Error(`${layout}: mehrere Startwelten sichtbar`);
-    screenshots[layout]=path.resolve(`output/playwright/guenni-live-${layout}-release-78.png`);
+    screenshots[layout]=path.resolve(`output/playwright/guenni-live-${layout}-release-80.png`);
     await surface.screenshot({path:screenshots[layout]});
   }
-  await page.locator('[data-view="settings"]').click();const aiCore=page.locator('.ai-core-panel');await aiCore.getByText('Günnis Denkzentrale').waitFor();await aiCore.locator('[data-ai-model="gpt-6.1-sol"] button').click();if(await page.evaluate(()=>localStorage.getItem('agentone.personal.model'))!=='gpt-6.1-sol')throw new Error('AI-Core-Modellwechsel wurde nicht gespeichert');await aiCore.locator('[data-ai-model="gpt-6-luna"] button').click();await page.getByRole('button',{name:'Jarvis Neon'}).click();if(await page.locator('#theme-primary').inputValue()!=='#027dff')throw new Error('Jarvis-Neon-Preset ist nicht bedienbar');await aiCore.locator('.ai-core-status').getByText(/LOCAL ·/).waitFor();const localModelButton=aiCore.locator('[data-ai-model="ollama"] button');if(!await localModelButton.isDisabled())throw new Error('Ollama wurde ohne erfolgreichen Pi-Healthcheck aktiviert');screenshots.aiCore=path.resolve('output/playwright/guenni-live-ai-core-release-79.png');await aiCore.screenshot({path:screenshots.aiCore});
+  await page.locator('[data-view="settings"]').click();const aiCore=page.locator('.ai-core-panel');await aiCore.getByText('Günnis Denkzentrale').waitFor();await aiCore.locator('[data-ai-model="gpt-6.1-terra"] button').click();if(await page.evaluate(()=>localStorage.getItem('agentone.personal.model'))!=='gpt-6.1-terra')throw new Error('Terra-Modellwechsel wurde nicht gespeichert');await aiCore.locator('[data-ai-model="gpt-6.1-sol"] button').click();if(await page.evaluate(()=>localStorage.getItem('agentone.personal.model'))!=='gpt-6.1-sol')throw new Error('Sol-Modellwechsel wurde nicht gespeichert');await aiCore.locator('[data-ai-model="gpt-6-luna"] button').click();await page.getByRole('button',{name:'Jarvis Neon'}).click();if(await page.locator('#theme-primary').inputValue()!=='#027dff')throw new Error('Jarvis-Neon-Preset ist nicht bedienbar');await aiCore.locator('.ai-core-status').getByText(/LOCAL ·/).waitFor();const localModelButton=aiCore.locator('[data-ai-model="ollama"] button');if(!await localModelButton.isDisabled())throw new Error('Ollama wurde ohne erfolgreichen Pi-Healthcheck aktiviert');screenshots.aiCore=path.resolve('output/playwright/guenni-live-ai-core-release-80.png');await aiCore.screenshot({path:screenshots.aiCore});
   await page.locator('[data-view="command"]').click();await page.locator('[data-layout-surface="home"] [data-personal-open="home"]').first().click();
   await page.locator('#home.active').waitFor();
   await page.locator('#ha-refresh').click();
@@ -59,15 +59,20 @@ try{
   screenshots.appleMobile=path.resolve('output/playwright/guenni-live-apple-mobile-release-78.png');
   await page.locator('#private-access .apple-quickstart').screenshot({path:screenshots.appleMobile});
   await page.locator('[data-view="tools"]').click();
+  await page.locator('.mail-account').first().waitFor();
+  if(await page.locator('#mail-groups span').count()!==4)throw new Error('Gespeicherte Gmail-Gruppierung wird nicht sichtbar dargestellt');
+  if(!/Nachrichten read-only gruppiert/.test(await page.locator('#mail-center-status').textContent()))throw new Error('Gmail-Gruppierungsstatus fehlt');
+  screenshots.gmailInbox=path.resolve('output/playwright/guenni-live-gmail-groups-release-80.png');
+  await page.locator('.mail-center').screenshot({path:screenshots.gmailInbox});
   await page.locator('#google-oauth').click();
   const gmailDialog=page.locator('.mail-setup[open]');
   await gmailDialog.waitFor();
   await gmailDialog.locator('.mail-provider-help').filter({hasText:'Gmail · drei kurze Schritte'}).waitFor();
   if(!String(await gmailDialog.locator('.mail-provider-help a').getAttribute('href')).includes('myaccount.google.com/apppasswords'))throw new Error('Öffentliche Gmail-App-Passwort-Hilfe fehlt');
   if(await gmailDialog.locator('[name="provider"]').inputValue()!=='gmail')throw new Error('Gmail ist nicht vorausgewählt');
-  screenshots.gmailMobile=path.resolve('output/playwright/guenni-live-gmail-mobile-release-78.png');
+  screenshots.gmailMobile=path.resolve('output/playwright/guenni-live-gmail-mobile-release-80.png');
   await gmailDialog.screenshot({path:screenshots.gmailMobile});
   await gmailDialog.locator('.mail-close').first().click();
   if(errors.length)throw new Error(`Browserfehler: ${errors.join(' | ')}`);
-  console.log(JSON.stringify({origin,release,layouts:'3/3 PASS',exclusiveSurfaces:true,aiCore:'MODEL_ROUTING+GUARDED+JARVIS_NEON PASS',localModel:'VISIBLE+LOCKED_UNTIL_HEALTHCHECK PASS',liveInbox:'PASS',homeNavigation:'PASS',appleQuickstart:'4 STEPS PASS',gmailAppPassword:'NO OAUTH_CLIENT PASS',mobile:'PASS',consoleErrors:0,screenshots},null,2));
+  console.log(JSON.stringify({origin,release,layouts:'3/3 PASS',exclusiveSurfaces:true,aiCore:'LUNA+TERRA+SOL+OLLAMA ROUTING PASS',localModel:'VISIBLE+LOCKED_UNTIL_HEALTHCHECK PASS',liveInbox:'PASS',gmailGroups:'VISIBLE+PERSISTED+ZERO_AI_COST PASS',homeNavigation:'PASS',appleQuickstart:'4 STEPS PASS',gmailAppPassword:'NO OAUTH_CLIENT PASS',mobile:'PASS',consoleErrors:0,screenshots},null,2));
 }finally{await browser.close();}

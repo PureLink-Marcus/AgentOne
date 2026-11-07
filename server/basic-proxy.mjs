@@ -26,7 +26,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.06-79');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-83');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -44,7 +44,7 @@ const instructionRecipient=String(process.env.AGENTONE_INSTRUCTION_RECIPIENT||''
 const instructionDeliveryMode=String(process.env.AGENTONE_INSTRUCTION_DELIVERY_MODE||'manual-approved');
 const instructionIncludeTaskKeys=String(process.env.AGENTONE_INSTRUCTION_INCLUDE_TASK_KEYS||'false').toLowerCase()==='true';
 const voiceModel=process.env.AGENTONE_VOICE_MODEL||'gpt-6-luna';
-const allowedVoiceModels=new Set(['gpt-6-luna','gpt-6.1-sol']);
+const allowedVoiceModels=new Set(['gpt-6-luna','gpt-6.1-terra','gpt-6.1-sol']);
 const openAiBaseUrl=String(process.env.OPENAI_BASE_URL||'https://api.openai.com').replace(/\/$/,'');
 const cookieName='agentone_access';
 const sessionSeconds=12*60*60;
@@ -168,8 +168,13 @@ async function personalConnectors(req,res){
     const options={method:req.method,headers,signal:AbortSignal.timeout(8_000)};
     if(req.method==='PUT')options.body=(await readBody(req,16_384)).toString('utf8');
     const response=await fetch(`${personalApiUrl}/api/internal/personal/connectors`,options);
-    const payload=await response.text();
-    res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);
+    if(req.method!=='GET'||!response.ok){const payload=await response.text();res.writeHead(response.status,securityHeaders({'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(payload)}));return res.end(payload);}
+    const payload=await response.json(),connectors=Array.isArray(payload.connectors)?payload.connectors:[],byId=new Map(connectors.map(item=>[item.id,item]));
+    const upsert=(id,value)=>{const current=byId.get(id)||{id,permissions:[]};byId.set(id,{...current,...value,runtimeVerified:true});};
+    const [mailResult,homeResult]=await Promise.allSettled([fetch(`${personalApiUrl}/api/internal/personal/mail/accounts`,{headers,signal:AbortSignal.timeout(8_000)}).then(async result=>result.ok?result.json():{accounts:[]}),homeConnectorSnapshot()]);
+    if(mailResult.status==='fulfilled'&&mailResult.value.accounts?.length){const accounts=mailResult.value.accounts,connected=accounts.filter(item=>item.status==='CONNECTED').length;upsert('mail',{label:'E-Mail und Gmail',status:connected?'CONNECTED':'DEGRADED',permissions:['mail.read','mail.group','mail.draft'],runtime:{accounts:accounts.length,connected}});}
+    if(homeResult.status==='fulfilled'){const home=homeResult.value,verified=home.status==='LIVE'&&home.test?.authenticated===true&&/^agentone\.home-connector\/v\d+$/.test(String(home.schema||''));if(verified)upsert('home',{label:'Home Connector',status:'CONNECTED',permissions:['home.status','home.routines'],runtime:{schema:home.schema,authenticated:true}});else if(home.status==='OFFLINE'&&byId.has('home'))upsert('home',{status:'DEGRADED',runtime:{authenticated:false}});}
+    return jsonResponse(res,200,{connectors:[...byId.values()],runtimeVerifiedAt:new Date().toISOString(),secretsExposed:false});
   }catch(error){return jsonResponse(res,502,{error:'connector_store_failed',detail:String(error.message||error).slice(0,100)});}
 }
 async function personalMail(req,res){

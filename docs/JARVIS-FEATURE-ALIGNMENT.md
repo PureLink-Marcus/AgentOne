@@ -1,6 +1,6 @@
 # AgentOne Personal · Jarvis-Funktionsabgleich
 
-Stand: 6. November 2026
+Stand: 7. November 2026
 
 AgentOne Personal übernimmt nicht das Jarvis-Produkt oder dessen Branding. Die öffentlich dokumentierten Jarvis-Funktionsgruppen dienen als UX-Referenz für einen Assistenten, der Aufgaben sichtbar ausführt statt nur Antworten zu formulieren. OpenClaw bleibt die interne Agenten- und Werkzeugruntime; Günni und Fressi bleiben eigenständige AgentOne-Personal-Instanzen.
 
@@ -21,10 +21,10 @@ Jede Oberfläche teilt dieselben fünf Laufzeitobjekte:
 | Command Center | Chatleiste, laufende Aufgaben, Freigaben, Termine, Geräte und Alerts | vorhanden | Tool-Schritte als durchgängige Live-Timeline zusammenführen |
 | Agentic Tool Registry | OpenClaw-Plugins plus AgentOne-Connectoren mit Zuständen und Rechten | vorhanden | Fähigkeiten, benötigte Einrichtung und letztes Ergebnis pro Werkzeug vereinheitlichen |
 | Think–Act–Observe | sichtbare Route, Modell, Streamingzustand, Ergebniszeit und Fehler | im Chat und Voice vorhanden | echte Toolaufrufe als einklappbare Schritte ergänzen |
-| Multi-LLM-Routing | bedienbarer AI Core mit Luna als schnellem Standard, Sol als Fallback, persistentem HUD-Sync und ehrlichem Ollama/Strict-Status | implementiert | Kosten-/Latenzbudget je Aufgabe und manueller Modell-Prefix |
+| Multi-LLM-Routing | bedienbarer AI Core mit Luna als günstigem Standard, Terra für visuelle Aufgaben, Sol für komplexe Aufgaben und ehrlichem Ollama/Strict-Status | implementiert | Kosten-/Latenzbudget je Aufgabe und manueller Modell-Prefix |
 | Cross-Session Memory | persistente Einträge, Remember/Forget, Herkunft, Schutzklasse, Ablaufdatum und Suche | implementiert | optionale semantische Vektorsuche |
-| Voice & Wake Word | Browser-Voice, Mikrofonwahl, Latenz, Siri-Fast-Path, später lokales Wake Word | Browserpfad vorhanden | lokaler Whisper/Kokoro-Pfad |
-| Gmail/Email | IMAP read-only, Sortierung, Briefings, Entwürfe; SMTP getrennt | Release 71 korrigiert und live | echtes Benutzerkonto abnehmen, danach Entwurf-Freigabe ergänzen |
+| Voice & Wake Word | Jarvis Core mit Textfallback, Browser-Voice, Mikrofonwahl, Latenz und Siri-Fast-Path | Browserpfad vorhanden, Anna ausgeschlossen | später Realtime- oder lokaler Sprachpfad |
+| Gmail/Email | IMAP read-only, Sortierung, Briefings, Entwürfe; SMTP getrennt | Release 81 mit echtem Konto und persistenten Gruppen live abgenommen | Entwurf-Freigabe ergänzen |
 | Calendar | Google/CalDAV/Apple über getrennte Rechte | vorbereitet | mobile Kontoabnahme und gemeinsame Tagesansicht |
 | Desktop/App Control | Home Connector und später Desktop-/Pi-Nodes | teilweise | Gerätefähigkeiten und Human Gates pro Node anzeigen |
 | Browser Automation | kontrollierte Browser-Werkzeuge über OpenClaw | Plugin vorhanden | Session-Isolation und sichtbare Browser-Aktivität |
@@ -52,10 +52,18 @@ Die Jarvis-Referenz wurde visuell und funktional ausgewertet. AgentOne übernimm
 - vier echte Cockpit-Spalten für Systeme, AI Core, Operationen/Freigaben und Schnellaktionen;
 - Live-Werte aus Dashboard, Connectoren, Mail und Home Assistant statt dekorativer Beispieldaten;
 - explizite Zustände und Fehler (`LIVE`, `READY`, `SETUP`, `OFFLINE`, `ERROR`);
-- wählbares Modell: GPT-6 Luna für schnelle Alltagsarbeit oder GPT-6.1 Sol für komplexe Aufgaben;
+- wählbares Modell: GPT-6 Luna für günstige Alltagsarbeit, GPT-6.1 Terra für Dokumente/Bilder oder GPT-6.1 Sol für komplexe Aufgaben;
 - responsive Verdichtung für PWA und Mobilgeräte.
 
 Die Modellwahl wird lokal pro Browserinstanz gespeichert, serverseitig gegen eine Allowlist geprüft und gilt sowohl für Text- als auch Sprachchat. Unbekannte Modellnamen werden ignoriert und auf den sicheren Standard zurückgesetzt.
+
+## Jarvis Core ab Release 81
+
+- Günni bleibt der ansprechbare persönliche Agent; Jarvis Core bezeichnet seinen Kommunikationsmodus.
+- Textchat und Voice-Texteingabe verwenden denselben verlässlichen, authentifizierten API-Pfad.
+- Die kostenlose Browser-Sprachausgabe wählt bevorzugt eine passende männliche Gerätestimme und schließt `Anna` aus.
+- Sprachausgabe kann vollständig deaktiviert werden; Mikrofonzugriff beginnt ausschließlich nach Benutzeraktion.
+- Fehler und Laufzeit bleiben sichtbar, ohne Prompt- oder Secret-Inhalte ins Audit zu schreiben.
 
 ## Gmail ab Release 71
 

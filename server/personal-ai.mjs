@@ -1,4 +1,4 @@
-const allowedModels=new Set(['gpt-6-luna','gpt-6.1-sol']);
+const allowedModels=new Set(['gpt-6-luna','gpt-6.1-terra','gpt-6.1-sol']);
 
 export function responseText(payload){
   return (payload?.output||[]).flatMap(item=>item?.content||[]).filter(part=>part?.type==='output_text').map(part=>part.text).join('\n').trim();

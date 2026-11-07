@@ -14,6 +14,13 @@ test('personal AI uses Luna first and falls back to Sol',async()=>{
   assert.equal(JSON.stringify(result).includes('not-a-real-key'),false);
 });
 
+test('personal AI accepts Terra only when explicitly selected',async()=>{
+  const calls=[];const fakeFetch=async(_url,init)=>{const body=JSON.parse(init.body);calls.push(body);return {ok:true,status:200,json:async()=>({output:[{content:[{type:'output_text',text:'Terra bereit.'}]}]})};};
+  const result=await personalReply({prompt:'Dokument prüfen',apiKey:'not-a-real-key',primaryModel:'gpt-6.1-terra',fallbackModel:'gpt-6-luna',fetchImpl:fakeFetch});
+  assert.deepEqual(calls.map(call=>call.model),['gpt-6.1-terra']);
+  assert.equal(result.model,'gpt-6.1-terra');assert.equal(result.mode,'LIVE');
+});
+
 test('personal AI remains functional in simulator mode without a key',async()=>{
   const result=await personalReply({prompt:'Test',apiKey:''});assert.equal(result.mode,'SIMULATED');assert.equal(result.model,'simulator');
 });

@@ -24,7 +24,7 @@ Die Oberfläche trennt zwei technisch unterschiedliche Ebenen:
 - **Konten und Geräte** verbinden externe Benutzerquellen wie Gmail, Kalender, Home Assistant, Spotify oder iPhone-Companions. Sie besitzen je Instanz eigene Zugangsdaten, Freigaben und Zustände `LIVE`, `PREPARED`, `DEGRADED` oder `DISABLED`.
 - **OpenClaw-Plugins** stellen Werkzeuge, Provider und Kanäle innerhalb der persönlichen Agent-Runtime bereit. Der Katalog wird serverseitig aus der installierten OpenClaw-Registry bereitgestellt; Secret-Werte gelangen dabei nie in den Browser.
 
-Release `2026.11.06-79` betreibt Fressi und Günni mit getrennten Apps, Datenbanken, OpenClaw-Runtimes, Access-Proxys und Volumes. Günni besitzt Command Center, Live-Inbox, Routinen, persistentes Memory, Voice, Home-Assistant-Steuerung, Connector-Governance und einen optionalen lokalen Modellpfad über den signierten Home Connector v4. Externe Konten und Geräte benötigen trotz geladener Plugins weiterhin eigene Zugangsdaten beziehungsweise Benutzerfreigaben.
+Release `2026.11.07-83` betreibt Fressi und Günni mit getrennten Apps, Datenbanken, OpenClaw-Runtimes, Access-Proxys und Volumes. Günni besitzt Command Center, Live-Inbox, Routinen, persistentes Memory, Jarvis Core für Text und Sprache, Home-Assistant-Steuerung, Connector-Governance und einen optionalen lokalen Modellpfad über den signierten Home Connector v4. Externe Konten und Geräte benötigen trotz geladener Plugins weiterhin eigene Zugangsdaten beziehungsweise Benutzerfreigaben.
 
 Ein externer Dienst gilt erst nach erfolgreichem Healthcheck als `LIVE`. Das bloße Vorhandensein eines OpenClaw-Plugins oder einer gespeicherten Connector-Freigabe reicht dafür nicht aus.
 
@@ -32,7 +32,9 @@ Ein externer Dienst gilt erst nach erfolgreichem Healthcheck als `LIVE`. Das blo
 
 Der öffentliche Einzelbenutzer-Testzugang verwendet ein normales AgentOne-Formular statt Browser-Basic-Auth. Zugangsdaten werden konstant verglichen, Fehlversuche begrenzt und erfolgreiche Anmeldungen als opaque, serverseitig gehashte Secure-/HttpOnly-Session gespeichert. Entra Authorization Code + PKCE bleibt für die spätere Mehrbenutzerfreigabe vorbereitet.
 
-Der persönliche Webchat verwendet serverseitig die OpenAI Responses API. `gpt-6-luna` ist der kostengünstige Standard, `gpt-6.1-sol` der automatische Fallback. Ohne konfigurierten Schlüssel bleibt derselbe Endpoint als sichtbar markierter Simulator verfügbar. Schlüssel, Prompts und Antworten werden nicht im Audit protokolliert; dort erscheinen nur Modus und Modell.
+Der persönliche Webchat verwendet serverseitig die OpenAI Responses API. `gpt-6-luna` ist der kostengünstige Standard für Chat, Mail-Triage und häufige Routinen, `gpt-6.1-terra` ist die bewusste Auswahl für Bilder und Dokumente und `gpt-6.1-sol` bleibt komplexen Aufgaben vorbehalten. Deterministische Mail-Gruppierung und Connector-Synchronisation benötigen kein Sprachmodell. Ohne konfigurierten Schlüssel bleibt derselbe Endpoint als sichtbar markierter Simulator verfügbar. Schlüssel, Prompts und Antworten werden nicht im Audit protokolliert; dort erscheinen nur Modus und Modell.
+
+Jarvis Core ist die schnelle Kommunikationsoberfläche von Günni, nicht eine dritte Instanz. Textchat und eingegebener Voice-Chat verwenden einen robusten Request-Pfad mit sichtbarer Laufzeit und Fehleranzeige. Die optionale Browser-Sprachausgabe nutzt eine lokale Gerätestimme ohne API-Kosten; Stimmen mit dem Namen `Anna` werden nicht angeboten. Mikrofonzugriff erfolgt erst nach einem bewussten Klick.
 
 ## Administration
 
