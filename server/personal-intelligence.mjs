@@ -167,7 +167,7 @@ function buildCalendarSignals(events, now) {
   }
   const minutes = meetings.reduce((sum, event) => sum + Math.max(0, finite(event.metrics?.durationMinutes) ?? 0), 0);
 
-  return [{
+  const signals = [{
     id: 'calendar.next-24h',
     domain: 'calendar',
     severity: conflicts ? 'attention' : 'info',
@@ -177,6 +177,25 @@ function buildCalendarSignals(events, now) {
     evidence: meetings.slice(0, 20).map(sourceRef),
     confidence: 0.98,
   }];
+  const shortTransitions = meetings.slice(1).filter((meeting, index) => {
+    const previous = meetings[index];
+    const previousEnd = new Date(previous.metrics?.endAt ?? previous.occurredAt).getTime();
+    const nextStart = new Date(meeting.occurredAt).getTime();
+    const gapMinutes = (nextStart - previousEnd) / 60_000;
+    return Number.isFinite(gapMinutes) && gapMinutes >= 0 && gapMinutes < 30;
+  }).length;
+  if (meetings.length >= 3 && shortTransitions >= 2) signals.push({
+    id: 'calendar.focus-fragmentation',
+    domain: 'planning',
+    severity: 'attention',
+    title: 'Dein Tag ist stark fragmentiert',
+    summary: `${meetings.length} Termine erzeugen ${shortTransitions} kurze Wechsel unter 30 Minuten. Plane Vorbereitung und Fokus bewusst; AgentOne verändert keine Termine.`,
+    actions: [{ type: 'open-calendar', target: 'calendar:focus', label: 'Fokusfenster prüfen' }],
+    evidence: meetings.slice(0, 20).map(sourceRef),
+    confidence: Math.min(0.96, 0.72 + shortTransitions * 0.08),
+    counterEvidence: minutes < 180 ? ['Die reine Terminzeit liegt unter drei Stunden; der Hinweis basiert auf den kurzen Wechseln.'] : [],
+  });
+  return signals;
 }
 
 function metricSeries(events, metricNames, source, now, convert = (value) => value) {
@@ -239,13 +258,14 @@ function buildCrossDomainSignals(signals, events, now) {
   const mail = signals.find((signal) => signal.id === 'mail.daily-triage' && signal.severity === 'attention');
   const healthAttention = signals.find((signal) => signal.id === 'health.weekly-pattern' && signal.severity === 'attention');
   const calendar = signals.find((signal) => signal.id === 'calendar.next-24h');
+  const fragmented = signals.find((signal) => signal.id === 'calendar.focus-fragmentation');
   const meetings = events.filter((event) => event.kind === 'calendar.event'
     && new Date(event.occurredAt).getTime() >= now.getTime()
     && new Date(event.occurredAt).getTime() <= now.getTime() + DAY_MS);
   const scheduledMinutes = meetings.reduce((sum, event) => sum + (finite(event.metrics?.durationMinutes) ?? 0), 0);
-  if (mail && calendar && scheduledMinutes >= 180) {
+  if (mail && calendar && (scheduledMinutes >= 180 || fragmented)) {
     const relevantMail=events.filter((event)=>event.kind==='mail.message'&&new Date(event.occurredAt).getTime()>=now.getTime()-DAY_MS&&event.tags.some((tag)=>['urgent','needs-review','needs-reply'].includes(tag)));
-    results.push({id:'cross.mail-calendar-pressure',domain:'planning',severity:'attention',title:'Wichtige Post trifft auf einen vollen Tag',summary:`${relevantMail.length} Nachricht${relevantMail.length===1?'':'en'} brauchen Prüfung; für die nächsten 24 Stunden sind ${Math.round(scheduledMinutes/60*10)/10} Stunden geplant.`,actions:[{type:'open-calendar',target:'calendar:pressure',label:'Post und Tagesplan gemeinsam prüfen'}],evidence:[...mail.evidence,...calendar.evidence],confidence:Math.min(mail.confidence,calendar.confidence),counterEvidence:scheduledMinutes<240?['Terminlast liegt unter vier Stunden; Hinweis basiert zusätzlich auf dringender Post.']:[]});
+    results.push({id:'cross.mail-calendar-pressure',domain:'planning',severity:'attention',title:'Wichtige Post trifft auf einen anspruchsvollen Tag',summary:`${relevantMail.length} Nachricht${relevantMail.length===1?'':'en'} brauchen Prüfung; ${fragmented?`${meetings.length} Termine erzeugen kurze Wechsel`:`für die nächsten 24 Stunden sind ${Math.round(scheduledMinutes/60*10)/10} Stunden geplant`}.`,actions:[{type:'open-calendar',target:'calendar:pressure',label:'Post und Tagesplan gemeinsam prüfen'}],evidence:[...mail.evidence,...calendar.evidence],confidence:Math.min(mail.confidence,calendar.confidence),counterEvidence:scheduledMinutes<240?['Die reine Terminlast liegt unter vier Stunden; kurze Wechsel oder dringende Post erhöhen trotzdem den Planungsbedarf.']:[]});
   }
   if (healthAttention && calendar && scheduledMinutes >= 240) results.push({
       id: 'cross.recovery-schedule',

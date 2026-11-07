@@ -8,6 +8,7 @@ const SIGNAL_COPY=Object.freeze({
   'mail.daily-triage':Object.freeze({domain:'mail',title:'Posteingang ausgewertet',summary:'Neue Nachrichten wurden nach Handlungsbedarf und Herkunft gebündelt.',target:'tools:mail'}),
   'calendar.next-24h':Object.freeze({domain:'calendar',title:'Die nächsten 24 Stunden',summary:'Termine, Belegung und mögliche Überschneidungen wurden read-only geprüft.',target:'tasks:planning'}),
   'health.weekly-pattern':Object.freeze({domain:'health',title:'Persönliches Gesundheitsmuster',summary:'Der eigene Verlauf wurde quellen- und methodengetrennt mit der persönlichen Basis verglichen.',target:'tools:health'}),
+  'calendar.focus-fragmentation':Object.freeze({domain:'planning',title:'Kurze Wechsel im Tagesplan',summary:'Mehrere Termine lassen wenig zusammenhängende Fokuszeit; der Kalender wurde nicht verändert.',target:'tasks:planning'}),
   'cross.recovery-schedule':Object.freeze({domain:'planning',title:'Tageslast und Körpermuster',summary:'Terminlast und persönliche Verlaufssignale wurden gemeinsam geprüft; es wurde nichts verändert.',target:'tasks:planning'}),
 });
 

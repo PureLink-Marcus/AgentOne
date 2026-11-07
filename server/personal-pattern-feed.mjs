@@ -2,7 +2,7 @@ const ID=/^[A-Za-z0-9][A-Za-z0-9._:@-]{0,191}$/;
 const KEY=/^[a-f0-9]{64}$/;
 const DOMAINS=new Set(['mail','calendar','health','planning','home','personal']);
 const SEVERITIES=new Set(['info','attention']);
-const WINDOWS=Object.freeze({'mail.daily-triage':'LETZTE 24 STUNDEN','calendar.next-24h':'NÄCHSTE 24 STUNDEN','health.weekly-pattern':'7 TAGE GEGEN 28-TAGE-BASIS','cross.recovery-schedule':'NÄCHSTE 24 STUNDEN + 35 TAGE','cross.mail-calendar-pressure':'NÄCHSTE 24 STUNDEN'});
+const WINDOWS=Object.freeze({'mail.daily-triage':'LETZTE 24 STUNDEN','calendar.next-24h':'NÄCHSTE 24 STUNDEN','calendar.focus-fragmentation':'NÄCHSTE 24 STUNDEN','health.weekly-pattern':'7 TAGE GEGEN 28-TAGE-BASIS','cross.recovery-schedule':'NÄCHSTE 24 STUNDEN + 35 TAGE','cross.mail-calendar-pressure':'NÄCHSTE 24 STUNDEN'});
 
 function patternError(message,code='PERSONAL_PATTERN_INVALID',status=400){return Object.assign(new Error(message),{code,status});}
 function identifier(value,field){const result=String(value??'').trim();if(!ID.test(result))throw patternError(`${field} ist ungültig`);return result;}

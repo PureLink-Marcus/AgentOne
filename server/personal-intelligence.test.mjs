@@ -93,6 +93,22 @@ test('connects urgent person mail with a packed calendar without exposing or mut
   const brief=buildPersonalBrief({userId:'guenni',now,events:[event({source:'mail.imap',kind:'mail.message',externalId:'mail-pressure',occurredAt:'2026-11-07T09:30:00.000Z',title:'private subject',tags:['person','needs-review','urgent']}),event({source:'calendar.ics',kind:'calendar.event',externalId:'calendar-pressure',occurredAt:'2026-11-07T11:00:00.000Z',title:'private appointment',metrics:{durationMinutes:210,endAt:'2026-11-07T14:30:00.000Z'}})]}),signal=brief.signals.find(item=>item.id==='cross.mail-calendar-pressure');assert.equal(signal.severity,'attention');assert.match(signal.summary,/1 Nachricht/);assert.match(signal.summary,/3.5 Stunden/);assert.equal(signal.actions[0].type,'open-calendar');assert.doesNotMatch(signal.summary,/private subject|private appointment/);
 });
 
+test('detects calendar fragmentation and connects it to urgent mail without requiring three busy hours',()=>{
+  const events=[
+    event({source:'mail.imap',kind:'mail.message',externalId:'mail-fragmented',occurredAt:'2026-11-07T09:30:00.000Z',title:'private subject',tags:['person','needs-review','urgent']}),
+    event({source:'calendar.ics',kind:'calendar.event',externalId:'fragment-1',occurredAt:'2026-11-07T11:00:00.000Z',title:'private one',metrics:{durationMinutes:30,endAt:'2026-11-07T11:30:00.000Z'}}),
+    event({source:'calendar.ics',kind:'calendar.event',externalId:'fragment-2',occurredAt:'2026-11-07T11:40:00.000Z',title:'private two',metrics:{durationMinutes:30,endAt:'2026-11-07T12:10:00.000Z'}}),
+    event({source:'calendar.ics',kind:'calendar.event',externalId:'fragment-3',occurredAt:'2026-11-07T12:20:00.000Z',title:'private three',metrics:{durationMinutes:30,endAt:'2026-11-07T12:50:00.000Z'}}),
+  ];
+  const brief=buildPersonalBrief({userId:'guenni',now,events}),fragmented=brief.signals.find(item=>item.id==='calendar.focus-fragmentation'),cross=brief.signals.find(item=>item.id==='cross.mail-calendar-pressure');
+  assert.equal(fragmented.severity,'attention');
+  assert.match(fragmented.summary,/3 Termine erzeugen 2 kurze Wechsel/);
+  assert.match(fragmented.counterEvidence[0],/unter drei Stunden/);
+  assert.equal(cross.severity,'attention');
+  assert.match(cross.summary,/kurze Wechsel/);
+  assert.doesNotMatch(JSON.stringify([fragmented,cross]),/private subject|private one|private two|private three/);
+});
+
 test('notification policy deduplicates and respects quiet hours', () => {
   const signal = { severity: 'attention', notificationKey: 'key' };
   assert.equal(shouldNotify(signal, { now: new Date('2026-11-07T10:00:00') }), true);
