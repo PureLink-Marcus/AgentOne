@@ -483,6 +483,27 @@ sind dokumentiert. Der Funktionsumfang bleibt Push-to-talk mit gestreamter
 Antwort, nicht Full-Duplex-Realtime-Audio oder Wake Word. Echtes Mikrofon,
 Safari/WebKit und native iOS-Funktionen bleiben separat abzunehmen.
 
+### Release 2026.11.07-99 · Mail als dauerhafte Jarvis-Quelle (**PASS LOKAL**)
+
+Jarvis Core verarbeitet IMAP nicht mehr als vergänglichen 50er-Snapshot. Ein
+UID-/UIDVALIDITY-Cursor, atomare Metadatenablage, Deduplizierung,
+15-Minuten-Scheduler, begrenzter Backoff und Retention liefern eine restartfeste
+Quelle für Tagesbild, Pulse und Briefing. Der Fetch fordert nur Envelope,
+Flags, Größe, Thread-ID und allowlistete Klassifikationsheader an; Bodies,
+Snippets, Anhänge und Roh-Header bleiben technisch ausgeschlossen.
+
+Das neue Mail Review Center ist eine echte Ergebnisansicht: Konto- und
+Kategoriefilter, Suche, Paging, Thread-Detail, Unread-/Prüfstatus, Konfidenz,
+erklärbare Signale und der vorhandene hashgebundene Antwortentwurf. Es zeigt
+Cursor, neue und deduplizierte Datensätze sowie letzten und nächsten Lauf. Bei
+einem Syncfehler bleibt der letzte gültige Bestand sichtbar. SMTP wird nur
+verifiziert; Senden, Verschieben und Löschen bleiben ohne gesonderten
+freigegebenen Ausführungspfad unmöglich.
+
+**Lokale Abnahme:** 229/229 Tests, Production-Build und API-Smoke sind grün.
+Die echte Günni-Doppelsynchronisation, Restart-Persistenz und mobile
+Chrome-Abnahme folgen versionsgebunden direkt nach dem Rollout.
+
 ## Primärquellen und Lizenzgrenzen
 
 - [Jarvis Institute – Features](https://jarvis.institute/features/) —

@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { loadEnv } from '../server/state.mjs';
 
 const env=loadEnv(path.resolve('.'));
-const origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-98';
+const origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-99';
 if(!origin||!env.AGENTONE_GUENNI_USER||!env.AGENTONE_GUENNI_PASSWORD)throw new Error('Günni-Testzugang ist nicht vollständig konfiguriert.');
 
 const browser=await chromium.launch({channel:'chrome',headless:true});
@@ -44,15 +44,15 @@ try{
   const metricCount=await page.locator('#ha-metrics .ha-metric').count(),groupCount=await page.locator('#ha-groups .ha-group').count();
   if(metricCount!==4||groupCount<1)throw new Error(`Dashboard unvollständig: ${metricCount} Metriken, ${groupCount} Gruppen`);
   const controlCount=await page.locator('#ha-groups .ha-entity-controls button').count(),controlNote=await page.locator('#ha-control-note').innerText();if(controlCount<1||!/(STEUERUNG AKTIV|READ-ONLY|VOLLGAS)/.test(controlNote))throw new Error(`Steuerungs-Cards fehlen: ${controlCount} · ${controlNote}`);
-  const dashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-release-98.png');
+  const dashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-release-99.png');
   await page.screenshot({path:dashboardScreenshot,fullPage:true});
   await page.setViewportSize({width:390,height:844});
-  const mobileDashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-mobile-release-98.png');
+  const mobileDashboardScreenshot=path.resolve('output/demo/guenni-home-assistant-dashboard-mobile-release-99.png');
   await page.screenshot({path:mobileDashboardScreenshot});
   await page.locator('[data-view="tools"]').click();
 
   await mkdir(path.resolve('output/demo'),{recursive:true});
-  const deviceScreenshot=path.resolve('output/demo/guenni-home-device-release-98.png');
+  const deviceScreenshot=path.resolve('output/demo/guenni-home-device-release-99.png');
   await card.screenshot({path:deviceScreenshot});
 
   await page.locator('#home-device-setup').click();
@@ -63,7 +63,7 @@ try{
   const permissionCount=await dialog.locator('input[type="checkbox"]').count();
   if(permissionCount<4)throw new Error(`Nur ${permissionCount} Gerätefreigaben im Einrichtungsdialog.`);
 
-  const setupScreenshot=path.resolve('output/demo/guenni-home-device-setup-release-98.png');
+  const setupScreenshot=path.resolve('output/demo/guenni-home-device-setup-release-99.png');
   await dialog.screenshot({path:setupScreenshot});
   if(browserErrors.length)throw new Error(`Browserfehler: ${browserErrors.join(' | ')}`);
   console.log(JSON.stringify({origin,release,connector:dashboard.controlEnabled?'v3-control':'v3-readonly',status:'LIVE',card:'visible',connection:'authenticated',entities:dashboard.summary.entities,domains:dashboard.summary.domains,metricCount,groupCount,controlCount,controlNote,setupPermissions:permissionCount,dashboardScreenshot,mobileDashboardScreenshot,deviceScreenshot,setupScreenshot},null,2));

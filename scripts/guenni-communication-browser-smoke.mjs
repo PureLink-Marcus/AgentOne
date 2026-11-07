@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { loadEnv } from '../server/state.mjs';
 
-const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-98';
+const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-99';
 const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(String(error.message||error)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
@@ -33,7 +33,7 @@ try{
   if(!/voice-ui-ok/i.test(voiceText||''))throw new Error(`Voice-UI fehlgeschlagen: ${voiceText} · ${voiceStatus}`);
   const voiceOptions=await page.locator('#voice-choice option').allTextContents();
   await mkdir(path.resolve('output/playwright'),{recursive:true});
-  const screenshot=path.resolve('output/playwright/guenni-communication-release-98.png');
+  const screenshot=path.resolve('output/playwright/guenni-communication-release-99.png');
   await page.locator('#voice').screenshot({path:screenshot});
   if(errors.length)throw new Error('Browserfehler: '+errors.join(' | '));
   if(voiceOptions.some(value=>/anna/i.test(value)))throw new Error('Anna wurde nicht aus der Jarvis-Core-Stimmenliste entfernt');

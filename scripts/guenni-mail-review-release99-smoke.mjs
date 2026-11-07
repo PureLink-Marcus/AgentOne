@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import { chromium } from 'playwright';
+import { loadEnv } from '../server/state.mjs';
+
+const env=loadEnv(path.resolve('.')),origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,''),release='2026.11.07-99',persistenceOnly=process.argv.includes('--persistence-only');
+if(!origin||!env.AGENTONE_GUENNI_USER||!env.AGENTONE_GUENNI_PASSWORD)throw new Error('Günni-Live-Konfiguration fehlt');
+const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:430,height:932},deviceScaleFactor:1}),errors=[];
+page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});page.on('pageerror',error=>errors.push(error.message));
+
+const noContentKeys=value=>{const forbidden=new Set(['body','bodyParts','source','snippet','html','text','attachments','rawHeaders','password','secret','token']);const visit=item=>{if(!item||typeof item!=='object')return true;for(const [key,child] of Object.entries(item)){if(forbidden.has(key))return false;if(!visit(child))return false;}return true;};return visit(value);};
+const request=async(pathname,options={})=>page.evaluate(async({pathname,options})=>{const response=await fetch(pathname,{cache:'no-store',...options,headers:{accept:'application/json',...(options.headers||{})}}),data=await response.json();return {status:response.status,ok:response.ok,data};},{pathname,options});
+
+try{
+  await page.goto(`${origin}/login`,{waitUntil:'networkidle'});await page.locator('#username').fill(env.AGENTONE_GUENNI_USER);await page.locator('#password').fill(env.AGENTONE_GUENNI_PASSWORD);await Promise.all([page.waitForURL(`${origin}/`),page.getByRole('button',{name:'Sicher anmelden'}).click()]);
+  const releaseState=await request('/agentone/release.json?smoke=mail-review-99');assert.equal(releaseState.status,200);assert.equal(releaseState.data.release,release);
+  await page.locator('[data-view="tools"]').click();const center=page.locator('.mail-center');await center.waitFor();await page.locator('#mail-plugin-badge').filter({hasText:'OPENCLAW IMAP LOADED'}).waitFor();await page.waitForFunction(()=>document.querySelectorAll('.mail-account').length>0);
+  const accounts=await request('/agentone/mail/accounts');assert.equal(accounts.status,200);assert.ok(accounts.data.accounts?.length>0);const accountId=accounts.data.accounts[0].id;
+  let firstScan=null,secondScan=null;
+  if(!persistenceOnly){
+    firstScan=await request(`/agentone/mail/accounts/${encodeURIComponent(accountId)}/scan`,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(firstScan.status,200);assert.equal(firstScan.data.scan?.schema,'agentone.mail.scan/v3');assert.equal(firstScan.data.scan?.policy?.bodyFetched,false);assert.equal(firstScan.data.scan?.policy?.bodyStored,false);assert.equal(firstScan.data.scan?.policy?.providerMutations,false);assert.ok(firstScan.data.scan?.sync?.uidValidity);assert.ok(Number(firstScan.data.scan?.sync?.lastUid)>0);
+  }
+  const firstList=await request(`/agentone/mail/messages?accountId=${encodeURIComponent(accountId)}&limit=200`);assert.equal(firstList.status,200);assert.equal(firstList.data.schema,'agentone.personal-mail-review/v1');assert.equal(firstList.data.policy?.bodyStored,false);assert.equal(firstList.data.policy?.providerMutations,false);assert.ok(firstList.data.summary?.total>0);assert.ok(firstList.data.messages?.length>0);assert.ok(noContentKeys(firstList.data));assert.equal(new Set(firstList.data.messages.map(item=>item.id)).size,firstList.data.messages.length);
+  if(!persistenceOnly){secondScan=await request(`/agentone/mail/accounts/${encodeURIComponent(accountId)}/scan`,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});assert.equal(secondScan.status,200);assert.equal(secondScan.data.scan?.schema,'agentone.mail.scan/v3');assert.ok(['incremental','full'].includes(secondScan.data.scan?.sync?.mode));}
+  const secondList=await request(`/agentone/mail/messages?accountId=${encodeURIComponent(accountId)}&limit=200`);assert.equal(secondList.status,200);assert.ok(secondList.data.summary.total>=firstList.data.summary.total);assert.equal(new Set(secondList.data.messages.map(item=>item.id)).size,secondList.data.messages.length);assert.ok(noContentKeys(secondList.data));
+  await page.locator('#mail-review-account').selectOption(accountId);await page.locator('[data-mail-category=""]').click();await page.waitForFunction(()=>document.querySelectorAll('#mail-review-list .mail-review-row').length>0);const firstRow=page.locator('#mail-review-list .mail-review-row').first();await firstRow.click();const detail=page.locator('#mail-detail-dialog[open]');await detail.waitFor();await detail.locator('.mail-detail-close').click();await page.locator('#mail-review-search').fill('___agentone_no_match___');await page.waitForTimeout(450);await page.locator('#mail-review-list .mail-review-empty').waitFor();await page.locator('#mail-review-search').fill('');await page.waitForTimeout(450);await page.locator('#mail-review-list .mail-review-row').first().waitFor();
+  await mkdir(path.resolve('output/playwright'),{recursive:true});const screenshot=path.resolve('output/playwright/guenni-mail-review-release-99-mobile.png');await center.screenshot({path:screenshot});assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({origin,release,mode:persistenceOnly?'PERSISTENCE_AFTER_RESTART':'SYNC_TWICE',accounts:accounts.data.accounts.length,stored:secondList.data.summary.total,visible:secondList.data.messages.length,uniqueIds:new Set(secondList.data.messages.map(item=>item.id)).size,firstMode:firstScan?.data.scan?.sync?.mode||null,secondMode:secondScan?.data.scan?.sync?.mode||null,secondFetched:secondScan?.data.scan?.sync?.fetched??null,secondNew:secondScan?.data.scan?.sync?.newCount??null,contentStored:false,providerMutations:false,mailReview:'PASS',consoleErrors:errors.length,screenshot},null,2));
+}finally{await browser.close();}

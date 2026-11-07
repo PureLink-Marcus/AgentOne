@@ -8,7 +8,7 @@ const env=loadEnv(path.resolve('.'));
 const origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,'');
 const user=env.AGENTONE_GUENNI_USER;
 const password=env.AGENTONE_GUENNI_PASSWORD;
-const expectedRelease=process.env.AGENTONE_EXPECTED_RELEASE||'2026.11.07-98';
+const expectedRelease=process.env.AGENTONE_EXPECTED_RELEASE||'2026.11.07-99';
 const expectedMinDurationMs=Number(process.env.VOICE_SMOKE_EXPECTED_MIN_DURATION||1000);
 const fixturePath=path.resolve('scripts/fixtures/release98-voice-smoke-de.wav');
 

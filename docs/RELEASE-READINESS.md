@@ -1,18 +1,18 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release: `2026.11.07-98` (**PASS LIVE**)
-Deployment: Release 98 ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy. PureLink, Fressi und Günni bestehen die versionsgebundene PWA-Abnahme. Der Release ergänzt den belastbaren Push-to-talk-Pfad mit echter Audio-Transkription, standardmäßigem Auto-Send und gestreamter Antwort.
+Release: `2026.11.07-99` (**PASS LOKAL / DEPLOYMENT AUSSTEHEND**)
+Deployment: Release 99 ist lokal vollständig verifiziert und wartet auf den versionsgebundenen Rollout. Er ersetzt den flüchtigen IMAP-50er-Snapshot durch einen persistenten UID-/UIDVALIDITY-Sync und ergänzt ein klickbares Mail Review Center.
 
 ## Abgenommen
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LIVE | Release 98: 211/211 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build, lokaler API-Smoke und mobiler Chrome-Voice-Smoke bestanden; `npm audit --omit=dev --audit-level=high` meldet 0 Schwachstellen. |
+| Lokale Anwendung | PASS LOKAL | Release 99: 229/229 Node-Tests, vollständige lokale Verifikation, Vite-Production-Build und lokaler API-Smoke bestanden; der ungenutzte Body-Parser wurde entfernt und der Produktions-Audit meldet 0 Schwachstellen. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE | Release 98 besteht auf Günni erneut den vollständigen Webflow `QR-BASE → INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → SELF-REVOKE-RETRY → RECOVER → VAULT-ROLLBACK`. Der Serverwiderruf kommt vor dem lokalen Tresor-Cleanup; Netz-/503-Fehler behalten den verschlüsselten Token für einen sicheren Retry. Die Abnahme läuft in echtem Chrome mit iPhone-UA und simuliertem Standalone, nicht auf Safari/WebKit. |
-| Gmail ohne OAuth-Client | PASS | Release 81: echtes Günni-Konto verbunden; 50 Nachrichten read-only geladen und persistent in Personen, Newsletter, Transaktionen und Spam-Verdacht gruppiert. SMTP bleibt optional. |
+| Gmail ohne OAuth-Client | PASS LOKAL | Release 99: IMAP-Metadaten werden read-only mit persistentem UID-/UIDVALIDITY-Cursor, 15-Minuten-Zeitplan, Backoff, Deduplizierung und benutzerisolierter Aufbewahrung synchronisiert. Bodies, Snippets, Anhänge und Roh-Header werden weder geladen noch gespeichert. Die erneute echte Günni-Abnahme folgt direkt nach dem Rollout. |
 | Mail-Antwortentwurf | PASS | Release 84: Entwurf live speichern, Inhalt anzeigen und unverändert hashgebunden freigeben; der Status nennt ausdrücklich `NOCH NICHT GESENDET`. Es existiert kein impliziter Sendepfad. |
 | Google-Konto-Connectoren | PASS | Release 83: Mail und Kalender sind am vorhandenen Gmail-Konto getrennt wählbar; Kalender wurde aktiviert und zeigt bis zur separaten OAuth-Freigabe ehrlich `FREIGABE NÖTIG`. Das App-Passwort wird nicht an Kalender weitergegeben. |
 | Home-Live-Schreibpfad | PASS (zustandserhaltend) | RGB-Licht und Media-Player-Lautstärke wurden live auf ihre jeweiligen Istwerte geschrieben; HTTP 200, persistenter Audit, Testwert redigiert, 0 Browserfehler |
@@ -46,7 +46,7 @@ Deployment: Release 98 ist auf Fressi und Günni live; alle vier App-/Access-Con
 | OpenAI | PASS | serverseitige OpenClaw-Inferenz über den günstigen Standard `gpt-6-luna` liefert `smoke-ok` |
 | Personal-Konto-Login | PASS | eigenes Formular, konstante Credential-Prüfung, Fehlversuchslimit, Secure/HttpOnly-Session und Live-Server-Smoke |
 | Personal-Chat | PASS | serverseitige Responses API, GPT‑6 Luna Standard, GPT‑6.1 Sol Fallback und echte Live-Antwort `personal-smoke-ok` |
-| Persistenz | PASS | PostgreSQL-, App-, OpenClaw-Konfigurations- und Workspace-Volumes bleiben bei Containerrotation erhalten |
+| Persistenz | PASS LOKAL | PostgreSQL-, App-, OpenClaw-Konfigurations- und Workspace-Volumes bleiben bei Containerrotation erhalten. Release 99 ergänzt atomare Mail-Metadaten-/Cursor-Tabellen mit 180 Tagen beziehungsweise 2.500 Datensätzen je Konto. |
 
 ## Bewusst noch nicht produktiv freigegeben
 
@@ -156,6 +156,17 @@ Deployment: Release 98 ist auf Fressi und Günni live; alle vier App-/Access-Con
 | Mobile Browserabnahme | PASS LOKAL | Headless Chrome bei 430 × 932 px: eine Transkription führt exakt zu einem Auto-Send; Doppelklick erzeugt nur einen weiteren Stream; während der Antwort wird kein zweiter Mikrofonzugriff gestartet. Screenshot: `output/playwright/release-98-voice-mobile.png`. |
 | Produktgrenze | KLAR | Release 98 ist dateibasierter Push-to-talk mit gestreamter Text-/Sprachantwort. Er behauptet weder Full-Duplex-Realtime-Audio noch Wake Word, echten Mikrofon-Hardwaretest oder native iOS-/Safari-Abnahme. |
 | Deployment und Live-Abnahme | PASS LIVE | Source-Commit `f15d1ac`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-98.tgz`, SHA-256 `bac50692186f3fe835bb202b6fff0c62554dab9f451560b28e1f9a93f7d85ce0`; Image `purelink/agentone:2026.11.07-98`, Digest `sha256:35a93b83bdfba82439ebbebfd3e4804a9309e02f7c7d1b2827066cb6676ae4e4`; vier private Container healthy. PWA auf drei Domains, iPhone-Vollflow, 7/7 Connector-APIs, 68/68 Plugins, Home 345 Entitäten/15 Domains/275 Controls, Mail 1 Konto/50 Datensätze, Command Stream, Jarvis, Planung mit Cleanup und ICS ehrlich `NOT_CONNECTED` bestanden. |
+
+### Release 99 · persistenter IMAP-Sync und Mail Review Center (**PASS LOKAL**)
+
+| Prüfung | Status | Nachweis |
+|---|---|---|
+| UID-/UIDVALIDITY-Synchronisation | PASS LOKAL | Begrenzter Erstimport, inkrementeller UID-Lauf, No-New-Mail-Pfad, UIDVALIDITY-Reset, sicher beobachtete UID-Lücken und Backlog-Grenze sind deterministisch getestet. |
+| Datenminimierung | PASS LOKAL | Fetch-Allowlist enthält Envelope, Flags, Größe, Thread-ID und Klassifikationsheader. Body, Source, Snippet und Anhänge werden nicht angefordert; die Repository-Grenze verwirft unbekannte Inhaltsfelder. |
+| Persistenz und Betrieb | PASS LOKAL | Atomarer Full-/Incremental-Upsert, Deduplizierung, 180 Tage/2.500 Datensätze je Konto, 15-Minuten-Lauf und 15–360 Minuten Backoff; Fehler lassen den letzten gültigen Bestand sichtbar. |
+| Mail Review Center | PASS LOKAL | Konto-/Kategorie-/Suchfilter, Paging bis 200, Thread-Detail, Unread/Review/Confidence/Gründe, Antwortentwurf und sichtbarer Sync-/Cursorstatus; Touchziele mindestens 44 px und Remote-Texte ausschließlich über `textContent`. |
+| Gesamtabnahme | PASS LOKAL | 229/229 Tests, Production-Build und lokaler API-Smoke grün. Echte Günni-Doppelsynchronisation, Restart-Persistenz und mobile Chrome-Abnahme sind als versionsgebundener Live-Smoke vorbereitet. |
+| Produktgrenze | KLAR | IMAP bleibt vollständig read-only; SMTP wird nur verifiziert. Es gibt keinen automatischen Versand, keine Löschung oder Provider-Mutation. Google Kalender bleibt eine getrennte OAuth-/ICS-Freigabe. |
 
 ```powershell
 npm run verify:local
