@@ -49,6 +49,17 @@ HealthKit-Abnahme wird damit ausdrücklich nicht behauptet.
 
 Der Web-Companion ersetzt keine native App: Safari/PWA kann HealthKit, EventKit und CoreLocation im Hintergrund nicht direkt lesen. Diese Funktionen bleiben bis zu Apple-Signing und Geräteabnahme ehrlich `PREPARED`.
 
+Release `2026.11.07-96` ergänzt bewusst **keinen** nativen EventKit-Zugriff,
+sondern einen unabhängigen read-only Kalenderweg: Ein persönlicher
+`https://`- oder `webcal://`-ICS-Link kann AES-256-GCM-verschlüsselt gespeichert
+und manuell beziehungsweise alle 15 Minuten synchronisiert werden. Der Link
+wird weder an Browser/API zurückgegeben noch in Audit, Logs oder Screenshots
+geschrieben. DNS-Pinning und SSRF-Schutz blockieren interne Ziele; bei Fehlern
+bleibt der letzte gültige Snapshot erhalten und der Status wechselt auf
+`DEGRADED`. Lokal sind 207/207 Tests, Production-Build und mobiler Chrome-Smoke
+grün. Rollout und echter Benutzerfeed stehen noch aus. Dies ist weiterhin
+keine Safari-/WebKit-, EventKit- oder HealthKit-Abnahme.
+
 ## Technische Grenze
 
 Eine PWA oder ein Server kann nicht direkt auf HealthKit, Apple Erinnerungen oder dauerhaft auf den iPhone-Standort zugreifen. Dafür wird eine kleine native **AgentOne Companion** App benötigt. Sie hält Apples Berechtigungsdialoge auf dem iPhone und überträgt ausschließlich ausdrücklich freigegebene Daten an die persönliche Instanz.

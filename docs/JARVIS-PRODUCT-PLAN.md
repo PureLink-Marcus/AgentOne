@@ -209,6 +209,31 @@ Günni-Chrome-Smoke bestätigt bei 390 px HTTPS, sicheren Browser-Speicher,
 Fragment-Übergabe, Ingest und Widerruf ohne horizontale Überbreite,
 Konsolenfehler oder Secret-Leak.
 
+#### Release 2026.11.07-96 · privates Kalender-Abo
+
+Der Kalenderpfad erhält einen dauerhaft nutzbaren read-only Zugang ohne eigene
+OAuth-App. Benutzer können einen privaten `https://`- oder `webcal://`-Link
+verbinden, sofort manuell synchronisieren und den letzten beziehungsweise
+nächsten Lauf sehen. Der Server speichert den Link ausschließlich
+benutzergebunden und AES-256-GCM-verschlüsselt; Browser, öffentliche API,
+Audit, Logs und Screenshots erhalten nur Status, gekürzten Endpoint-Hash,
+Zähler und Zeitpunkte.
+
+Der Hintergrundlauf prüft fällige Feeds alle fünf Minuten und synchronisiert
+im Normalfall alle 15 Minuten. Fehler führen zu exponentiellem Backoff und
+`DEGRADED`, ohne den letzten gültigen Kalenderstand zu verwerfen. DNS wird
+einmal öffentlich validiert und die geprüfte IP für TLS gepinnt; interne,
+lokale und sonstige nicht öffentliche Ziele, Redirects und übergroße Antworten
+werden abgewiesen.
+
+**Abnahmestand vor Deployment:** 207/207 Tests und Production-Build sind grün.
+Der echte mobile Chrome-Smoke bei 390 × 844 px bestätigt Webcal/HTTPS, sofort
+geleertes Secret-Feld, manuellen Sync, iCloud-/Google-/Outlook-Anleitungen,
+mindestens 44 px Touchziele, keine Überbreite und 0 relevante
+Konsolenfehler. Ein persönlicher Feed ist noch nicht `LIVE`, bis der Benutzer
+seinen Link nach dem Rollout eingibt. Dieser Webpfad behauptet weder native
+EventKit-/HealthKit-Funktionen noch eine Safari-/WebKit-Geräteabnahme.
+
 ## Priorisierte vertikale Lieferpakete
 
 Die Reihenfolge maximiert echten Nutzen und hält externe Freigaben aus dem
@@ -354,6 +379,22 @@ PureLink, Fressi und Günni verifiziert; Günnis HTTPS-iPhone-Webflow einschlie�
 Vault-Rollback und Cleanup sowie Connectoren, Home, Mail, Command Stream,
 Planung, Jarvis und Chat/Voice-Text sind live ohne Secret- oder Inhaltsleck
 bestanden.
+
+### Release 2026.11.07-96 · verschlüsseltes Kalender-Abo
+
+**Heute & Planung** kann einen privaten Kalender nun dauerhaft read-only
+beziehen, ohne den Feed-Link an die PWA zurückzugeben. Die Oberfläche trennt
+Kalenderlink und Dateiimport, zeigt iCloud-/Google-/Outlook-Hilfe und erlaubt
+manuellen Sync sowie vollständiges Entfernen. Im Hintergrund sichern
+AES-256-GCM, Zweckbindung, Benutzertrennung, DNS-Pinning, SSRF-Schutz,
+15-Minuten-Takt und Backoff den Datenweg. Bei Fehlern bleibt der letzte
+erfolgreiche Snapshot verfügbar und wird ehrlich als `DEGRADED` markiert.
+
+Der lokale Release-Kandidat ist mit 207/207 Tests, Production-Build und echtem
+Chrome bei 390 × 844 px abgenommen. Archiv, Image, Container-Rollout und
+Live-Günni-Smoke stehen noch aus; bis zur Eingabe eines persönlichen Links wird
+kein echter Feedstatus behauptet. EventKit, HealthKit und native
+Safari-/WebKit-Abnahme bleiben separate Apple-Arbeitspakete.
 
 ## Primärquellen und Lizenzgrenzen
 

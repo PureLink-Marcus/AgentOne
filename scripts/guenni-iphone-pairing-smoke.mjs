@@ -73,7 +73,7 @@ try{
   if(JSON.stringify(ingestPayload).includes(deviceToken)||JSON.stringify(ingestPayload).includes(pairCode))throw new Error('Ingest-Antwort enthält Pairing-Secrets.');
   await adminPage.waitForFunction(name=>[...document.querySelectorAll('#apple-device-list b')].some(node=>node.textContent===name),deviceName,{timeout:15_000});
   await mkdir(path.resolve('output/playwright'),{recursive:true});
-  const screenshot=path.resolve('output/playwright/guenni-iphone-pairing-release-95.png'),mobileScreenshot=path.resolve('output/playwright/guenni-iphone-companion-mobile-release-95.png');
+  const screenshot=path.resolve('output/playwright/guenni-iphone-pairing-release-96.png'),mobileScreenshot=path.resolve('output/playwright/guenni-iphone-companion-mobile-release-96.png');
   await apple.screenshot({path:screenshot});
   await mobilePage.screenshot({path:mobileScreenshot,fullPage:true});
   const row=apple.locator('.apple-device').filter({hasText:deviceName});
@@ -98,7 +98,7 @@ try{
   const adminText=await adminPage.locator('body').innerText(),mobileText=await mobilePage.locator('body').innerText();
   if(adminText.includes(deviceToken)||mobileText.includes(deviceToken)||adminText.includes(pairCode)||mobileText.includes(pairCode))throw new Error('Secret blieb nach Widerruf in einer sichtbaren Oberfläche.');
   if(errors.length)throw new Error(`Browserfehler: ${errors.join(' | ')}`);
-  console.log(JSON.stringify({origin,release:'95',flow:'INSTALL-GATE→PAIR→STATUS→INGEST→RELOAD→REVOKE→RECOVER→VAULT-ROLLBACK',codeHandoff:'FRAGMENT_CLEARED_BEFORE_MODE_CHECK',iphoneDiagnostics:{https:httpsOrigin,secureContext:true,secureStorage:true,pwaControlled:true,iosStandaloneRequired:true},mobileViewport:'390x844',horizontalOverflow:false,minTouchHeight:connectedLayout.minTouchHeight,tokenPersisted:'AES_GCM_INDEXEDDB',reloadRestored:true,revokeRecovery:true,vaultFailureRollback:true,sensitiveScopes:'EXPLICIT_OPT_IN',deviceRevoked:true,eventsDeleted:true,consoleErrors:0,screenshot,mobileScreenshot,secretsExposed:false},null,2));
+  console.log(JSON.stringify({origin,release:'96',flow:'INSTALL-GATE→PAIR→STATUS→INGEST→RELOAD→REVOKE→RECOVER→VAULT-ROLLBACK',codeHandoff:'FRAGMENT_CLEARED_BEFORE_MODE_CHECK',iphoneDiagnostics:{https:httpsOrigin,secureContext:true,secureStorage:true,pwaControlled:true,iosStandaloneRequired:true},mobileViewport:'390x844',horizontalOverflow:false,minTouchHeight:connectedLayout.minTouchHeight,tokenPersisted:'AES_GCM_INDEXEDDB',reloadRestored:true,revokeRecovery:true,vaultFailureRollback:true,sensitiveScopes:'EXPLICIT_OPT_IN',deviceRevoked:true,eventsDeleted:true,consoleErrors:0,screenshot,mobileScreenshot,secretsExposed:false},null,2));
 }finally{
   if(deviceId&&!revoked)await admin.request.delete(`${origin}/agentone/companion/devices/${encodeURIComponent(deviceId)}`,{headers:{origin,accept:'application/json'}}).catch(()=>{});
   if(rollbackToken&&!rollbackRevoked)await mobile.request.delete(`${origin}/agentone/companion/self`,{headers:{'x-agentone-device-token':rollbackToken,accept:'application/json'}}).catch(()=>{});

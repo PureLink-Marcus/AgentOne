@@ -5,6 +5,8 @@ import { personalUiJs } from './personal-ui.mjs';
 
 function ledgerUi(){const start=personalUiJs.indexOf('const ledgerCenter'),marker='\n  loadEventLedger();',end=personalUiJs.indexOf(marker,start)+marker.length;assert.ok(start>=0&&end>start+marker.length,'Ledger-UI-Block fehlt');return personalUiJs.slice(start,end);}
 
+test('personal UI payload remains valid browser JavaScript',()=>{assert.doesNotThrow(()=>new Function(personalUiJs));});
+
 test('personal UI exposes the minimized mobile Event Ledger card and source filter',()=>{
   const ui=ledgerUi();
   for(const value of ['PERSONAL EVENT LEDGER','Deine sichere Zeitachse','ledger-total','ledger-source-count','ledger-visible','ledger-source','ledger-refresh','ledger-feed','Zeitpunkt, Quelle, Typ und kurze Zusammenfassung'])assert.match(ui,new RegExp(value));

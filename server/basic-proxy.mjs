@@ -28,7 +28,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-95');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.07-96');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -286,9 +286,9 @@ async function personalCommandsRead(req,res){
 }
 async function personalIcsCalendar(req,res){
   if(instanceType!=='personal')return jsonResponse(res,404,{error:'not_found'});if(!personalApiUrl||!personalApiToken)return jsonResponse(res,503,{error:'ics_calendar_unavailable'});
-  const requestUrl=new URL(String(req.url||'/agentone/calendar/ics'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/calendar/ics'.length),method=String(req.method||'GET'),upload=method==='POST'&&suffix==='/import',feed=method==='POST'&&suffix==='/feed',allowed=(method==='GET'&&(suffix===''||suffix==='/'))||upload||feed||(method==='DELETE'&&(suffix===''||suffix==='/'));
+  const requestUrl=new URL(String(req.url||'/agentone/calendar/ics'),publicOrigin||'http://127.0.0.1'),suffix=requestUrl.pathname.slice('/agentone/calendar/ics'.length),method=String(req.method||'GET'),upload=method==='POST'&&suffix==='/import',feed=method==='POST'&&suffix==='/feed',sync=method==='POST'&&suffix==='/sync',allowed=(method==='GET'&&(suffix===''||suffix==='/'))||upload||feed||sync||(method==='DELETE'&&(suffix===''||suffix==='/'));
   if(!allowed)return jsonResponse(res,404,{error:'not_found'});if(method!=='GET'&&!originAllowed(req))return jsonResponse(res,403,{error:'forbidden'});
-  const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},options={method,headers,signal:AbortSignal.timeout(upload||feed?45_000:20_000)};
+  const headers={'x-agentone-internal-token':personalApiToken,'x-agentone-user':expectedUser,accept:'application/json'},options={method,headers,signal:AbortSignal.timeout(upload||feed||sync?45_000:20_000)};
   try{
     if(upload){
       const max=4*1024*1024,declared=req.headers['content-length'];if(declared!=null&&(!/^\d+$/.test(String(declared))||Number(declared)<=0))return jsonResponse(res,400,{error:'ICS_UPLOAD_SIZE_INVALID'});if(declared!=null&&Number(declared)>max)return jsonResponse(res,413,{error:'ICS_TOO_LARGE'});
@@ -296,6 +296,7 @@ async function personalIcsCalendar(req,res){
       try{const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics/import`,options);return await streamHealthResponse(response,res);}catch(error){if(limitFailure)return jsonResponse(res,limitFailure.status,{error:limitFailure.status===413?'ICS_TOO_LARGE':'ICS_EMPTY'});throw error;}
     }
     if(feed){headers['content-type']='application/json';options.body=(await readBody(req,4096)).toString('utf8')||'{}';const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics/feed`,options);return await streamHealthResponse(response,res);}
+    if(sync){headers['content-type']='application/json';options.body='{}';const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics/sync`,options);return await streamHealthResponse(response,res);}
     if(method==='DELETE'){headers['content-type']='application/json';options.body=(await readBody(req,4096)).toString('utf8')||'{}';}
     const response=await fetch(`${personalApiUrl}/api/internal/personal/calendar/ics${requestUrl.search}`,options);return await streamHealthResponse(response,res);
   }catch(error){return jsonResponse(res,error.status||502,{error:'ics_calendar_failed',secretsExposed:false});}

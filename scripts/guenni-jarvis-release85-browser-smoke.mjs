@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { loadEnv } from '../server/state.mjs';
 
-const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-95';
+const env=loadEnv(path.resolve('.')),origin=env.AGENTONE_GUENNI_ORIGIN,release='2026.11.07-96';
 if(!origin||!env.AGENTONE_GUENNI_USER||!env.AGENTONE_GUENNI_PASSWORD)throw new Error('Günni Browser-Abnahme ist nicht konfiguriert');
 const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(String(error.message||error)));
@@ -18,7 +18,7 @@ try{
   if(snapshot.pulse.status!==200||!Array.isArray(snapshot.pulse.data.items))throw new Error('Pulse API ist nicht produktiv erreichbar');
   if(snapshot.health.status!==200||snapshot.health.data.policy?.userIsolated!==true)throw new Error('Health API ist nicht benutzerisoliert erreichbar');
   await page.locator('[data-view="command"]').click();await page.locator('.personal-pulse-feed').waitFor({state:'visible'});await page.locator('#pulse-state').waitFor();await page.waitForFunction(()=>document.querySelector('#pulse-state')?.textContent?.trim()!=='PRÜFUNG');
-  await mkdir(path.resolve('output/playwright'),{recursive:true});const screenshots={pulse:path.resolve('output/playwright/guenni-pulse-release-95.png'),briefing:path.resolve('output/playwright/guenni-briefing-feedback-release-95.png'),google:path.resolve('output/playwright/guenni-google-live-release-95.png')};await page.locator('.personal-pulse-feed').screenshot({path:screenshots.pulse});
+  await mkdir(path.resolve('output/playwright'),{recursive:true});const screenshots={pulse:path.resolve('output/playwright/guenni-pulse-release-96.png'),briefing:path.resolve('output/playwright/guenni-briefing-feedback-release-96.png'),google:path.resolve('output/playwright/guenni-google-live-release-96.png')};await page.locator('.personal-pulse-feed').screenshot({path:screenshots.pulse});
   await page.locator('[data-view="tasks"]').click();await page.locator('#personal-briefing-result').waitFor({state:'visible'});const signals=await page.locator('#personal-briefing-facts .signal-feedback').count();if(snapshot.intelligence.data.signals.length&&signals!==snapshot.intelligence.data.signals.length)throw new Error('Feedback fehlt an einem Intelligence-Signal');if(signals){const labels=await page.locator('#personal-briefing-facts .signal-feedback').first().getByRole('button').allTextContents();for(const label of ['Hilfreich','Nicht hilfreich','Falsch','Später','Nie wieder'])if(!labels.includes(label))throw new Error('Feedback-Aktion fehlt: '+label);}await page.locator('#personal-briefing-result').screenshot({path:screenshots.briefing});
   await page.locator('[data-view="tools"]').click();await page.locator('.mail-center').waitFor({state:'visible'});await page.locator('#google-sync').waitFor();const google=(snapshot.services.data.services||[]).find(service=>service.id==='google');if(google?.settings?.calendars?.length&&!await page.locator('.mail-provider-help input[type="checkbox"]').count())throw new Error('Google-Kalenderauswahl fehlt trotz synchronisierter Kalender');await page.locator('.mail-center').screenshot({path:screenshots.google});
   if(errors.length)throw new Error('Browserfehler: '+errors.join(' | '));

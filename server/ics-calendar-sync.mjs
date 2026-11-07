@@ -1,9 +1,14 @@
 import crypto from 'node:crypto';
 import dns from 'node:dns/promises';
+import https from 'node:https';
+import net from 'node:net';
 import { validatePublicServiceEndpoint } from './personal-services.mjs';
 
 const MAX_BYTES=4*1024*1024;
 const MAX_EVENTS=20_000;
+const NON_PUBLIC_IPV4=new net.BlockList(),NON_PUBLIC_IPV6=new net.BlockList();
+for(const [address,prefix] of [['0.0.0.0',8],['10.0.0.0',8],['100.64.0.0',10],['127.0.0.0',8],['169.254.0.0',16],['172.16.0.0',12],['192.0.0.0',24],['192.0.2.0',24],['192.88.99.0',24],['192.168.0.0',16],['198.18.0.0',15],['198.51.100.0',24],['203.0.113.0',24],['224.0.0.0',4],['240.0.0.0',4]])NON_PUBLIC_IPV4.addSubnet(address,prefix,'ipv4');
+for(const [address,prefix] of [['::',3],['2001::',32],['2001:2::',48],['2001:10::',28],['2001:20::',28],['2001:db8::',32],['2002::',16],['3fff::',20],['4000::',2],['8000::',1]])NON_PUBLIC_IPV6.addSubnet(address,prefix,'ipv6');
 
 export class IcsCalendarError extends Error{
   constructor(message,{code='ICS_SYNC_FAILED',status=400,retryable=false}={}){super(message);this.name='IcsCalendarError';this.code=code;this.status=status;this.retryable=retryable;}
@@ -14,6 +19,51 @@ function fail(message,options){throw new IcsCalendarError(message,options);}
 function safeText(value,max=500){return String(value??'').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,max);}
 function hash(value){return crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');}
 function unescapeText(value){return String(value??'').replace(/\\[nN]/g,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');}
+
+function normalizeFeedUrl(value){
+  const raw=String(value??'').trim(),normalized=/^webcal:/i.test(raw)?`https:${raw.slice(raw.indexOf(':')+1)}`:raw,url=new URL(normalized),hostname=url.hostname.replace(/\.+$/,'');
+  if(hostname!==url.hostname)url.hostname=hostname;
+  const literal=hostname.startsWith('[')&&hostname.endsWith(']')?hostname.slice(1,-1):hostname,lower=hostname.toLowerCase();
+  if(!hostname||net.isIP(literal)||lower==='localhost'||lower.endsWith('.localhost')||lower.endsWith('.local'))throw new Error('local endpoint');
+  return url;
+}
+
+function normalizeResolvedAddresses(value){
+  const entries=Array.isArray(value)?value:[value],addresses=entries.map(item=>{const address=typeof item==='string'?item:item?.address,family=net.isIP(address),blocked=family===4?NON_PUBLIC_IPV4.check(address,'ipv4'):family===6?NON_PUBLIC_IPV6.check(address,'ipv6'):true;if(blocked)throw new Error('non-public DNS address');return {address,family};});
+  if(!addresses.length)throw new Error('empty DNS response');
+  return addresses;
+}
+
+async function validateAndResolveFeed(value,lookup){
+  const normalized=normalizeFeedUrl(value);let addresses=[];
+  const capturingLookup=async(hostname,options)=>{addresses=normalizeResolvedAddresses(await lookup(hostname,{...options,all:true}));return addresses;};
+  const endpoint=await validatePublicServiceEndpoint(normalized,capturingLookup);
+  if(!addresses.length)throw new Error('empty DNS response');
+  return {endpoint,addresses};
+}
+
+function createPinnedLookup(endpoint,addresses){
+  const expected=endpoint.hostname.toLowerCase(),pinned=addresses.map(item=>({...item}));let cursor=0;
+  return (hostname,options,callback)=>{
+    if(typeof options==='function'){callback=options;options={};}
+    const actual=String(hostname||'').toLowerCase();
+    if(actual!==expected){const error=Object.assign(new Error('DNS pin mismatch'),{code:'ENOTFOUND',hostname:actual});callback(error);return;}
+    const family=Number(options?.family)||0,candidates=family?pinned.filter(item=>item.family===family):pinned;
+    if(!candidates.length){const error=Object.assign(new Error('No validated address for requested family'),{code:'ENOTFOUND',hostname:actual});callback(error);return;}
+    if(options?.all){callback(null,candidates.map(item=>({...item})));return;}
+    const selected=candidates[cursor++%candidates.length];callback(null,selected.address,selected.family);
+  };
+}
+
+function responseHeaders(headers={}){return {get(name){const value=headers[String(name||'').toLowerCase()];return Array.isArray(value)?value.join(', '):value==null?null:String(value);}};}
+function discardResponseBody(response){try{const pending=response?.body?.cancel?.();pending?.catch?.(()=>{});}catch{}try{response?.body?.destroy?.();}catch{}}
+
+function pinnedHttpsFetch(endpoint,{method='GET',headers={},signal}={},addresses,requestImpl=https.request){
+  return new Promise((resolve,reject)=>{
+    const request=requestImpl(endpoint,{method,headers,signal,agent:false,servername:endpoint.hostname,rejectUnauthorized:true,lookup:createPinnedLookup(endpoint,addresses)},response=>{const status=Number(response.statusCode)||0;resolve({ok:status>=200&&status<300,status,headers:responseHeaders(response.headers),body:response});});
+    request.once('error',reject);request.end();
+  });
+}
 
 function unfold(input){
   const normalized=String(input).replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
@@ -85,17 +135,19 @@ export function parseIcsCalendar(input,{accountId='ics',calendarId='default',def
 
 async function limitedBody(response,maxBytes){
   const declared=response.headers?.get?.('content-length');if(declared&&Number(declared)>maxBytes)fail('Kalenderdatei ist zu groß',{code:'ICS_TOO_LARGE',status:413});
-  if(!response.body?.getReader){const data=Buffer.from(await response.arrayBuffer());if(data.length>maxBytes)fail('Kalenderdatei ist zu groß',{code:'ICS_TOO_LARGE',status:413});return data;}
-  const reader=response.body.getReader(),chunks=[];let size=0;while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>maxBytes){await reader.cancel();fail('Kalenderdatei ist zu groß',{code:'ICS_TOO_LARGE',status:413});}chunks.push(Buffer.from(value));}return Buffer.concat(chunks,size);
+  if(response.body?.getReader){const reader=response.body.getReader(),chunks=[];let size=0;while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>maxBytes){await reader.cancel();fail('Kalenderdatei ist zu groß',{code:'ICS_TOO_LARGE',status:413});}chunks.push(Buffer.from(value));}return Buffer.concat(chunks,size);}
+  if(response.body?.[Symbol.asyncIterator]){const chunks=[];let size=0;for await(const value of response.body){const chunk=Buffer.from(value);size+=chunk.length;if(size>maxBytes){response.body.destroy?.();fail('Kalenderdatei ist zu groß',{code:'ICS_TOO_LARGE',status:413});}chunks.push(chunk);}return Buffer.concat(chunks,size);}
+  const data=response.arrayBuffer?Buffer.from(await response.arrayBuffer()):Buffer.alloc(0);if(data.length>maxBytes)fail('Kalenderdatei ist zu groß',{code:'ICS_TOO_LARGE',status:413});return data;
 }
 
-export async function fetchIcsCalendar({url,fetchImpl=fetch,lookup=dns.lookup,timeoutMs=12_000,maxBytes=MAX_BYTES,...options}={}){
-  let endpoint;try{endpoint=await validatePublicServiceEndpoint(url,lookup);}catch{fail('Kalender-URL wurde aus Sicherheitsgründen abgelehnt',{code:'ICS_ENDPOINT_REJECTED'});}
-  let response;try{response=await fetchImpl(endpoint,{method:'GET',headers:{accept:'text/calendar, text/plain;q=0.8'},redirect:'error',signal:AbortSignal.timeout(Math.max(1000,Math.min(30_000,Number(timeoutMs)||12_000)))});}catch{fail('Kalenderquelle ist vorübergehend nicht erreichbar',{code:'ICS_SOURCE_UNAVAILABLE',status:503,retryable:true});}
-  if(!response.ok){if(response.status===401||response.status===403)fail('Kalenderfreigabe ist ungültig oder abgelaufen',{code:'ICS_AUTHORIZATION_REQUIRED',status:401});if(response.status===429||response.status>=500)fail('Kalenderquelle ist vorübergehend nicht erreichbar',{code:'ICS_SOURCE_UNAVAILABLE',status:503,retryable:true});fail('Kalenderquelle konnte nicht gelesen werden',{code:'ICS_SOURCE_REJECTED',status:422});}
-  const limit=Math.min(MAX_BYTES,Math.max(1,Number(maxBytes)||MAX_BYTES)),data=await limitedBody(response,limit),snapshot=parseIcsCalendar(data,{...options,maxBytes:limit});return {...snapshot,source:{type:'https-ics',endpointHash:hash(endpoint.origin+endpoint.pathname)}};
+export async function fetchIcsCalendar({url,fetchImpl=fetch,lookup=dns.lookup,httpsRequestImpl=https.request,timeoutMs=12_000,maxBytes=MAX_BYTES,...options}={}){
+  let endpoint,addresses;try{({endpoint,addresses}=await validateAndResolveFeed(url,lookup));}catch{fail('Kalender-URL wurde aus Sicherheitsgründen abgelehnt',{code:'ICS_ENDPOINT_REJECTED'});}
+  const requestOptions={method:'GET',headers:{accept:'text/calendar, text/plain;q=0.8'},redirect:'error',signal:AbortSignal.timeout(Math.max(1000,Math.min(30_000,Number(timeoutMs)||12_000)))};
+  let response;try{response=fetchImpl===fetch?await pinnedHttpsFetch(endpoint,requestOptions,addresses,httpsRequestImpl):await fetchImpl(endpoint,requestOptions);}catch{fail('Kalenderquelle ist vorübergehend nicht erreichbar',{code:'ICS_SOURCE_UNAVAILABLE',status:503,retryable:true});}
+  if(!response.ok){discardResponseBody(response);if(response.status===401||response.status===403)fail('Kalenderfreigabe ist ungültig oder abgelaufen',{code:'ICS_AUTHORIZATION_REQUIRED',status:401});if(response.status===429||response.status>=500)fail('Kalenderquelle ist vorübergehend nicht erreichbar',{code:'ICS_SOURCE_UNAVAILABLE',status:503,retryable:true});fail('Kalenderquelle konnte nicht gelesen werden',{code:'ICS_SOURCE_REJECTED',status:422});}
+  const limit=Math.min(MAX_BYTES,Math.max(1,Number(maxBytes)||MAX_BYTES));let data;try{data=await limitedBody(response,limit);}catch(error){if(error instanceof IcsCalendarError)throw error;fail('Kalenderquelle ist vorübergehend nicht erreichbar',{code:'ICS_SOURCE_UNAVAILABLE',status:503,retryable:true});}const snapshot=parseIcsCalendar(data,{...options,maxBytes:limit});return {...snapshot,source:{type:'https-ics',endpointHash:hash(endpoint.origin+endpoint.pathname)}};
 }
 
 export function publicIcsError(error){return error instanceof IcsCalendarError?error.toPublicJSON():new IcsCalendarError('Kalender konnte nicht verarbeitet werden').toPublicJSON();}
 
-export const icsCalendarInternals=Object.freeze({parseDate,parseRule,unfold});
+export const icsCalendarInternals=Object.freeze({createPinnedLookup,normalizeFeedUrl,parseDate,parseRule,unfold});
