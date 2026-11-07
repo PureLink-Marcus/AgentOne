@@ -10,6 +10,12 @@ test('mobile companion page is installable, secret-free and escapes instance bra
   assert.match(html,/HealthKit benötigt weiterhin die signierte native Companion-App/);
   assert.match(html,/IPHONE-CHECK/);
   assert.match(html,/Zum Home-Bildschirm/);
+  assert.match(html,/id="install-guide"/);
+  assert.match(html,/Pairing funktioniert direkt in Safari/);
+  assert.match(html,/Wenn du jetzt in Safari koppelst, bleibt der Schlüssel nur in Safari/);
+  assert.match(html,/id="install-check"/);
+  assert.match(html,/id="paste-code"/);
+  assert.match(html,/Code aus Zwischenablage einfügen/);
   assert.match(html,/local-disconnect/);
   assert.match(html,/id="pair-card"/);
   assert.match(html,/enterkeyhint="done"/);
@@ -22,7 +28,7 @@ test('mobile companion page is installable, secret-free and escapes instance bra
 test('mobile companion script uses fragment handoff and encrypted IndexedDB storage',()=>{
   assert.match(companionPairJs,/location\.hash/);
   assert.doesNotMatch(companionPairJs,/URLSearchParams\(location\.search\)/);
-  assert.equal(companionPairJs.split('replace(/\\D/g').length-1,3);
+  assert.equal(companionPairJs.split('replace(/\\D/g').length-1,4);
   assert.equal(companionPairJs.includes('replace(/D/g'),false);
   assert.match(companionPairJs,/indexedDB/);
   assert.match(companionPairJs,/AES-GCM/);
@@ -35,8 +41,12 @@ test('mobile companion script uses fragment handoff and encrypted IndexedDB stor
   assert.match(companionPairJs,/response\.status===401/);
   assert.match(companionPairJs,/showPairForm\(true,\{focus:!quiet\}\)/);
   assert.match(companionPairJs,/location\.pathname\+location\.search/);
-  assert.match(companionPairJs,/INSTALLIEREN ERFORDERLICH/);
+  assert.doesNotMatch(companionPairJs,/INSTALLIEREN ERFORDERLICH/);
   assert.match(companionPairJs,/navigator\.standalone/);
+  assert.match(companionPairJs,/ready=secure&&cryptoReady&&storageReady;/);
+  assert.match(companionPairJs,/installGuide\.classList\.toggle\('hidden',!installRecommended\)/);
+  assert.match(companionPairJs,/navigator\.clipboard\.readText/);
+  assert.match(companionPairJs,/SAFARI BEREIT/);
   assert.match(companionPairJs,/addEventListener\('hashchange',consumeFragmentCode\)/);
   assert.match(companionPairJs,/addEventListener\('pageshow',consumeFragmentCode\)/);
   assert.match(companionPairJs,/agentone\/companion\/self/);
