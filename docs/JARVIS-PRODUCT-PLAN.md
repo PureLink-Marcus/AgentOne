@@ -226,12 +226,14 @@ einmal öffentlich validiert und die geprüfte IP für TLS gepinnt; interne,
 lokale und sonstige nicht öffentliche Ziele, Redirects und übergroße Antworten
 werden abgewiesen.
 
-**Abnahmestand vor Deployment:** 207/207 Tests und Production-Build sind grün.
+**Abnahmestand:** 207/207 Tests und Production-Build sind grün.
 Der echte mobile Chrome-Smoke bei 390 × 844 px bestätigt Webcal/HTTPS, sofort
 geleertes Secret-Feld, manuellen Sync, iCloud-/Google-/Outlook-Anleitungen,
 mindestens 44 px Touchziele, keine Überbreite und 0 relevante
 Konsolenfehler. Ein persönlicher Feed ist noch nicht `LIVE`, bis der Benutzer
-seinen Link nach dem Rollout eingibt. Dieser Webpfad behauptet weder native
+seinen Link eingibt. Release 96 ist auf vier healthy Fressi-/Günni-App-/Access-
+Containern live; PWA und Kalenderoberfläche sind auf den öffentlichen Domains
+geprüft. Dieser Webpfad behauptet weder native
 EventKit-/HealthKit-Funktionen noch eine Safari-/WebKit-Geräteabnahme.
 
 ## Priorisierte vertikale Lieferpakete
@@ -390,11 +392,17 @@ AES-256-GCM, Zweckbindung, Benutzertrennung, DNS-Pinning, SSRF-Schutz,
 15-Minuten-Takt und Backoff den Datenweg. Bei Fehlern bleibt der letzte
 erfolgreiche Snapshot verfügbar und wird ehrlich als `DEGRADED` markiert.
 
-Der lokale Release-Kandidat ist mit 207/207 Tests, Production-Build und echtem
-Chrome bei 390 × 844 px abgenommen. Archiv, Image, Container-Rollout und
-Live-Günni-Smoke stehen noch aus; bis zur Eingabe eines persönlichen Links wird
-kein echter Feedstatus behauptet. EventKit, HealthKit und native
-Safari-/WebKit-Abnahme bleiben separate Apple-Arbeitspakete.
+Release 96 ist mit 207/207 Tests, Production-Build und echtem Chrome bei
+390 × 844 px abgenommen und auf vier healthy Fressi-/Günni-App-/Access-
+Containern live. Der Source-Commit ist `a45b299`; das secret-freie Archiv hat
+SHA-256 `4ad57121ad71c3f567ff0ca92fb2ec2c80cefcbec1285bfdce57ae4ad3499dfd`,
+das Image den Digest
+`sha256:4373daf420933e06715a602d0059ac7d297adf1b5ff57b1a05ca6b614ccd0463`.
+PWA auf drei Domains, kompletter iPhone-Webflow, Kalenderoberfläche,
+Connectoren, Home, Mail, Command Stream, Kommunikation, Planung und Jarvis
+sind live geprüft. Bis zur Eingabe eines persönlichen Links bleibt Günni
+ehrlich `NOT_CONNECTED`. EventKit, HealthKit und native Safari-/WebKit-Abnahme
+bleiben separate Apple-Arbeitspakete.
 
 ## Primärquellen und Lizenzgrenzen
 

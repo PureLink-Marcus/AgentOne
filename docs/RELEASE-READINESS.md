@@ -1,8 +1,8 @@
 # AgentOne Release Readiness
 
 Stand: 7. November 2026
-Release-Kandidat: `2026.11.07-96`
-Deployment: Release 95 ist weiterhin auf Fressi und Günni live. Release 96 ist lokal vollständig verifiziert und wartet auf Archiv, Image-Build und Rollout. Der Kandidat ergänzt einen dauerhaft gespeicherten, verschlüsselten privaten ICS-Kalenderlink mit manueller und automatischer Synchronisation; bis zum erfolgreichen Rollout bleibt 95 der produktive Stand.
+Release: `2026.11.07-96`
+Deployment: Release 96 ist auf Fressi und Günni live. Alle vier App-/Access-Container sind healthy; PureLink, Fressi und Günni liefern den versionsgebundenen PWA-Stand 96. Der Release ergänzt einen dauerhaft gespeicherten, verschlüsselten privaten ICS-Kalenderlink mit manueller und automatischer Synchronisation.
 
 ## Abgenommen
 
@@ -26,7 +26,7 @@ Deployment: Release 95 ist weiterhin auf Fressi und Günni live. Release 96 ist 
 | Command Center | PASS | eigene AgentOne-Hülle mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools und Schnellaktionen; keine sichtbare OpenClaw-Navigation |
 | Command-Stream Center | PASS LIVE | Release 92 persistiert echte Runs für Personal Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import. Günnis echter IMAP-Scan erzeugte live `OBSERVE → TOOL → RESULT`; die öffentliche Timeline enthält ausschließlich freigegebene Run-/Step-Metadaten. Desktop und 390-px-Mobilansicht wurden in Google Chrome geprüft. |
 | Heute & Planung | PASS LIVE | Release 94: serverseitiger Berliner Tagesplan aus minimiertem Google-/ICS-Ledger, Upcoming Events, echte Überschneidungen und freie Arbeitsfenster. Günni wurde in Chrome bei 390 px mit zwei temporären Live-Terminen, einem Konflikt, zwei freien Fenstern und acht echten Mail-Aktionen geprüft; die ICS-Testdaten wurden danach wieder entfernt. |
-| Privates Kalender-Abo | PASS LOKAL / DEPLOYMENT PENDING | Release 96 speichert `https://`- oder `webcal://`-Feeds AES-256-GCM-verschlüsselt und benutzerisoliert. Manueller Sync, 15-Minuten-Hintergrundlauf, Backoff, DNS-Pinning/SSRF-Schutz und der letzte gültige Snapshot bei Providerfehlern sind implementiert. API, Audit, DOM und Screenshot enthalten keinen Feed-Link. Ein echter persönlicher Feed ist erst `LIVE`, nachdem der Benutzer seinen privaten Link eingibt. |
+| Privates Kalender-Abo | PASS LIVE / NOT_CONNECTED | Release 96 speichert `https://`- oder `webcal://`-Feeds AES-256-GCM-verschlüsselt und benutzerisoliert. Manueller Sync, 15-Minuten-Hintergrundlauf, Backoff, DNS-Pinning/SSRF-Schutz und der letzte gültige Snapshot bei Providerfehlern sind live ausgerollt. API, Audit, DOM und Screenshot enthalten keinen Feed-Link. Günni zeigt ehrlich `NOT_CONNECTED`, bis der Benutzer seinen privaten Link eingibt. |
 | Bedienbarer AI Core | PASS | Luna-Standard, Terra für Dokumente/Bilder und Sol für komplexe Aufgaben synchronisieren sich persistent mit dem HUD; Ollama bleibt bis zum Connector-Healthcheck ehrlich gesperrt. |
 | Lokaler Modellpfad | READY | Connector v4 und App-Pfad sind getestet, allowlist-begrenzt und signiert. Live-Status, `LOCAL`-Datenschutz und Latenz werden sichtbar; ein reales Ollama-Modell auf dem Pi fehlt noch. |
 | Chat-/Voice-Trace | PASS | Release 83: echter Browserchat und Voice-Texteingabe antworten über Luna mit HTTP 200; PWA-Erststart bleibt stabil, keine Konsolenfehler. Jarvis Core wählt Stefan, Gerätestimme `Anna` ist ausgeschlossen. |
@@ -129,8 +129,9 @@ Deployment: Release 95 ist weiterhin auf Fressi und Günni live. Release 96 ist 
 | Netzwerkgrenze | PASS LOKAL | Lokale, private und nicht öffentliche IPv4-/IPv6-Ziele werden nach einmaliger DNS-Auflösung verworfen; die geprüfte öffentliche IP wird für TLS gepinnt, Redirects sind deaktiviert und Fehler werden redigiert. |
 | Mobile Oberfläche | PASS LOKAL | Echter Chrome-Smoke bei 390 × 844 px: Webcal/HTTPS, sofort geleertes Secret-Feld, Status/Hash/Terminzahl/letzter und nächster Lauf, manueller Sync sowie iCloud-/Google-/Outlook-Hilfe; 0 relevante Konsolenfehler, keine Überbreite, mindestens 44 px Touchhöhe. |
 | Geheimnisfreiheit | PASS LOKAL | Feed-Link erscheint weder in API-Status und Audit noch in DOM, Local-/Session-Storage oder Screenshot. |
-| Gesamtabnahme | PASS LOKAL | 207/207 Tests und Production-Build grün. Archiv, Image, vier Container und Live-Günni-Smoke folgen im Release-Rollout. |
+| Gesamtabnahme | PASS LIVE | 207/207 Tests und Production-Build grün. Source-Commit `a45b299`; secret-freies Archiv `output/demo/agentone-release-2026.11.07-96.tgz`, SHA-256 `4ad57121ad71c3f567ff0ca92fb2ec2c80cefcbec1285bfdce57ae4ad3499dfd`; Image `purelink/agentone:2026.11.07-96`, Digest `sha256:4373daf420933e06715a602d0059ac7d297adf1b5ff57b1a05ca6b614ccd0463`; vier private Container healthy. |
 | Apple-Nativgrenze | OFFEN | Die Kalenderfunktion ist ein read-only ICS-Abo. Sie behauptet weder EventKit-/HealthKit-Zugriff noch eine Safari-/WebKit-Geräteabnahme; dafür bleiben signierte native App, Apple-Entitlements und echter iPhone-Test erforderlich. |
+| Live-Regression | PASS LIVE | PWA auf PureLink/Fressi/Günni; kompletter iPhone-Webflow `INSTALL-GATE → PAIR → STATUS → INGEST → RELOAD → REVOKE → RECOVER → VAULT-ROLLBACK`; ICS-Oberfläche bei 390 × 844 px mit mindestens 44 px Touchhöhe, ohne Überbreite oder Konsolenfehler; Connectoren HTTP 200, OpenClaw-Plugins 68/68, Home 345 Entitäten/15 Domains/275 Controls, Mail mobil, Command Stream, Kommunikation, Planung mit zwei temporären Terminen/einem Konflikt samt Cleanup und Jarvis bestanden. Keine echten Benutzer-ICS-Daten verbunden. |
 
 ```powershell
 npm run verify:local

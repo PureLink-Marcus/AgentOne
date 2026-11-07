@@ -8,14 +8,14 @@ Freigabe und nachvollziehbarer Ausführung.
 
 ## Ehrlicher Ausgangspunkt
 
-Release `2026.11.07-95` ist auf Fressi und Günni live; Release-Kandidat `2026.11.07-96` ist lokal mit 207/207 Tests, Production-Build und mobilem Chrome-Smoke vollständig verifiziert, aber noch nicht ausgerollt. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Release 96 ergänzt einen dauerhaft gespeicherten, AES-256-GCM-verschlüsselten privaten Kalenderlink mit manuellem und 15-minütigem Sync, Backoff und Last-good-Snapshot. Auf Günni sind aktuell:
+Release `2026.11.07-96` ist auf Fressi und Günni live; alle vier App-/Access-Container sind healthy und der versionsgebundene PWA-Stand 96 ist auf PureLink, Fressi und Günni bestätigt. 207/207 Tests, Production-Build und mobiler Chrome-Smoke sind grün. Das Command-Stream Center bindet Briefing, IMAP-Test/-Scan, Google-Read-only-Sync und Apple-Health-Import an echte persistente Runs. **Heute & Planung** liest den serverseitigen Tagesplan; **Health & Recovery** zeigt Apple Health und WHOOP strikt getrennt. Release 96 ergänzt einen dauerhaft gespeicherten, AES-256-GCM-verschlüsselten privaten Kalenderlink mit manuellem und 15-minütigem Sync, Backoff und Last-good-Snapshot. Auf Günni sind aktuell:
 
 - 50 reale Gmail-Nachrichten per IMAP read-only synchronisiert und gruppiert;
 - acht aktuelle Mail-Vorgänge mit Handlungsbedarf im Tagesplan sichtbar;
 - ein echtes Mail-Signal sowie der automatische Personal Pulse aktiv;
 - Feedback pro Signal wirksam und benutzerisoliert;
 - Apple-Health-Import, Verschlüsselung, Consent, Export und Löschung bereit;
-- der Kalenderplan produktiv über ICS-Datei nutzbar; der neue persistente `https://`-/`webcal://`-Feed ist lokal abgenommen und wird erst nach Release-96-Rollout sowie Eingabe eines persönlichen Links `LIVE`;
+- der Kalenderplan produktiv über ICS-Datei nutzbar; der persistente `https://`-/`webcal://`-Feed ist live ausgerollt und bleibt mangels persönlichem Link ehrlich `NOT_CONNECTED`;
 - Health noch ohne persönliche Messwerte; der Apple-/WHOOP-Vergleich und seine sichtbare Release-95-Zentrale sind implementiert und warten auf echte Daten;
 - Google OAuth und WHOOP ohne registrierte Anbieter-Credentials nicht live.
 - das Web-Companion-Pairing und die Shortcut-API implementiert. Release 95 korrigiert Mehrgeräte-Pairing, iOS-Standalone-Grenze, Reload/Widerruf und Vault-Fehler-Recovery; direkte HealthKit-/EventKit-Hintergrunddaten benötigen weiterhin die signierte native iOS-App.
@@ -53,11 +53,13 @@ angezeigt.
    fail-closed. PWA, iPhone-Webflow, Connectoren, Home, Mail, Command Stream,
    Planung, Jarvis und Chat/Voice-Text sind live geprüft. Eine reale
    Safari-/WebKit-Geräteabnahme bleibt getrennt.
-9. **Release 96 lokal bestanden, Deployment ausstehend:** Der private
+9. **Release 96 lokal und live bestanden:** Der private
    Kalenderlink wird verschlüsselt gespeichert, nie zurückgegeben und manuell
    oder alle 15 Minuten synchronisiert. DNS-Pinning, SSRF-Schutz, Backoff und
    der letzte gültige Snapshot verhindern Secret-Leaks und Datenverlust bei
-   Feedfehlern. Ein echter Benutzerfeed bleibt bis zur Linkeingabe
+   Feedfehlern. PWA, kompletter iPhone-Webflow, Kalenderoberfläche,
+   Connectoren, Home, Mail, Command Stream, Kommunikation, Planung und Jarvis
+   sind live geprüft. Ein echter Benutzerfeed bleibt bis zur Linkeingabe
    `NOT_CONNECTED`; EventKit, HealthKit und echte Safari/WebKit-Abnahme sind
    nicht Bestandteil dieses Releases.
 

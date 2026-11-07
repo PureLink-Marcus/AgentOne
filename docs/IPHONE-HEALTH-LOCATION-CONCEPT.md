@@ -56,9 +56,11 @@ und manuell beziehungsweise alle 15 Minuten synchronisiert werden. Der Link
 wird weder an Browser/API zurückgegeben noch in Audit, Logs oder Screenshots
 geschrieben. DNS-Pinning und SSRF-Schutz blockieren interne Ziele; bei Fehlern
 bleibt der letzte gültige Snapshot erhalten und der Status wechselt auf
-`DEGRADED`. Lokal sind 207/207 Tests, Production-Build und mobiler Chrome-Smoke
-grün. Rollout und echter Benutzerfeed stehen noch aus. Dies ist weiterhin
-keine Safari-/WebKit-, EventKit- oder HealthKit-Abnahme.
+`DEGRADED`. 207/207 Tests, Production-Build und mobiler Chrome-Smoke sind grün;
+Release 96 ist auf vier healthy privaten Containern live und die PWA auf drei
+Domains geprüft. Der Kalenderstatus bleibt mangels persönlichem Feed-Link
+ehrlich `NOT_CONNECTED`. Dies ist weiterhin keine Safari-/WebKit-, EventKit-
+oder HealthKit-Abnahme.
 
 ## Technische Grenze
 
