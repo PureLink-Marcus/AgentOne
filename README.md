@@ -1,13 +1,22 @@
 # AgentOne – eigenständige Agentenplattform
 
-Stand: 07.11.2026
-Status: Release `2026.11.07-112` (**MASTER · LIVE auf Fressi und Günni**) mit Source Sync Center, Fokus-Kompass und erklärbarer Feedback-Schleife
+Stand: 08.11.2026
+Status: Release `2026.11.08-118` (**MASTER · bereit für Fressi und Günni**) mit produktiver Startseite, Health-Cockpit und geführter Apple-/WHOOP-Einrichtung
 
 ## 1. Zweck
 
 AgentOne ist eine eigenständige, intern betriebene Plattform für KI-gestützte und deterministische Arbeitsabläufe. Sie verbindet Projekte mit APIs, MCP-Servern, Datenbanken, Dateisystemen und externen Plattformen. Menschen steuern Aufträge, Freigaben, Budgets und Rechte; Agenten und Tools führen klar begrenzte Schritte aus.
 
-AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Release 112 läuft dort auf vier gesunden Containern; der gestufte Rollout Günni → Fressi besitzt einen automatischen Rückfall auf das exakte Preflight-Image. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+AgentOne läuft auf `container2.purelink.de`. Marcus' geschäftlicher AgentOne ist unter [https://agentone.purelink.de](https://agentone.purelink.de) per HTTPS und normalem AgentOne-Konto-Login erreichbar. Die sichtbare Anwendung ist ein eigenes AgentOne Command Center mit AI Core, Aufgaben, Freigaben, Zeitplan, Systemstatus, Tools, Schnellaktionen und einem durchgängig dunkel gestalteten Live-Chat. OpenClaw bleibt ausschließlich die intern eingebettete Runtime für Chat, Tools, Memory und Sessions. [Fressi](https://fressi.mwart.solutions) und [Günni](https://guenni.mwart.solutions) laufen im getrennten Coolify-Projekt `agentone-private` als vollständig isolierte Instanzen mit eigenen Apps, Datenbanken, Gateways, Sessions, Quellen und Memory-Daten. Der gestufte Rollout Günni → Fressi besitzt einen automatischen Rückfall auf das exakte Preflight-Image. Release 101 behob die reale iPhone-Blockade: HTTPS, WebCrypto und IndexedDB genügen für direktes Safari-Pairing; die Home-Bildschirm-PWA ist eine Empfehlung statt einer Voraussetzung. Release 102 ersetzt den 32-MiB-Direktpfad für große Apple-Health-Exporte durch persistente, verschlüsselt gestagte Importjobs bis 512 MiB. Der genaue Abnahmezustand steht in [`docs/RELEASE-READINESS.md`](docs/RELEASE-READINESS.md).
+
+Release 118 macht den bislang tief liegenden Health-Stack auf der persönlichen
+Startseite produktiv bedienbar. Ein serverzustandsbasierter Einrichtungsstand
+trennt drei Kernschritte (verschlüsselter Tresor, echte Apple-Daten, erste
+Auswertung) von den optionalen Quellen iPhone Companion und WHOOP. Jeder Schritt
+öffnet die bereits implementierte reale Arbeitsfläche; leere Zustände bleiben
+ehrlich und erzeugen keine Gesundheitsdaten. Apple und WHOOP werden niemals zu
+einem gemeinsamen Score verrechnet. 395/395 Tests, Produktionsbuild,
+npm-Audit sowie der 390-px-Chrome-Mobile-Flow sind grün.
 
 Release 110 schließt die Rückkopplung des persönlichen Assistenten im Frontend:
 erkannte Muster lassen sich nach aktiv oder ausgeblendet filtern, ihre Quelle

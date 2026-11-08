@@ -1,8 +1,18 @@
 # AgentOne Release Readiness
 
-Stand: 7. November 2026
-Release: `2026.11.07-112` (**MASTER · PASS LIVE**)
-Deployment: Release 112 ist gestuft Günni → Fressi ausgerollt; alle vier App-/Access-Container sind healthy. Der Rollout besitzt einen automatischen Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; ein echter iPhone-Safari-/PWA-Hardwaretest bleibt offen.
+Stand: 8. November 2026
+Release: `2026.11.08-118` (**MASTER · LOCAL PASS**)
+Deployment: gestufter Rollout Günni → Fressi mit automatischem Rückfall auf das exakte Preflight-Image. WHOOP bleibt ohne registrierte Provider-Credentials `NOT_CONFIGURED`; persönliche Apple-Daten werden erst nach einem ausdrücklichen Import sichtbar.
+
+Release 118 ergänzt auf der persönlichen Startseite ein echtes Health-Cockpit
+und einen geführten, serverzustandsbasierten Einrichtungsstand. Drei
+Kernschritte (verschlüsselter Tresor, Apple-Daten und erste Auswertung) bleiben
+von den optionalen Quellen iPhone Companion und WHOOP getrennt. Die Aktionen
+öffnen den persistenten Apple-Import, die iPhone-Kopplung, WHOOP-OAuth oder die
+vollständige Health-&-Recovery-Analyse. Leere Quellen bleiben sichtbar leer;
+es werden weder Beispieldaten noch medizinische Aussagen erzeugt. 395/395
+Node-Tests, Produktionsbuild, npm-Audit mit 0 Schwachstellen und der lokale
+Chrome-Mobile-Smoke bei 390 × 844 Pixeln sind bestanden.
 
 Release 112 stellt den Zustand und die read-only Aktualisierung persönlicher
 Quellen erstmals in einem eigenen Source Sync Center dar. API und Proxy binden
@@ -33,7 +43,7 @@ SHA-256 `62b98164c71f4301fd53c30f6427e0425a35bba579762b0999a9f4eb5e9295a4`).
 
 | Bereich | Status | Nachweis |
 |---|---|---|
-| Lokale Anwendung | PASS LOCAL + LIVE | Release 112: 385/385 Node-Tests, Produktions-Build, npm-Audit, lokaler Source-Sync-Chrome-Smoke und read-only Günni-Live-Smoke grün; Effect Ledger, Pattern-Feedback, Fokus-Kompass und PWA-Push bleiben als Regression erhalten. |
+| Lokale Anwendung | PASS LOCAL | Release 118: 395/395 Node-Tests, Produktions-Build, npm-Audit und geführter Health-Setup-Chrome-Smoke grün; Effect Ledger, Pattern-Feedback, Fokus-Kompass, Source Sync und PWA-Push bleiben als Regression erhalten. |
 | Personal-Startwelten | PASS | Companion, Jarvis HUD und Home & Life besitzen getrennte DOM-Strukturen, Prioritäten, Navigation und mobile Layouts; drei Chrome-Screenshots unter `output/playwright/` |
 | Persönliche Live-Inbox | PASS | Postfächer, aktuell 345 Home-Entitäten, iPhone-Ereignisse, offene Freigaben und Connector-Audit werden aus echten APIs zusammengeführt; Filter, Detailnavigation, Desktop und Mobile in Chrome geprüft |
 | Apple-Schnellstart | PASS LIVE WEB-FLOW | Release 104 benennt das Produkt eindeutig als Companion-Web-App, macht Safari-Pairing und optionale Home-Bildschirm-Installation sichtbar und trennt das Anleitungspaket ehrlich von der noch nicht vorhandenen nativen iOS-App. HTTPS, WebKit, Vault-Preflight, 54-px-Touchziele und 0 Konsolenfehler sind live geprüft; automatisiertes WebKit ersetzt keinen echten iPhone-Hardwaretest. |
@@ -60,7 +70,7 @@ SHA-256 `62b98164c71f4301fd53c30f6427e0425a35bba579762b0999a9f4eb5e9295a4`).
 | PWA-Benachrichtigungen | PASS LIVE | Release 107: explizites Geräte-Opt-in, verschlüsselte benutzergebundene Push-Abos, sichere VAPID-Grenze, Ruhezeit, Tagesbudget, kanalgetrennte Deduplizierung, generischer Sperrbildschirmtext, Testsendung und Widerruf. Lokale und Live-Abnahme bei 390×844 sind grün; ein reales Endgerät muss die Browserberechtigung selbst erteilen. |
 | Personal Event Ledger | PASS | Immutable, idempotent, user-isoliert, Retention/Export/Löschung; Mail-Bodies und Secret-Felder werden an der Speichergrenze abgewiesen. |
 | Google Live Sync | PREPARED | OAuth-, Gmail-Metadaten- und Kalender-Sync inklusive Paging, Cursor, Retention, Kalenderauswahl und Teilerfolg ist implementiert und getestet. Auf Günni fehlt noch die serverseitige Google-OAuth-Konfiguration; das vorhandene App-Passwort bleibt bewusst nur IMAP. |
-| Health Ledger | PASS LIVE | Release 102 verarbeitet Apple-Health-XML/ZIP bis 512 MiB als persistente Jobs: Streaming-Upload, AES-256-GCM-Ciphertext-Staging, begrenzter Child-Worker, User-/Consent-Isolation, Human Gate, Command Stream, Restart-Recovery und atomarer Cancel-/Commit-CAS. Browser und Audit sehen nur Status, Fortschritt und sichere Zähler; medizinische Diagnosen bleiben ausgeschlossen. Der lokale Chrome-Mobile-Smoke importierte 35.652.165 Bytes; der isolierte Günni-Live-Smoke importierte 35.652.207 Bytes und zwei Messwerte und endete nach Cleanup bei null Messwerten und null Freigaben. Der frühere Health-&-Recovery-Vergleich bleibt unverändert verfügbar; persönliche Günni-Daten und WHOOP-Credentials fehlen weiterhin. |
+| Health Ledger | PASS LOCAL + DEPLOYED CORE | Release 118 macht den verschlüsselten Apple-Import, iPhone Companion, WHOOP und die getrennte Trendanalyse über einen geführten Startseitenablauf direkt erreichbar. Der Kern verarbeitet XML/ZIP bis 512 MiB als persistente, verschlüsselt gestagte Jobs mit User-/Consent-Isolation, Human Gate, Restart-Recovery und atomarem Cancel-/Commit-CAS. Persönliche Günni-Daten fehlen bis zum ausdrücklichen Import; die UI zeigt deshalb ehrlich null Werte. |
 | WHOOP | PASS LOCAL · NOT CONFIGURED LIVE | Persistenter atomar einmaliger OAuth-State, AES-256-GCM-Refresh-Token, begrenzter v2-Sync, Teilerfolg/Rate-Limit, Rotation und Trennung sind implementiert und getestet. Ohne Developer-App bleibt der Status ehrlich `NOT_CONFIGURED`; Webhooks bleiben bis zu Queue und Reconciliation deaktiviert. |
 | Persönliches Memory | PASS | persistente, benutzerisolierte Einträge mit Herkunft, Quellenreferenz, Bereich, Schutzklasse, Ablaufdatum, Suche und gezieltem Vergessen; Server- und Browsertests bestanden |
 | Persönliche Routinen | PASS | Read-only-Routinen mit Aktion, Berliner Zeitplan, Wochentagen, Simulation, payloadgebundenem Freigabe-Hash, Aktivieren/Pausieren, täglicher Einmallauf-Garantie und sicherem Löschen |
