@@ -10,6 +10,8 @@ test('Release 115 puts calendar, mail attention and briefing on the personal sta
   assert.match(personalUiJs,/fetch\('\/agentone\/mail\/messages\?limit=1'/);
   assert.match(personalUiJs,/fetch\('\/agentone\/routines\/runs\?limit=1'/);
   assert.match(personalUiJs,/runPersonalBriefing\(\{scroll:false\}\)/);
+  assert.match(personalUiJs,/Tagesbriefing gerade erstellt/);
+  assert.match(personalUiJs,/BRIEFING ERSTELLT/);
   assert.match(personalUiJs,/planningCenter\.scrollIntoView/);
 });
 
