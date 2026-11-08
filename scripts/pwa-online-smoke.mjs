@@ -3,8 +3,8 @@ import { loadEnv } from '../server/state.mjs';
 const env=loadEnv(path.resolve('.'));
 const targets=[
   {id:'purelink',type:'business',release:env.AGENTONE_ASSISTANT_RELEASE||'2026.11.02-68',primary:'#005ae5',origin:env.AGENTONE_ASSISTANT_ORIGIN,user:env.AGENTONE_MOBILE_USER||'marcus',password:env.AGENTONE_MOBILE_PASSWORD},
-  {id:'fressi',name:'Fressi',type:'personal',release:env.AGENTONE_PERSONAL_RELEASE||'2026.11.08-114',primary:'#d8654f',origin:env.AGENTONE_FRESSI_ORIGIN,user:env.AGENTONE_FRESSI_USER,password:env.AGENTONE_FRESSI_PASSWORD},
-  {id:'guenni',name:'Günni',type:'personal',release:env.AGENTONE_PERSONAL_RELEASE||'2026.11.08-114',primary:'#7357d9',origin:env.AGENTONE_GUENNI_ORIGIN,user:env.AGENTONE_GUENNI_USER,password:env.AGENTONE_GUENNI_PASSWORD}
+  {id:'fressi',name:'Fressi',type:'personal',release:env.AGENTONE_PERSONAL_RELEASE||'2026.11.08-115',primary:'#d8654f',origin:env.AGENTONE_FRESSI_ORIGIN,user:env.AGENTONE_FRESSI_USER,password:env.AGENTONE_FRESSI_PASSWORD},
+  {id:'guenni',name:'Günni',type:'personal',release:env.AGENTONE_PERSONAL_RELEASE||'2026.11.08-115',primary:'#7357d9',origin:env.AGENTONE_GUENNI_ORIGIN,user:env.AGENTONE_GUENNI_USER,password:env.AGENTONE_GUENNI_PASSWORD}
 ];
 const selectedTargets=process.env.PWA_SCOPE==='private'?targets.filter(item=>item.type==='personal'):targets;
 const results=[];
