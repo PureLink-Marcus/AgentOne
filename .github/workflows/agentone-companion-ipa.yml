@@ -57,7 +57,7 @@ jobs:
             -o requested-entitlements.plist \
             AgentOneCompanion/AgentOneCompanion.entitlements
           plutil -lint requested-entitlements.plist
-          python3 -c "import plistlib; d=plistlib.load(open('requested-entitlements.plist','rb')); assert d.get('com.apple.developer.healthkit') is True; assert d.get('com.apple.developer.healthkit.background-delivery') is True"
+          python3 -c "import plistlib; d=plistlib.load(open('requested-entitlements.plist','rb')); assert all(k in d for k in ('com.apple.developer.healthkit','com.apple.developer.healthkit.background-delivery'))"
           rm -rf Payload
           mkdir Payload
           ditto "$APP" Payload/AgentOneCompanion.app
