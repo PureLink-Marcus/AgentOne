@@ -4,7 +4,7 @@ import {mkdir} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {loadEnv} from '../server/state.mjs';
 
-const release='2026.11.10-123',env=loadEnv(path.resolve('.')),origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,''),user=env.AGENTONE_GUENNI_USER,password=env.AGENTONE_GUENNI_PASSWORD;
+const release='2026.11.10-124',env=loadEnv(path.resolve('.')),origin=String(env.AGENTONE_GUENNI_ORIGIN||'').replace(/\/$/,''),user=env.AGENTONE_GUENNI_USER,password=env.AGENTONE_GUENNI_PASSWORD;
 if(!origin||!user||!password)throw new Error('Günni-Live-Konfiguration fehlt.');
 const browser=await chromium.launch({channel:'chrome',headless:true}),page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'de-DE'}),errors=[];page.setDefaultTimeout(40_000);page.on('pageerror',error=>errors.push(error.message));
 try{
