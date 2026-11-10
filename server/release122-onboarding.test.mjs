@@ -6,11 +6,13 @@ import {personalUiJs} from './personal-ui.mjs';
 const read=relative=>readFileSync(new URL('../'+relative,import.meta.url),'utf8');
 
 test('release 122 serves the Companion IPA and both onboarding guides inside AgentOne',()=>{
-  const proxy=read('server/basic-proxy.mjs'),archive=read('scripts/build-release-archive.mjs');
+  const proxy=read('server/basic-proxy.mjs'),archive=read('scripts/build-release-archive.mjs'),dockerfile=read('Dockerfile');
   assert.match(proxy,/\/agentone\/downloads\/agentone-companion\.ipa/);
   assert.match(proxy,/\/agentone\/downloads\/iphone-sideload\.md/);
   assert.match(proxy,/\/agentone\/downloads\/openclaw-plugin-onboarding\.md/);
   assert.match(archive,/AgentOne-Companion-unsigned\.ipa/);
+  assert.match(dockerfile,/COPY output\/connector\/AgentOne-Companion-unsigned\.ipa \.\/downloads\/AgentOne-Companion-unsigned\.ipa/);
+  assert.match(dockerfile,/COPY docs\/OPENCLAW-PLUGIN-ONBOARDING\.md \.\/downloads\/openclaw-plugin-onboarding\.md/);
   assert.match(personalUiJs,/IPA direkt laden/);
   assert.match(personalUiJs,/SHA-256-Prüfsumme/);
   assert.match(personalUiJs,/Installationsanleitung/);

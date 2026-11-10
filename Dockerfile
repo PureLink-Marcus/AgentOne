@@ -19,6 +19,10 @@ COPY output/connector/agentone-home-connector-raspberry.zip.sig ./downloads/agen
 COPY output/connector/home-connector-release.json ./downloads/home-connector-release.json
 COPY output/connector/agentone-siri-shortcuts.zip ./downloads/agentone-siri-shortcuts.zip
 COPY output/connector/agentone-apple-companion.zip ./downloads/agentone-apple-companion.zip
+COPY output/connector/AgentOne-Companion-unsigned.ipa ./downloads/AgentOne-Companion-unsigned.ipa
+COPY output/connector/AgentOne-Companion-unsigned.ipa.sha256 ./downloads/AgentOne-Companion-unsigned.ipa.sha256
+COPY docs/IPHONE-SIDELOAD.md ./downloads/iphone-sideload.md
+COPY docs/OPENCLAW-PLUGIN-ONBOARDING.md ./downloads/openclaw-plugin-onboarding.md
 RUN mkdir -p /data && chown -R node:node /app /data
 USER node
 EXPOSE 4173

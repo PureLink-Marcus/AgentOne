@@ -78,8 +78,8 @@ const siriShortcutDownload=path.join(downloadRoot,'agentone-siri-shortcuts.zip')
 const appleCompanionDownload=path.join(downloadRoot,'agentone-apple-companion.zip');
 const appleCompanionIpa=path.join(downloadRoot,'AgentOne-Companion-unsigned.ipa');
 const appleCompanionChecksum=path.join(downloadRoot,'AgentOne-Companion-unsigned.ipa.sha256');
-const iphoneSideloadGuide=path.join(appRoot,'docs','IPHONE-SIDELOAD.md');
-const openClawPluginGuide=path.join(appRoot,'docs','OPENCLAW-PLUGIN-ONBOARDING.md');
+const iphoneSideloadGuide=fs.existsSync(path.join(downloadRoot,'iphone-sideload.md'))?path.join(downloadRoot,'iphone-sideload.md'):path.join(appRoot,'docs','IPHONE-SIDELOAD.md');
+const openClawPluginGuide=fs.existsSync(path.join(downloadRoot,'openclaw-plugin-onboarding.md'))?path.join(downloadRoot,'openclaw-plugin-onboarding.md'):path.join(appRoot,'docs','OPENCLAW-PLUGIN-ONBOARDING.md');
 const fontFiles=new Map([
   ['/agentone/fonts/barlow-400.ttf','barlow-400.ttf'],
   ['/agentone/fonts/barlow-600.ttf','barlow-600.ttf'],
