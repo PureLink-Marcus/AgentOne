@@ -52,8 +52,9 @@ jobs:
             --entitlements AgentOneCompanion/AgentOneCompanion.entitlements \
             "$APP"
           codesign --verify --verbose=2 "$APP"
-          # codesign writes display output to stderr even on success.
-          codesign -d --entitlements - "$APP" 2> built-entitlements.plist
+          # Request XML explicitly; current codesign otherwise renders a human-readable [Dict].
+          codesign -d --entitlements - --xml "$APP" \
+            | plutil -convert xml1 -o built-entitlements.plist -
           grep -q 'com.apple.developer.healthkit' built-entitlements.plist
           grep -q 'com.apple.developer.healthkit.background-delivery' built-entitlements.plist
           rm -rf Payload

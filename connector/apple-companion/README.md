@@ -16,6 +16,23 @@ Google Maps Timeline bietet keine Cloud-API für einen dauerhaften Abruf der
 persönlichen Historie. AgentOne führt deshalb nach ausdrücklicher Freigabe eine
 eigene automatische Zeitachse über die native App.
 
+## Native IPA per Sideload
+
+Der aktuelle Geräte-Build steht direkt bereit:
+
+`https://github.com/PureLink-Marcus/AgentOne/releases/download/agentone-companion-v1.0.0/AgentOne-Companion-unsigned.ipa`
+
+Die IPA in AltStore oder SideStore öffnen. Der Sideload-Dienst signiert die App
+mit dem eigenen Apple-Konto neu; Apple-ID und Passwort werden niemals in
+AgentOne eingegeben. Bei einem kostenlosen Apple-Konto muss die Signatur alle
+sieben Tage über AltServer beziehungsweise SideStore erneuert werden.
+
+HealthKit funktioniert nur, wenn das dabei erzeugte Provisioning-Profil die
+HealthKit- und Background-Delivery-Entitlements bewahrt. Falls Apple oder der
+Sideload-Dienst diese Capability nicht zulässt, bleibt die Web-App nutzbar und
+der native Build muss einmal über Xcode mit dem eigenen Developer-Team signiert
+werden. AgentOne meldet den Zustand sichtbar und behauptet dann kein `LIVE`.
+
 ## Web-App
 
 Dieses Paket ist die **optionale Anleitung** für Günnis sofort nutzbare Web-App. Es ist keine App-Datei und muss nicht installiert oder entpackt werden. Die Companion-Web-App läuft direkt unter:
@@ -24,9 +41,9 @@ Dieses Paket ist die **optionale Anleitung** für Günnis sofort nutzbare Web-Ap
 
 Sie benötigt weder ein iCloud-Passwort noch Google OAuth.
 
-> Wichtig: Dieses ZIP enthält Quellcode, aber keine signierte IPA. HealthKit-
-> Hintergrundzugriff benötigt Apple-Entitlements, eine eigene Signatur und ein
-> echtes iPhone. Der Web-Companion behauptet dafür kein `LIVE`.
+> Wichtig: Dieses ZIP enthält Quellcode und verweist auf die separat erzeugte
+> IPA. HealthKit-Hintergrundzugriff benötigt Apple-Entitlements, eine eigene
+> Signatur und ein echtes iPhone. Der Web-Companion behauptet dafür kein `LIVE`.
 
 ## Pairing
 
