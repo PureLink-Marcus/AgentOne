@@ -15,6 +15,10 @@ targets:
       path: AgentOneCompanion/Info.plist
     entitlements:
       path: AgentOneCompanion/AgentOneCompanion.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.background-delivery: true
+        com.apple.developer.healthkit.access: []
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: solutions.mwart.agentone.companion

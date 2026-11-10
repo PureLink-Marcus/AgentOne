@@ -6,7 +6,7 @@ import {personalUiJs} from './personal-ui.mjs';
 const read=relative=>readFileSync(new URL('../'+relative,import.meta.url),'utf8');
 
 test('sideload workflow builds an unsigned device IPA and publishes a stable download',()=>{
-  const workflow=read('.github/workflows/agentone-companion-ipa.yml');
+  const workflow=read('.github/workflows/agentone-companion-ipa.yml'),project=read('connector/apple-companion-native/project.yml');
   assert.match(workflow,/runs-on: macos-15/);
   assert.match(workflow,/xcodegen generate/);
   assert.match(workflow,/-sdk iphoneos/);
@@ -21,6 +21,8 @@ test('sideload workflow builds an unsigned device IPA and publishes a stable dow
   assert.match(workflow,/Payload\/AgentOneCompanion\.app/);
   assert.match(workflow,/gh release (?:create|upload)/);
   assert.match(workflow,/AgentOne-Companion-unsigned\.ipa\.sha256/);
+  assert.match(project,/properties:[\s\S]*com\.apple\.developer\.healthkit: true/);
+  assert.match(project,/com\.apple\.developer\.healthkit\.background-delivery: true/);
 });
 
 test('sideload guide keeps Apple credentials outside AgentOne and explains entitlement limits',()=>{
