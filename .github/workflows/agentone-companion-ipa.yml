@@ -1,0 +1,84 @@
+name: AgentOne Companion IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version for the sideload release
+        required: true
+        default: 1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-unsigned-ipa:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: connector/apple-companion-native
+        run: xcodegen generate
+
+      - name: Build device app without embedded identity
+        working-directory: connector/apple-companion-native
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project AgentOneCompanion.xcodeproj \
+            -scheme AgentOneCompanion \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            clean build
+
+      - name: Package and verify IPA
+        working-directory: connector/apple-companion-native
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release-iphoneos/AgentOneCompanion.app"
+          test -d "$APP"
+          test -x "$APP/AgentOneCompanion"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Info.plist"
+          rm -rf Payload
+          mkdir Payload
+          ditto "$APP" Payload/AgentOneCompanion.app
+          zip -qry AgentOne-Companion-unsigned.ipa Payload
+          shasum -a 256 AgentOne-Companion-unsigned.ipa > AgentOne-Companion-unsigned.ipa.sha256
+          test "$(stat -f%z AgentOne-Companion-unsigned.ipa)" -gt 10000
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgentOne-Companion-${{ inputs.version }}-unsigned
+          path: |
+            connector/apple-companion-native/AgentOne-Companion-unsigned.ipa
+            connector/apple-companion-native/AgentOne-Companion-unsigned.ipa.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish stable sideload download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="agentone-companion-v${VERSION}"
+          IPA="connector/apple-companion-native/AgentOne-Companion-unsigned.ipa"
+          SUM="connector/apple-companion-native/AgentOne-Companion-unsigned.ipa.sha256"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$IPA" "$SUM" --clobber
+          else
+            gh release create "$TAG" "$IPA" "$SUM" \
+              --target "$GITHUB_SHA" \
+              --title "AgentOne Companion ${VERSION}" \
+              --notes "Unsigned iOS device build for AltStore, SideStore or Sideloadly. The sideload tool must create a provisioning profile that preserves the HealthKit and background-delivery entitlements."
+          fi

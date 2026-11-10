@@ -3,6 +3,18 @@
 This is the native path for automatic Apple Health and significant-location
 sync. A browser/PWA cannot access HealthKit or run reliable background location.
 
+## Sideload IPA
+
+The repository workflow **AgentOne Companion IPA** builds an unsigned iPhoneOS
+IPA on a macOS runner and publishes it as a GitHub Release asset. AltStore,
+SideStore or Sideloadly must re-sign that IPA with the user's own development
+profile. See `docs/IPHONE-SIDELOAD.md` for the Windows and iPhone procedure.
+
+An unsigned IPA cannot grant itself HealthKit access. The resulting provisioning
+profile must authorize both HealthKit entitlements. If a free sideload profile
+does not preserve them, use Xcode automatic signing with a valid team and the
+registered iPhone.
+
 ## Build
 
 1. Install Xcode and XcodeGen on macOS.
