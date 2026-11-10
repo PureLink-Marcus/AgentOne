@@ -9,6 +9,8 @@ test('Release 114 exposes a useful live mail inbox on the personal start page',(
   assert.match(personalUiJs,/fetch\('\/agentone\/mail\/messages\?limit=50'/);
   assert.match(personalUiJs,/data-mail-inbox-filter="unread"/);
   assert.match(personalUiJs,/data-mail-inbox-filter="people"/);
+  assert.match(personalUiJs,/if\(filter==='people'\)query\.set\('category','people'\)/);
+  assert.match(personalUiJs,/new URLSearchParams\(\{limit:'200'\}\)/);
   assert.match(personalUiJs,/data-mail-inbox-filter="review"/);
   assert.match(personalUiJs,/for\(const account of mailAccountCache\)await mailAction\(account\.id,'scan'\)/);
   assert.match(personalUiJs,/mailCenter\.querySelector\('#mail-review'\)/);

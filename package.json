@@ -84,7 +84,7 @@
     "verify:guenni-release118": "node scripts/guenni-release117-health-live-smoke.mjs",
     "verify:release118-audit": "node scripts/release112-live-audit.mjs",
     "verify:release119-ui": "node scripts/release119-onboarding-browser-smoke.mjs",
-    "verify:guenni-release119": "node scripts/guenni-release117-health-live-smoke.mjs",
+    "verify:guenni-release119": "node scripts/guenni-release119-onboarding-live-smoke.mjs",
     "verify:release119-audit": "node scripts/release112-live-audit.mjs",
     "verify:ics-subscription": "node scripts/release-96-ics-subscription-browser-smoke.mjs",
     "release:archive": "node scripts/build-release-archive.mjs",
