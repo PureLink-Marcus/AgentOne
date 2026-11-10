@@ -7,7 +7,7 @@ const read=relative=>readFileSync(new URL('../'+relative,import.meta.url),'utf8'
 
 test('sideload workflow builds an unsigned device IPA and publishes a stable download',()=>{
   const workflow=read('.github/workflows/agentone-companion-ipa.yml'),project=read('connector/apple-companion-native/project.yml');
-  assert.match(workflow,/runs-on: macos-15/);
+  assert.match(workflow,/runs-on: macos-15-intel/);
   assert.match(workflow,/xcodegen generate/);
   assert.match(workflow,/-sdk iphoneos/);
   assert.match(workflow,/CODE_SIGNING_ALLOWED=NO/);
