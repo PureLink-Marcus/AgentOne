@@ -6,8 +6,9 @@
 - Prüfsumme: https://github.com/PureLink-Marcus/AgentOne/releases/download/agentone-companion-v1.0.0/AgentOne-Companion-unsigned.ipa.sha256
 - Günni: https://guenni.mwart.solutions
 
-Die IPA ist bewusst **nicht fremdsigniert**. AltStore, SideStore oder Sideloadly
-signieren sie mit dem persönlichen Apple-Entwicklungsprofil des iPhone-
+Die IPA ist nur ad-hoc signiert, damit die angeforderten Entitlements für das
+Sideload-Programm lesbar bleiben. AltStore, SideStore oder Sideloadly ersetzen
+diese Signatur durch das persönliche Apple-Entwicklungsprofil des iPhone-
 Besitzers. Apple-ID oder Apple-Passwort werden niemals in AgentOne eingegeben.
 
 ## Empfohlen: AltStore unter Windows
