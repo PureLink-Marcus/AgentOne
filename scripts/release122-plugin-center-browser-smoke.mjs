@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import net from 'node:net';
+import os from 'node:os';
+import path from 'node:path';
+import {mkdir,mkdtemp,rm} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {chromium} from 'playwright';
+
+const release='2026.11.10-122';
+const freePort=()=>new Promise((resolve,reject)=>{const server=net.createServer();server.once('error',reject);server.listen(0,'127.0.0.1',()=>{const {port}=server.address();server.close(()=>resolve(port));});});
+const waitFor=async url=>{for(let attempt=0;attempt<100;attempt+=1){try{if((await fetch(url)).ok)return;}catch{}await new Promise(resolve=>setTimeout(resolve,100));}throw new Error('Server nicht bereit: '+url);};
+const stop=async child=>{if(!child||child.exitCode!==null)return;child.kill();await Promise.race([new Promise(resolve=>child.once('exit',resolve)),new Promise(resolve=>setTimeout(resolve,4_000))]);if(child.exitCode===null)child.kill('SIGKILL');};
+const appPort=await freePort(),proxyPort=await freePort(),dataDir=await mkdtemp(path.join(os.tmpdir(),'agentone-release122-')),token='release122-internal-token-with-enough-length',origin=`http://127.0.0.1:${proxyPort}`,user='release122-user',password='release122-browser-password-with-enough-length';
+const app=spawn(process.execPath,['server/demo-server.mjs'],{cwd:process.cwd(),env:{...process.env,HOST:'127.0.0.1',PORT:String(appPort),AGENTONE_DATA_DIR:dataDir,DATABASE_URL:'',AGENTONE_INTERNAL_API_TOKEN:token,AGENTONE_SECRET_KEY:'release122-companion-key-with-enough-length',AGENTONE_HEALTH_MASTER_KEY:'release122-health-master-key-with-enough-length',AGENTONE_DEMO_MASTER_KEY:'',OPENAI_API_KEY:''},stdio:'ignore'});let proxy,browser;
+try{
+  await waitFor(`http://127.0.0.1:${appPort}/api/health`);
+  proxy=spawn(process.execPath,['server/basic-proxy.mjs'],{cwd:process.cwd(),env:{...process.env,HOST:'127.0.0.1',PORT:String(proxyPort),UPSTREAM_URL:`http://127.0.0.1:${appPort}`,PERSONAL_API_URL:`http://127.0.0.1:${appPort}`,PERSONAL_API_TOKEN:token,BASIC_AUTH_USER:user,BASIC_AUTH_PASSWORD:password,AUTHENTICATED_USER:user,AGENTONE_DISPLAY_NAME:'Günni',AGENTONE_INSTANCE_TYPE:'personal',AGENTONE_RELEASE:release,ACCESS_SESSION_SECRET:'release122-session-key-with-enough-length',PUBLIC_ORIGIN:origin,OPENAI_API_KEY:''},stdio:'ignore'});
+  await waitFor(`${origin}/proxy-health`);browser=await chromium.launch({channel:'chrome',headless:true});const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'de-DE'}),errors=[];page.setDefaultTimeout(20_000);page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(`${origin}/login`);await page.getByLabel('Benutzername').fill(user);await page.getByLabel('Passwort').fill(password);await page.getByRole('button',{name:/Sicher anmelden/}).click();await page.waitForURL(`${origin}/`);await page.locator('[data-view="tools"]').click();
+  const center=page.locator('#openclaw-plugin-center');await center.waitFor();assert.equal(await center.locator('.openclaw-onboarding article').count(),5);assert.equal(await center.getByRole('link',{name:'Plugin-Katalog öffnen'}).getAttribute('href'),'/plugins?agentone_native=1');assert.equal(await center.getByRole('link',{name:'Installiert verwalten'}).getAttribute('href'),'/settings/plugins?agentone_native=1');assert.equal(await center.getByRole('link',{name:'Anleitung herunterladen'}).getAttribute('href'),'/agentone/downloads/openclaw-plugin-onboarding.md');assert.ok(await center.locator('.openclaw-plugin').count()>5);assert.ok(await center.getByRole('link',{name:/Konfigurieren und prüfen|Aktivieren und Rechte prüfen/}).count()>5);
+  const guide=await page.request.get(`${origin}/agentone/downloads/openclaw-plugin-onboarding.md`);assert.ok(guide.ok());assert.match(await guide.text(),/openclaw plugins install/);const layout=await center.evaluate(root=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minTouchHeight:Math.min(...[...root.querySelectorAll('a,button')].map(item=>Math.round(item.getBoundingClientRect().height)))}));assert.equal(layout.scrollWidth,layout.width);assert.ok(layout.minTouchHeight>=44,JSON.stringify(layout));await mkdir(path.resolve('output/playwright'),{recursive:true});const screenshot=path.resolve('output/playwright/release122-openclaw-plugin-center-mobile.png');await center.screenshot({path:screenshot});assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify({ok:true,release,steps:5,plugins:await center.locator('.openclaw-plugin').count(),guide:true,layout,pageErrors:0,screenshot})+'\n');
+}finally{await browser?.close();await stop(proxy);await stop(app);await rm(dataDir,{recursive:true,force:true,maxRetries:8,retryDelay:100});}
+

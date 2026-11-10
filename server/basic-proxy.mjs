@@ -29,7 +29,7 @@ const brandLine=validColor(process.env.AGENTONE_THEME_LINE,'#223047');
 const brandMark=cleanText(process.env.AGENTONE_BRAND_MARK,instanceType==='business'?brandName.slice(0,2).toUpperCase():'A1',4);
 let instanceDirectory=[];try{instanceDirectory=JSON.parse(process.env.AGENTONE_INSTANCE_DIRECTORY||'[]');}catch{}
 const publicOrigin=String(process.env.PUBLIC_ORIGIN||'').replace(/\/$/,'');
-const release=String(process.env.AGENTONE_RELEASE||'2026.11.10-121');
+const release=String(process.env.AGENTONE_RELEASE||'2026.11.10-122');
 const sessionSecret=process.env.ACCESS_SESSION_SECRET||crypto.createHash('sha256').update(`${expectedPassword}|agentone-session`).digest('hex');
 const openAiKey=process.env.OPENAI_API_KEY||'';
 const googleClientId=process.env.GMAIL_CLIENT_ID||'';
@@ -76,6 +76,10 @@ const connectorSignature=path.join(downloadRoot,'agentone-home-connector-raspber
 const connectorManifest=path.join(downloadRoot,'home-connector-release.json');
 const siriShortcutDownload=path.join(downloadRoot,'agentone-siri-shortcuts.zip');
 const appleCompanionDownload=path.join(downloadRoot,'agentone-apple-companion.zip');
+const appleCompanionIpa=path.join(downloadRoot,'AgentOne-Companion-unsigned.ipa');
+const appleCompanionChecksum=path.join(downloadRoot,'AgentOne-Companion-unsigned.ipa.sha256');
+const iphoneSideloadGuide=path.join(appRoot,'docs','IPHONE-SIDELOAD.md');
+const openClawPluginGuide=path.join(appRoot,'docs','OPENCLAW-PLUGIN-ONBOARDING.md');
 const fontFiles=new Map([
   ['/agentone/fonts/barlow-400.ttf','barlow-400.ttf'],
   ['/agentone/fonts/barlow-600.ttf','barlow-600.ttf'],
@@ -532,6 +536,10 @@ const server=http.createServer((req,res)=>{
   if(req.method==='GET'&&req.url==='/agentone/downloads/home-connector-release.json')return publicFile(res,connectorManifest,'application/json; charset=utf-8');
   if(req.method==='GET'&&req.url==='/agentone/downloads/siri-shortcuts.zip')return publicFile(res,siriShortcutDownload,'application/zip','agentone-siri-shortcuts.zip');
   if(req.method==='GET'&&req.url==='/agentone/downloads/apple-companion.zip')return publicFile(res,appleCompanionDownload,'application/zip','agentone-apple-companion.zip');
+  if(req.method==='GET'&&req.url==='/agentone/downloads/agentone-companion.ipa')return publicFile(res,appleCompanionIpa,'application/octet-stream','AgentOne-Companion-unsigned.ipa');
+  if(req.method==='GET'&&req.url==='/agentone/downloads/agentone-companion.ipa.sha256')return publicFile(res,appleCompanionChecksum,'text/plain; charset=utf-8','AgentOne-Companion-unsigned.ipa.sha256');
+  if(req.method==='GET'&&req.url==='/agentone/downloads/iphone-sideload.md')return publicFile(res,iphoneSideloadGuide,'text/markdown; charset=utf-8','AgentOne-iPhone-Sideload.md');
+  if(req.method==='GET'&&req.url==='/agentone/downloads/openclaw-plugin-onboarding.md')return publicFile(res,openClawPluginGuide,'text/markdown; charset=utf-8','AgentOne-OpenClaw-Plugin-Onboarding.md');
   if(req.method==='GET'&&fontFiles.has(req.url||'')){
     const file=path.join(fontRoot,fontFiles.get(req.url));
     if(!fs.existsSync(file)){res.writeHead(404);return res.end();}
@@ -590,7 +598,7 @@ const server=http.createServer((req,res)=>{
   if(req.method==='GET'&&req.url==='/agentone/home-assistant/services')return homeAssistantServices(res);
   if(req.method==='POST'&&req.url==='/agentone/home-assistant/action')return homeAssistantAction(req,res);
   if(req.method==='GET'&&/^\/agentone\/home-assistant\/camera\/[a-z0-9_]+\.[a-z0-9_]+\/snapshot(?:\?|$)/.test(req.url||''))return homeAssistantCamera(req,res);
-  if(req.method==='GET'&&req.url==='/agentone/openclaw/plugins'){const key=expectedUser==='guenni'?'guenni':expectedUser==='fressi'?'fressi':'agentone-personal',plugins=openClawPluginCatalogByInstance[key]||openClawPluginCatalog;return jsonResponse(res,200,{runtime:'OpenClaw 2026.10.8',source:'live-registry-snapshot',instance:key,plugins,summary:{total:plugins.length,loaded:plugins.filter(item=>item.status==='loaded').length,disabled:plugins.filter(item=>item.status==='disabled').length}});}
+  if(req.method==='GET'&&req.url==='/agentone/openclaw/plugins'){const key=expectedUser==='guenni'?'guenni':expectedUser==='fressi'?'fressi':'agentone-personal',plugins=openClawPluginCatalogByInstance[key]||openClawPluginCatalog;return jsonResponse(res,200,{runtime:'OpenClaw 2026.10.8',source:'deployment-registry-snapshot',instance:key,management:{catalog:'/plugins?agentone_native=1',installed:'/settings/plugins?agentone_native=1',guide:'/agentone/downloads/openclaw-plugin-onboarding.md',writesOwnedBy:'OpenClaw owner-only Control UI'},plugins,summary:{total:plugins.length,loaded:plugins.filter(item=>item.status==='loaded').length,disabled:plugins.filter(item=>item.status==='disabled').length}});}
   if(req.method==='GET'&&req.url==='/agentone/voice/status')return jsonResponse(res,200,voiceTranscriptionStatus({configured:Boolean(openAiKey)}));
   if(req.method==='POST'&&req.url==='/agentone/voice/transcribe')return handleVoiceTranscription(req,res);
   if(req.method==='POST'&&req.url==='/agentone/voice/chat')return handleVoiceChat(req,res);

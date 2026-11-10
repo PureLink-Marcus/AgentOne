@@ -14,6 +14,8 @@ const assets=[
   'output/connector/home-connector-release.json',
   'output/connector/agentone-siri-shortcuts.zip',
   'output/connector/agentone-apple-companion.zip',
+  'output/connector/AgentOne-Companion-unsigned.ipa',
+  'output/connector/AgentOne-Companion-unsigned.ipa.sha256',
 ];
 for(const asset of assets){const absolute=path.join(root,...asset.split('/'));if(!existsSync(absolute)||!statSync(absolute).isFile()||statSync(absolute).size<=0)throw new Error(`Release-Artefakt fehlt: ${asset}`);}
 mkdirSync(outputDir,{recursive:true});rmSync(tarPath,{force:true});rmSync(archivePath,{force:true});
