@@ -8,9 +8,13 @@ output/connector/*
 !output/connector/home-connector-release.json
 !output/connector/agentone-siri-shortcuts.zip
 !output/connector/agentone-apple-companion.zip
+!output/connector/AgentOne-Companion-unsigned.ipa
+!output/connector/AgentOne-Companion-unsigned.ipa.sha256
 master
 design
 docs
+!docs/IPHONE-SIDELOAD.md
+!docs/OPENCLAW-PLUGIN-ONBOARDING.md
 scripts
 .env*
 *.key
