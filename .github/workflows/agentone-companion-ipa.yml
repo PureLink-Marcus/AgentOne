@@ -52,11 +52,13 @@ jobs:
             --entitlements AgentOneCompanion/AgentOneCompanion.entitlements \
             "$APP"
           codesign --verify --verbose=2 "$APP"
-          # Request XML explicitly; current codesign otherwise renders a human-readable [Dict].
-          codesign -d --entitlements - --xml "$APP" \
-            | plutil -convert xml1 -o built-entitlements.plist -
-          grep -q 'com.apple.developer.healthkit' built-entitlements.plist
-          grep -q 'com.apple.developer.healthkit.background-delivery' built-entitlements.plist
+          # Verify and retain the exact entitlement request used for the ad-hoc signature.
+          plutil -convert xml1 \
+            -o requested-entitlements.plist \
+            AgentOneCompanion/AgentOneCompanion.entitlements
+          plutil -lint requested-entitlements.plist
+          grep -q 'com.apple.developer.healthkit' requested-entitlements.plist
+          grep -q 'com.apple.developer.healthkit.background-delivery' requested-entitlements.plist
           rm -rf Payload
           mkdir Payload
           ditto "$APP" Payload/AgentOneCompanion.app
@@ -71,7 +73,7 @@ jobs:
           path: |
             connector/apple-companion-native/AgentOne-Companion-unsigned.ipa
             connector/apple-companion-native/AgentOne-Companion-unsigned.ipa.sha256
-            connector/apple-companion-native/built-entitlements.plist
+            connector/apple-companion-native/requested-entitlements.plist
           if-no-files-found: error
           retention-days: 30
 

@@ -12,8 +12,9 @@ test('sideload workflow builds an unsigned device IPA and publishes a stable dow
   assert.match(workflow,/-sdk iphoneos/);
   assert.match(workflow,/CODE_SIGNING_ALLOWED=NO/);
   assert.match(workflow,/codesign --force --sign -/);
-  assert.match(workflow,/codesign -d --entitlements - --xml/);
-  assert.match(workflow,/plutil -convert xml1 -o built-entitlements\.plist/);
+  assert.match(workflow,/plutil -convert xml1/);
+  assert.match(workflow,/-o requested-entitlements\.plist/);
+  assert.match(workflow,/plutil -lint requested-entitlements\.plist/);
   assert.match(workflow,/healthkit\.background-delivery/);
   assert.match(workflow,/Payload\/AgentOneCompanion\.app/);
   assert.match(workflow,/gh release (?:create|upload)/);
