@@ -111,3 +111,8 @@ deploy_ok=1
 trap - EXIT`;
   process.stdout.write(run('ssh',[...common,target,command],480_000));
 }finally{try{fs.unlinkSync(localSecret);}catch{}try{run('ssh',[...common,target,`rm -f '${remoteSecret}'`],30_000);}catch{}}
+if(!preflightOnly){
+  const rebind=spawnSync(process.execPath,[path.resolve('scripts','openclaw-private-initialize.mjs')],{cwd:path.resolve('.'),encoding:'utf8',timeout:300_000});
+  process.stdout.write(rebind.stdout||'');
+  if(rebind.status!==0)throw new Error(`OpenClaw-Proxy-Rebinding nach Deployment fehlgeschlagen: ${(rebind.stderr||'').slice(-1200)}`);
+}
