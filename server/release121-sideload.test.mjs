@@ -15,8 +15,8 @@ test('sideload workflow builds an unsigned device IPA and publishes a stable dow
   assert.match(workflow,/plutil -convert xml1/);
   assert.match(workflow,/-o requested-entitlements\.plist/);
   assert.match(workflow,/plutil -lint requested-entitlements\.plist/);
-  assert.match(workflow,/plutil -extract 'com\\\.apple\\\.developer\\\.healthkit\\\.background-delivery' raw/);
-  assert.match(workflow,/healthkit\.background-delivery/);
+  assert.match(workflow,/plistlib\.load/);
+  assert.match(workflow,/d\.get\('com\.apple\.developer\.healthkit\.background-delivery'\) is True/);
   assert.match(workflow,/Payload\/AgentOneCompanion\.app/);
   assert.match(workflow,/gh release (?:create|upload)/);
   assert.match(workflow,/AgentOne-Companion-unsigned\.ipa\.sha256/);
