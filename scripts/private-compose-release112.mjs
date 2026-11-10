@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { loadEnv } from '../server/state.mjs';
 
-const release='2026.11.08-118',image=`purelink/agentone:${release}`,env=loadEnv(path.resolve('.'));
+const release='2026.11.10-119',image=`purelink/agentone:${release}`,env=loadEnv(path.resolve('.'));
 const host=env.COOLIFY_HETZNER_SERVER_IP||env.COOLIFY_SERVER_IP,user=env.COOLIFY_HETZNER_SSH_USER||env.COOLIFY_SSH_USER,key=env.COOLIFY_HETZNER_SSH_KEY_PATH||env.COOLIFY_SSH_KEY_PATH,knownHosts=path.resolve('output/demo/known_hosts'),preflightOnly=process.argv.includes('--preflight-only');
 const required=['AGENTONE_VAPID_PUBLIC_KEY','AGENTONE_VAPID_PRIVATE_KEY','AGENTONE_VAPID_SUBJECT','AGENTONE_PUSH_MASTER_KEY'];
 if(!host||!user||!key)throw new Error('SSH-Ziel fehlt');if(required.some(name=>!String(env[name]||'')))throw new Error('Push-Secrets fehlen im Master-ENV');

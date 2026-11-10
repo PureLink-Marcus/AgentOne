@@ -25,14 +25,14 @@ test('Release 104 exposes stratified health trends without medical claims',()=>{
   assert.match(personalUiJs,/keine Diagnose/);
 });
 
-test('Release 104 exposes human-gated Memory Review and clear Companion wording',()=>{
+test('Release 104 exposes human-gated Memory Review and honest native Companion wording',()=>{
   for(const fragment of ['/memory/candidates','candidateHash','Memory Review','Hermes · Memory Governance'])assert.match(personalUiJs,new RegExp(fragment.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'));
   assert.match(demo,/approveMemoryCandidate/);
   assert.match(demo,/actor:\{type:'human',id:userId\}/);
   assert.match(demo,/memory\.legacy-write\.staged/);
   assert.doesNotMatch(demo,/url\.pathname==='\/api\/internal\/personal\/memory'\)try\{return json\(res,201,\{entry:saveMemoryEntry/);
-  assert.match(personalUiJs,/Companion · Web-App/);
-  assert.match(personalUiJs,/Companion installieren oder koppeln/);
-  assert.match(personalUiJs,/aktuell keinen Download/);
+  assert.match(personalUiJs,/APPLE LIVE-SYNC/);
+  assert.match(personalUiJs,/Native iOS-Quellen \+ Anleitung/);
+  assert.match(personalUiJs,/HealthKit Background Delivery/);
   assert.doesNotThrow(()=>new Function(personalUiJs));
 });

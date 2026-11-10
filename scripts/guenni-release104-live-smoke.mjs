@@ -49,9 +49,9 @@ try{
 
   await page.locator('[data-view="private-access"]').click();
   const companion=page.locator('.apple-quickstart');
-  await companion.getByRole('heading',{name:'Günni Companion · Web-App'}).waitFor();
-  await companion.getByRole('link',{name:'Companion öffnen / installieren'}).waitFor();
-  await companion.getByRole('link',{name:'Companion-Anleitung (optional)'}).waitFor();
+  await companion.getByRole('heading',{name:'iPhone mit Günni verbinden'}).waitFor();
+  await companion.getByRole('link',{name:'Web-Companion öffnen'}).waitFor();
+  await companion.getByRole('link',{name:'Native iOS-Quellen + Anleitung'}).waitFor();
   const companionShot=path.resolve('output/playwright/guenni-release104-companion-live-mobile.png');
   await companion.screenshot({path:companionShot});
 
