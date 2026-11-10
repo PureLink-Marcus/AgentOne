@@ -35,6 +35,8 @@ test('sideload guide keeps Apple credentials outside AgentOne and explains entit
   assert.match(packageGuide,/HealthKit- und Background-Delivery-Entitlements/);
   assert.match(entitlements,/com\.apple\.developer\.healthkit/);
   assert.match(entitlements,/com\.apple\.developer\.healthkit\.background-delivery/);
-  assert.match(personalUiJs,/IPA für AltStore \/ SideStore/);
+  assert.match(personalUiJs,/Jetzt in SideStore installieren/);
+  assert.match(personalUiJs,/IPA in Dateien speichern/);
+  assert.match(personalUiJs,/sidestore:\/\/install\?url=/);
   assert.match(personalUiJs,/AgentOne-Companion-unsigned\.ipa/);
 });

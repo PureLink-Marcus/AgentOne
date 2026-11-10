@@ -1500,6 +1500,15 @@ export const openClawPluginCatalogByInstance={
       "providers": [
         "xai"
       ]
+    },
+    {
+      "id": "duckduckgo",
+      "name": "@openclaw/duckduckgo-plugin",
+      "status": "loaded",
+      "description": "OpenClaw DuckDuckGo plugin.",
+      "tools": [],
+      "channels": [],
+      "providers": []
     }
   ],
   "fressi": [

@@ -11,6 +11,18 @@ Sideload-Programm lesbar bleiben. AltStore, SideStore oder Sideloadly ersetzen
 diese Signatur durch das persönliche Apple-Entwicklungsprofil des iPhone-
 Besitzers. Apple-ID oder Apple-Passwort werden niemals in AgentOne eingegeben.
 
+## Direkt mit SideStore installieren
+
+In Günni unter **Private Access → Apple Live-Sync** auf
+**Jetzt in SideStore installieren** tippen. AgentOne verwendet dabei das von
+SideStore dokumentierte `sidestore://install?url=…`-Schema. SideStore lädt die
+IPA direkt von Günnis HTTPS-Adresse; ein vorheriges Speichern in „Dateien“ ist
+nicht erforderlich.
+
+Falls SideStore noch nicht installiert ist oder iOS das Schema nicht öffnet,
+**IPA in Dateien speichern** wählen und die Datei danach in SideStore, AltStore
+oder Sideloadly importieren.
+
 ## Empfohlen: AltStore unter Windows
 
 1. iTunes und iCloud direkt von Apple installieren, nicht aus dem Microsoft

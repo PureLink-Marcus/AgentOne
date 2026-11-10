@@ -4,7 +4,8 @@
 
 1. Günni öffnen: `https://guenni.mwart.solutions`
 2. **Private Access → Apple Live-Sync** öffnen.
-3. **IPA direkt laden** wählen.
+3. **Jetzt in SideStore installieren** wählen. Falls SideStore nicht öffnet,
+   **IPA in Dateien speichern** verwenden.
 4. Die IPA in AltStore oder SideStore öffnen und mit dem eigenen Apple-Konto
    signieren. Apple-Zugangsdaten werden niemals in AgentOne eingegeben.
 5. Entwickler-Modus aktivieren, falls iOS danach fragt.

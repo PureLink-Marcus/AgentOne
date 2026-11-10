@@ -13,7 +13,8 @@ test('release 122 serves the Companion IPA and both onboarding guides inside Age
   assert.match(archive,/AgentOne-Companion-unsigned\.ipa/);
   assert.match(dockerfile,/COPY output\/connector\/AgentOne-Companion-unsigned\.ipa \.\/downloads\/AgentOne-Companion-unsigned\.ipa/);
   assert.match(dockerfile,/COPY docs\/OPENCLAW-PLUGIN-ONBOARDING\.md \.\/downloads\/openclaw-plugin-onboarding\.md/);
-  assert.match(personalUiJs,/IPA direkt laden/);
+  assert.match(personalUiJs,/Direkt in SideStore öffnen/);
+  assert.match(personalUiJs,/IPA in Dateien speichern/);
   assert.match(personalUiJs,/SHA-256-Prüfsumme/);
   assert.match(personalUiJs,/Installationsanleitung/);
 });
