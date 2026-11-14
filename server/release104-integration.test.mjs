@@ -31,8 +31,8 @@ test('Release 104 exposes human-gated Memory Review and honest native Companion 
   assert.match(demo,/actor:\{type:'human',id:userId\}/);
   assert.match(demo,/memory\.legacy-write\.staged/);
   assert.doesNotMatch(demo,/url\.pathname==='\/api\/internal\/personal\/memory'\)try\{return json\(res,201,\{entry:saveMemoryEntry/);
-  assert.match(personalUiJs,/APPLE LIVE-SYNC/);
-  assert.match(personalUiJs,/Native iOS-Quellen \+ Anleitung/);
-  assert.match(personalUiJs,/HealthKit Background Delivery/);
+  assert.match(personalUiJs,/IPHONE · OHNE JAILBREAK/);
+  assert.match(personalUiJs,/Signierbares Xcode-Projekt laden/);
+  assert.match(personalUiJs,/HealthKit-Hintergrundsync/);
   assert.doesNotThrow(()=>new Function(personalUiJs));
 });

@@ -35,8 +35,10 @@ test('sideload guide keeps Apple credentials outside AgentOne and explains entit
   assert.match(packageGuide,/HealthKit- und Background-Delivery-Entitlements/);
   assert.match(entitlements,/com\.apple\.developer\.healthkit/);
   assert.match(entitlements,/com\.apple\.developer\.healthkit\.background-delivery/);
-  assert.match(personalUiJs,/Jetzt in SideStore installieren/);
-  assert.match(personalUiJs,/IPA in Dateien speichern/);
-  assert.match(personalUiJs,/sidestore:\/\/install\?url=/);
-  assert.match(personalUiJs,/AgentOne-Companion-unsigned\.ipa/);
+  assert.match(personalUiJs,/IPHONE · OHNE JAILBREAK/);
+  assert.match(personalUiJs,/Web-App jetzt öffnen/);
+  assert.match(personalUiJs,/Signierbares Xcode-Projekt laden/);
+  assert.match(personalUiJs,/Keine rohe IPA installieren/);
+  assert.doesNotMatch(personalUiJs,/sidestore:\/\/install\?url=/);
+  assert.doesNotMatch(personalUiJs,/IPA in Dateien speichern/);
 });

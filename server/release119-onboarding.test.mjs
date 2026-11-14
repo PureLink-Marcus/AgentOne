@@ -6,7 +6,9 @@ import {personalUiCss,personalUiJs} from './personal-ui.mjs';
 test('release 119 exposes honest live onboarding and native background scopes',()=>{
   const source=personalUiJs;
   assert.match(personalUiCss,/onboarding-center/);
-  assert.match(source,/LIVE-EINRICHTUNG/);
+  assert.match(source,/Dienste Schritt für Schritt einrichten/);
+  assert.match(source,/Weitere Schritte anzeigen/);
+  assert.match(source,/Technischen Vollkatalog anzeigen/);
   assert.match(source,/PROVIDER_APP_REQUIRED/);
   assert.match(source,/NATIVE_APP_REQUIRED/);
   assert.match(source,/health\.background/);

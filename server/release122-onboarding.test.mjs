@@ -13,10 +13,10 @@ test('release 122 serves the Companion IPA and both onboarding guides inside Age
   assert.match(archive,/AgentOne-Companion-unsigned\.ipa/);
   assert.match(dockerfile,/COPY output\/connector\/AgentOne-Companion-unsigned\.ipa \.\/downloads\/AgentOne-Companion-unsigned\.ipa/);
   assert.match(dockerfile,/COPY docs\/OPENCLAW-PLUGIN-ONBOARDING\.md \.\/downloads\/openclaw-plugin-onboarding\.md/);
-  assert.match(personalUiJs,/Direkt in SideStore öffnen/);
-  assert.match(personalUiJs,/IPA in Dateien speichern/);
-  assert.match(personalUiJs,/SHA-256-Prüfsumme/);
-  assert.match(personalUiJs,/Installationsanleitung/);
+  assert.match(personalUiJs,/Web-App jetzt öffnen/);
+  assert.match(personalUiJs,/Zum Home-Bildschirm/);
+  assert.match(personalUiJs,/Signierbares Xcode-Projekt laden/);
+  assert.doesNotMatch(personalUiJs,/Direkt in SideStore öffnen/);
 });
 
 test('release 122 exposes an actionable owner-gated OpenClaw Plugin Center',()=>{

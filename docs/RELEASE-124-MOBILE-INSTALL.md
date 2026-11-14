@@ -1,11 +1,12 @@
-# Release 124 – dauerhafter mobiler IPA-Install
+# Release 124 – iPhone-Web-App ohne Jailbreak
 
-Release 124 verhindert, dass der visuelle Pull-to-refresh-Hinweis Installationsschaltflächen auf iPhone und iPad abfängt.
+Der reguläre iPhone-Weg ist die installierbare Companion-Web-App. Sie benötigt weder IPA, Entwicklerkonto noch Jailbreak.
 
-- Der Hinweis bleibt sichtbar, akzeptiert aber selbst keine Touch-Ereignisse mehr.
-- `Jetzt in SideStore installieren` verwendet weiterhin das offizielle `sidestore://install?url=…`-Schema.
-- `IPA in Dateien speichern` bleibt als dauerhafter AltStore-/Sideloadly-Fallback erhalten.
-- Lokale und produktive Browser-Smokes prüfen nun explizit `pointer-events: none`.
+- In Safari `/iphone` öffnen, den Einmalcode eingeben und anschließend **Teilen → Zum Home-Bildschirm** wählen.
+- Die Web-App startet danach im Standalone-Modus und übernimmt Pairing, Kalender, Erinnerungen und Kurzbefehle.
+- Der Pull-to-refresh-Hinweis bleibt sichtbar, nimmt den Installationsschaltflächen aber keine Touch-Ereignisse weg.
+- Browser-Smokes prüfen Manifest, Standalone-Modus, Touch-Ziele und dass im primären Onboarding keine IPA-/SideStore-Links auftauchen.
+- HealthKit Background Delivery und eine dauerhafte Standort-Zeitachse sind iOS-Systemfunktionen. Sie bleiben ein optionaler nativer Pfad und benötigen eine von Apple signierte App, aber keinen Jailbreak.
 - Der offizielle DuckDuckGo-Plugin bleibt in Günnis persistentem OpenClaw-Volume installiert; temporäre Administratorrechte werden nach der Installation entfernt.
 
-Die IPA wird serverseitig als Download ausgeliefert. Auf iOS muss SideStore bereits installiert und einmal eingerichtet sein, damit der direkte Link übernommen werden kann.
+Das mitgelieferte Xcode-Projekt ist nur für diesen optionalen nativen Sensorpfad gedacht. Eine unsignierte IPA wird nicht mehr als einfacher Installationsweg beworben, weil iOS sie ohne passendes Provisioning-Profil nicht zuverlässig installieren kann.

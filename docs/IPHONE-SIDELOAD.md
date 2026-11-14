@@ -1,4 +1,17 @@
-# AgentOne Companion auf dem iPhone sideloaden
+# AgentOne Companion auf dem iPhone
+
+## Empfohlen: Web-App ohne Jailbreak installieren
+
+Für Pairing, Kalender, Erinnerungen und Siri ist keine IPA nötig:
+
+1. `https://guenni.mwart.solutions/iphone` in Safari öffnen.
+2. Den in AgentOne erzeugten Einmalcode eingeben und das Gerät koppeln.
+3. In Safari **Teilen → Zum Home-Bildschirm** wählen.
+4. Companion danach über das neue App-Symbol starten.
+
+Dieser Weg funktioniert ohne Jailbreak, Entwicklerkonto, SideStore oder AltStore. Die folgenden Sideload-Hinweise betreffen nur den optionalen nativen Sensorpfad für HealthKit Background Delivery und eine dauerhafte Standort-Zeitachse. iOS verlangt dafür eine gültige Apple-Signatur und ein passendes Provisioning-Profil; eine IPA allein kann das nicht ersetzen.
+
+## Optional: native Sensor-App signieren
 
 ## Download
 
@@ -11,17 +24,18 @@ Sideload-Programm lesbar bleiben. AltStore, SideStore oder Sideloadly ersetzen
 diese Signatur durch das persönliche Apple-Entwicklungsprofil des iPhone-
 Besitzers. Apple-ID oder Apple-Passwort werden niemals in AgentOne eingegeben.
 
-## Direkt mit SideStore installieren
+## Optionaler nativer Sensorpfad
 
-In Günni unter **Private Access → Apple Live-Sync** auf
-**Jetzt in SideStore installieren** tippen. AgentOne verwendet dabei das von
-SideStore dokumentierte `sidestore://install?url=…`-Schema. SideStore lädt die
-IPA direkt von Günnis HTTPS-Adresse; ein vorheriges Speichern in „Dateien“ ist
-nicht erforderlich.
+Der reguläre Onboarding-Dialog bietet bewusst keinen direkten IPA- oder
+SideStore-Button mehr an. Eine rohe IPA wirkt wie ein einfacher Installationsweg,
+funktioniert für HealthKit und Hintergrundzugriffe ohne passendes
+Provisioning-Profil aber nicht zuverlässig.
 
-Falls SideStore noch nicht installiert ist oder iOS das Schema nicht öffnet,
-**IPA in Dateien speichern** wählen und die Datei danach in SideStore, AltStore
-oder Sideloadly importieren.
+Wer die optionalen nativen Sensorfunktionen benötigt, verwendet bevorzugt das
+bereitgestellte Xcode-Projekt und signiert es auf einem Mac mit dem eigenen
+Apple-Konto. SideStore, AltStore oder Sideloadly bleiben nur ein manueller
+Expertenpfad; sie ersetzen weder die erforderlichen Entitlements noch Apples
+Signaturprüfung.
 
 ## Empfohlen: AltStore unter Windows
 
